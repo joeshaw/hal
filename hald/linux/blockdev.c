@@ -966,6 +966,32 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 
 	}
 
+	/* handle virtual block devices */
+	if (parent == NULL && !is_fakevolume && !hotplug_event->reposted && (strstr(sysfs_path, "virtual") != NULL) ) {
+		char *link;
+		char *target;
+
+		HAL_INFO (("Check if this is a BDI based device ..."));
+                link = g_strdup_printf ("%s/bdi", sysfs_path);
+                if (g_file_test (link, G_FILE_TEST_IS_SYMLINK)) {
+                	target = resolve_symlink (link);
+	                if (target != NULL) {
+                		HAL_INFO (("Looks like a BDI based block device. Link->target: '%s' -> '%s'", link, target));
+				/* try to find the parent device to this link */
+				parent = hal_device_store_match_key_value_string (hald_get_gdl(), "linux.sysfs_path", target);
+			}
+			g_free (target);
+                } else {
+			char *parent_path = NULL;
+
+			HAL_INFO (("This wasn't a BDI base device. Check now if it is a slave device ..."));
+
+			parent_path = hal_util_get_parent_path (sysfs_path);
+			if (parent_path) 
+				parent = hal_device_store_match_key_value_string (hald_get_gdl(), "linux.sysfs_path", parent_path);
+		}
+	}
+
 	if (parent == NULL) {
 		HAL_INFO (("Ignoring hotplug event - no parent"));
 		goto error;
@@ -1193,6 +1219,10 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 					physdev = d_it;
 					physdev_udi = udi_it;
 					hal_device_property_set_string (d, "storage.bus", "pci");
+				} else if (strcmp (bus, "bdi") == 0) {
+					physdev = d_it;
+					physdev_udi = udi_it;
+					hal_device_property_set_string (d, "storage.bus", "bdi");
 				}
 			}
 
