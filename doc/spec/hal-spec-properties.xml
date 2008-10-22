@@ -3177,6 +3177,77 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
       </informaltable>
     </sect2>
 
+    <sect2 id="device-properties-bdi">
+      <title>
+        bdi namespace
+      </title>
+      <para>
+	Devices backing a memory (mmap) region, called Backing Device 
+	Information (BDI), are represented by device objects where 
+	<literal>info.subsystem</literal> equals <literal>bdi</literal>. 
+	The following properties are available for such device objects.
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry>
+                <literal>bdi.id</literal> (int)
+              </entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>Device identification</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>bdi.read_ahead_kb</literal> (int)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+		Size of the read-ahead window in kilobytes
+		For more information check the Linux kernel documentation
+	      </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>bdi.min_ratio</literal> (int)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+		The 'min_ratio' parameter contains information about the 
+		minimum percentage of the write-back cache to a particular 
+		device.
+		For more information check the Linux kernel documentation
+	      </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>bdi.max_ratio</literal> (int)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>
+		The 'max_ratio' parameter contains information about the 
+		maximum percentage of the write-back cache a particular 
+		device can use. 
+		For more information check the Linux kernel documentation
+	      </entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
+
     <sect2 id="device-properties-vio">
       <title>
         vio namespace
