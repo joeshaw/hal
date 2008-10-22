@@ -4350,45 +4350,9 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
             </row>
             <row>
               <entry></entry>
-              <entry>ide</entry>
+              <entry>bdi</entry>
               <entry></entry>
-              <entry>IDE or ATA interface</entry>
-            </row>
-            <row>
-              <entry></entry>
-              <entry>usb</entry>
-              <entry></entry>
-              <entry>USB interface</entry>
-            </row>
-            <row>
-              <entry></entry>
-              <entry>ieee1394</entry>
-              <entry></entry>
-              <entry>IEEE 1394 interface</entry>
-            </row>
-            <row>
-              <entry></entry>
-              <entry>scsi</entry>
-              <entry></entry>
-              <entry>SCSI interface</entry>
-            </row>
-            <row>
-              <entry></entry>
-              <entry>sata</entry>
-              <entry></entry>
-              <entry>SATA interface</entry>
-            </row>
-            <row>
-              <entry></entry>
-              <entry>pcmcia</entry>
-              <entry></entry>
-              <entry>PCMCIA interface</entry>
-            </row>
-            <row>
-              <entry></entry>
-              <entry>mmc</entry>
-              <entry></entry>
-              <entry>MultiMediaCard (MMC) interface</entry>
+              <entry>BDI (Backing Device Information) interface</entry>
             </row>
             <row>
               <entry></entry>
@@ -4398,15 +4362,15 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
             </row>
             <row>
               <entry></entry>
-              <entry>vio</entry>
+              <entry>ide</entry>
               <entry></entry>
-              <entry>IBM pSeries/iSeries Vio interface</entry>
+              <entry>IDE or ATA interface</entry>
             </row>
             <row>
               <entry></entry>
-              <entry>platform</entry>
+              <entry>ieee1394</entry>
               <entry></entry>
-              <entry>Legacy device that is part of the platform</entry>
+              <entry>IEEE 1394 interface</entry>
             </row>
             <row>
               <entry></entry>
@@ -4416,15 +4380,51 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
             </row>
             <row>
               <entry></entry>
+              <entry>mmc</entry>
+              <entry></entry>
+              <entry>MultiMediaCard (MMC) interface</entry>
+            </row>
+            <row>
+              <entry></entry>
               <entry>pci</entry>
               <entry></entry>
               <entry>PCI interface</entry>
             </row>
             <row>
               <entry></entry>
-              <entry>bdi</entry>
+              <entry>pcmcia</entry>
               <entry></entry>
-              <entry>BDI (Backing Device Information) interface</entry>
+              <entry>PCMCIA interface</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>platform</entry>
+              <entry></entry>
+              <entry>Legacy device that is part of the platform</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>sata</entry>
+              <entry></entry>
+              <entry>SATA interface</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>scsi</entry>
+              <entry></entry>
+              <entry>SCSI interface</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>usb</entry>
+              <entry></entry>
+              <entry>USB interface</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>vio</entry>
+              <entry></entry>
+              <entry>IBM pSeries/iSeries Vio interface</entry>
             </row>
             <row>
               <entry></entry>
