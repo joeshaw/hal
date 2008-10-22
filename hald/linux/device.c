@@ -127,6 +127,57 @@ backlight_compute_udi (HalDevice *d)
 /*--------------------------------------------------------------------------------------------------------------*/
 
 static HalDevice *
+bdi_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_dev,
+         const gchar *parent_path)
+{
+	HalDevice *d;
+	const gchar *id;
+
+	d = NULL;
+
+	if (parent_dev == NULL) {
+	        parent_dev = hal_device_store_find (hald_get_gdl (), "/org/freedesktop/Hal/devices/computer");
+		if (parent_dev == NULL) {
+                	parent_dev = hal_device_store_find (hald_get_tdl (), "/org/freedesktop/Hal/devices/computer");
+			if (parent_dev == NULL) {
+				HAL_ERROR (("Device '%s' has no parent and couldn't find computer root object."));
+				goto error;
+			}
+		}
+        }
+
+	d = hal_device_new ();
+	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
+	hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
+	hal_device_property_set_string (d, "info.category", "bdi");
+	hal_device_add_capability (d, "bdi");
+	hal_device_property_set_string (d, "info.product", "Backing Device Information Device");
+
+	id = hal_util_get_last_element (sysfs_path);
+	hal_device_property_set_string (d, "bdi.id", id);	
+
+	hal_util_set_int_from_file (d, "bdi.read_ahead_kb", sysfs_path, "read_ahead_kb", 10);
+	hal_util_set_int_from_file (d, "bdi.min_ratio", sysfs_path, "min_ratio", 10);
+	hal_util_set_int_from_file (d, "bdi.max_ratio", sysfs_path, "max_ratio", 10);
+
+error:
+	return d;
+}
+
+static gboolean
+bdi_compute_udi (HalDevice *d)
+{
+	gchar udi[256];
+
+	hald_compute_udi (udi, sizeof (udi), "%s_bdi_%s", hal_device_property_get_string (d, "info.parent"),
+							  hal_device_property_get_string (d, "bdi.id"));
+	hal_device_set_udi (d, udi);
+	return TRUE;
+}
+
+/*--------------------------------------------------------------------------------------------------------------*/
+
+static HalDevice *
 bluetooth_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_dev, 
 	       const gchar *parent_path)
 {
@@ -1390,7 +1441,6 @@ net_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 	gint flags;
 	gint addr_len;
 
-	d = NULL;
 	d = hal_device_new ();
 
 	if (parent_dev == NULL) {
@@ -4030,6 +4080,13 @@ static DevHandler dev_handler_backlight =
        .remove       = dev_remove
 };
 
+static DevHandler dev_handler_bdi = {
+	.subsystem   = "bdi",
+	.add         = bdi_add,
+	.compute_udi = bdi_compute_udi,
+	.remove      = dev_remove
+};
+
 static DevHandler dev_handler_bluetooth = 
 { 
 	.subsystem    = "bluetooth",
@@ -4374,6 +4431,7 @@ static DevHandler dev_handler_xen = {
 
 static DevHandler *dev_handlers[] = {
 	&dev_handler_backlight,
+	&dev_handler_bdi,
 	&dev_handler_bluetooth,
 	&dev_handler_ccw,
 	&dev_handler_ccwgroup,
