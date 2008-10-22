@@ -4422,6 +4422,12 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
             </row>
             <row>
               <entry></entry>
+              <entry>bdi</entry>
+              <entry></entry>
+              <entry>BDI (Backing Device Information) interface</entry>
+            </row>
+            <row>
+              <entry></entry>
               <entry></entry>
               <entry></entry>
               <entry></entry>
