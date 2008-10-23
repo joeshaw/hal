@@ -35,183 +35,6 @@ $ dbus-send --system --print-reply --dest=org.freedesktop.Hal \
     obtain the privilege) if the caller is not privileged and so on.
   </para>
 
-  <sect1 id="interface-manager">
-    <title>org.freedesktop.Hal.Manager interface</title>
-    <para>
-      Only the <literal>/org/freedesktop/Hal/Manager</literal> object
-      implements this interface. It's primarily used to discover
-      devices. The following methods are available:
-    </para>
-
-    <informaltable>
-      <tgroup cols="2">
-        <thead>
-          <row>
-            <entry>Method</entry>
-            <entry>Returns</entry>
-            <entry>Parameters</entry>
-            <entry>Throws</entry>
-            <entry>Description</entry>
-          </row>
-        </thead>
-        <tbody>
-          <row>
-            <entry>GetAllDevices</entry>
-            <entry>Objref[]</entry>
-            <entry></entry>
-            <entry></entry>
-            <entry>
-              Get all UDI's in the database.
-            </entry>
-          </row>
-          <row>
-            <entry>DeviceExists</entry>
-            <entry>Bool</entry>
-            <entry></entry>
-            <entry></entry>
-            <entry>
-              Determines if a given object exists.
-            </entry>
-          </row>
-          <row>
-            <entry>FindDeviceStringMatch</entry>
-            <entry>Objref[]</entry>
-            <entry>String key, String value</entry>
-            <entry></entry>
-            <entry>
-              Find devices for which the given string property assumes the given value.
-            </entry>
-          </row>
-          <row>
-            <entry>FindDeviceByCapability</entry>
-            <entry>Objref[]</entry>
-            <entry>String capability</entry>
-            <entry></entry>
-            <entry>
-              Finds devices of the given capability.
-            </entry>
-          </row>
-          <row>
-            <entry>NewDevice</entry>
-            <entry>Objref</entry>
-            <entry></entry>
-            <entry>PermissionDenied</entry>
-            <entry>
-              Creates a new device object in the temporary device list
-              (TDL) and return the UDI. Caller must be uid 0.
-            </entry>
-          </row>
-          <row>
-            <entry>Remove</entry>
-            <entry></entry>
-            <entry>Objref tmp_udi</entry>
-            <entry>NoSuchDevice, PermissionDenied</entry>
-            <entry>
-              Removes a device object that was created in the
-              TDL. Caller must be uid 0.
-            </entry>
-          </row>
-          <row>
-            <entry>CommitToGdl</entry>
-            <entry></entry>
-            <entry>Objref tmp_udi, Objref udi</entry>
-            <entry>NoSuchDevice, PermissionDenied</entry>
-            <entry>
-              Moves a device from the temporary device list (TDL) to
-              the global device list (GDL). Caller must be uid 0.
-            </entry>
-          </row>
-
-          <row>
-            <entry>AcquireGlobalInterfaceLock</entry>
-            <entry></entry>
-            <entry>String interface_name, Bool exclusive</entry>
-            <entry>Device.InterfaceAlreadyLocked</entry>
-            <entry>
-              Acquires a global lock on an interface. See
-              <xref linkend="locking"/> for details.
-            </entry>
-          </row>
-          <row>
-            <entry>ReleaseGlobalInterfaceLock</entry>
-            <entry></entry>
-            <entry>String interface_name</entry>
-            <entry>Device.InterfaceNotLocked</entry>
-            <entry>
-              Releases a global lock on an interface. See
-              <xref linkend="locking"/> for details.
-            </entry>
-          </row>
-          <row>
-            <entry>SingletonAddonIsReady</entry>
-            <entry></entry>
-            <entry>String command_line</entry>
-            <entry>PermissionDenied, SyntaxError</entry>
-            <entry>
-              Called by singleton addons to signal that they are
-              ready to handle devices.  A singleton addon should
-              implement the <link linkend="interface-singleton-addon">
-                org.freedesktop.Hal.Singleton</link> interface.
-            </entry>
-          </row>
-        </tbody>
-      </tgroup>
-    </informaltable>
-
-    <para>
-      The following signals are emitted:
-    </para>
-
-    <informaltable>
-      <tgroup cols="2">
-        <thead>
-          <row>
-            <entry>Signal</entry>
-            <entry>Parameters</entry>
-            <entry>Description</entry>
-          </row>
-        </thead>
-        <tbody>
-          <row>
-            <entry>DeviceAdded</entry>
-            <entry>Objref obj</entry>
-            <entry>
-              A device was added to the global device list (GDL).
-            </entry>
-          </row>
-          <row>
-            <entry>DeviceRemoved</entry>
-            <entry>Objref obj</entry>
-            <entry>
-              A device was removed from the global device list (GDL).
-            </entry>
-          </row>
-          <row>
-            <entry>NewCapability</entry>
-            <entry>Objref obj, String cap</entry>
-            <entry>
-              A device gained a new capability.
-            </entry>
-          </row>
-          <row>
-            <entry>GlobalInterfaceLockAcquired</entry>
-            <entry>String lock_name, String lock_owner, Int num_holders</entry>
-            <entry>
-              Sent when a process acquires a global interface lock.
-            </entry>
-          </row>
-          <row>
-            <entry>GlobalInterfaceLockReleased</entry>
-            <entry>String lock_name, String lock_owner, Int num_holders</entry>
-            <entry>
-              Sent when a process releases a global interface lock.
-            </entry>
-          </row>
-        </tbody>
-      </tgroup>
-    </informaltable>
-  </sect1>
-
 
   <sect1 id="interface-device">
     <title>org.freedesktop.Hal.Device interface</title>
@@ -654,13 +477,12 @@ $ dbus-send --system --print-reply --dest=org.freedesktop.Hal \
     </informaltable>
   </sect1>
 
-  <sect1 id="interface-device-systempower">
-    <title>org.freedesktop.Hal.Device.SystemPowerManagement interface</title>
+  <sect1 id="interface-device-accesscontrol">
+    <title>org.freedesktop.Hal.Device.AccessControl interface</title>
     <para>
-      This interface provides a mechanism to affect system-wide power
-      management. Normally only the root computer device object
-      (<literal>/org/freedesktop/Hal/devices/computer</literal>)
-      implements this interface. The following methods are available:
+      This interface provides a mechanism for discovering when an ACL
+      is added or removed for a device file. The following signals are
+      available:
     </para>
 
     <informaltable>
@@ -668,90 +490,28 @@ $ dbus-send --system --print-reply --dest=org.freedesktop.Hal \
         <thead>
           <row>
             <entry>Method</entry>
-            <entry>Returns</entry>
             <entry>Parameters</entry>
-            <entry>Throws</entry>
             <entry>Description</entry>
           </row>
         </thead>
         <tbody>
           <row>
-            <entry>Suspend</entry>
-            <entry>Int</entry>
-            <entry>Int num_secs_to_wakeup</entry>
-            <entry>SystemPowerManagement.NotSupported, SystemPowerManagement.AlarmNotSupported</entry>
+            <entry>ACLAdded</entry>
+            <entry>UInt unix_user_id</entry>
             <entry>
-              Puts the system in a suspended state (typically ACPI S3)
-              for <literal>num_secs_to_wakeup</literal> seconds. If
-              the given time is zero, the system is put in the
-              suspended state indefinitely. If wake-up isn't supported
-              the the AlarmNotSupported exception is thrown. Latency
-              for the system to return to an operational state is in
-              the order of magnitude of 5 seconds.
+              Emitted when an ACL have been added for a UNIX user on a
+              device object with the <literal>access_control</literal>
+              capability.
             </entry>
           </row>
 
           <row>
-            <entry>Hibernate</entry>
-            <entry>Int</entry>
-            <entry></entry>
-            <entry>SystemPowerManagement.NotSupported</entry>
+            <entry>ACLRemoved</entry>
+            <entry>UInt unix_user_id</entry>
             <entry>
-              Save system state to persistent storage and power off
-              the system (typically ACPI S4). Latency for the system
-              to return to an operational state is in the order of
-              magnitude of one minute.
-            </entry>
-          </row>
-
-          <row>
-            <entry>SuspendHybrid</entry>
-            <entry>Int</entry>
-            <entry>Int num_secs_to_wakeup</entry>
-            <entry>SystemPowerManagement.NotSupported, SystemPowerManagement.AlarmNotSupported</entry>
-            <entry>
-              Puts the system in a suspended state (typically ACPI S3)
-              for <literal>num_secs_to_wakeup</literal> seconds but
-              also write the system state to persistent storage so the
-              system can resume even if power is removed. Like with
-              Suspend(), if the given time is zero, the system is put
-              in the suspended state indefinitely. If wake-up isn't
-              supported the the AlarmNotSupported exception is thrown.
-            </entry>
-          </row>
-
-          <row>
-            <entry>Shutdown</entry>
-            <entry>Int</entry>
-            <entry></entry>
-            <entry>SystemPowerManagement.NotSupported</entry>
-            <entry>
-              Shut down the system.
-            </entry>
-          </row>
-
-          <row>
-            <entry>Reboot</entry>
-            <entry>Int</entry>
-            <entry></entry>
-            <entry>SystemPowerManagement.NotSupported</entry>
-            <entry>
-              Reboot the system.
-            </entry>
-          </row>
-
-          <row>
-            <entry>SetPowerSave</entry>
-            <entry>Int</entry>
-            <entry>Bool should_save_power</entry>
-            <entry>SystemPowerManagement.NotSupported</entry>
-            <entry>
-              If the boolean passed is TRUE, the system will be
-              configured to save as much power as possible by
-              e.g. enabling <literal>laptop mode</literal> to avoid
-              spinning up disks. Typically, power management daemons
-              will call this method when it determines that the system
-              is running on battery power.
+              Emitted when an ACL have been removed for a UNIX user on
+              a device object with
+              the <literal>access_control</literal> capability.
             </entry>
           </row>
 
@@ -760,13 +520,7 @@ $ dbus-send --system --print-reply --dest=org.freedesktop.Hal \
     </informaltable>
 
     <para>
-      This interface does not emit any signals.
-    </para>
-
-    <para>
-      Implementors of power management daemons should make sure that
-      their software respects the locking guidelines described in
-      <xref linkend="interfaces"/>.
+      This interface does not export any methods.
     </para>
   </sect1>
 
@@ -878,61 +632,6 @@ $ dbus-send --system --print-reply --dest=org.freedesktop.Hal \
     </para>
   </sect1>
 
-  <sect1 id="interface-wakeonlan">
-    <title>org.freedesktop.Hal.Device.WakeOnLan interface</title>
-    <para>
-      This interface provides a mechanism to configure Wake On LAN
-      capabilities. The following methods are available:
-    </para>
-
-    <informaltable>
-      <tgroup cols="2">
-        <thead>
-          <row>
-            <entry>Method</entry>
-            <entry>Returns</entry>
-            <entry>Parameters</entry>
-            <entry>Throws</entry>
-            <entry>Description</entry>
-          </row>
-        </thead>
-        <tbody>
-          <row>
-            <entry>GetSupported</entry>
-            <entry>Bool</entry>
-            <entry></entry>
-            <entry>WakeOnLan.NoEthtool</entry>
-            <entry>
-	      Get if device supports Wake On LAN 
-            </entry>
-          </row>
-          <row>
-            <entry>GetEnabled</entry>
-            <entry>Bool</entry>
-            <entry></entry>
-            <entry>WakeOnLan.NoEthtool</entry>
-            <entry>
-              Get if Wake On LAN is enabled
-            </entry>
-          </row>
-          <row>
-            <entry>SetEnabled</entry>
-            <entry>Void</entry>
-            <entry>Bool</entry>
-            <entry>WakeOnLan.NoEthtool</entry>
-            <entry>
-	      Enable or disable Wake On LAN
-            </entry>
-          </row>
-        </tbody>
-      </tgroup>
-    </informaltable>
-
-    <para>
-      This interface does not emit any signals.
-    </para>
-  </sect1>
-
   <sect1 id="interface-dockstation">
     <title>org.freedesktop.Hal.Device.DockStation interface</title>
     <para>
@@ -969,11 +668,11 @@ $ dbus-send --system --print-reply --dest=org.freedesktop.Hal \
     </para>
   </sect1>
 
-  <sect1 id="interface-device-laptop-panel">
-    <title>org.freedesktop.Hal.Device.LaptopPanel interface</title>
+  <sect1 id="interface-device-keyboard-backlight">
+    <title>org.freedesktop.Hal.Device.KeyboardBacklight interface</title>
     <para>
       This interface provides a mechanism to get/set the brightness of
-      a laptop panel. The following methods are available:
+      the keyboard backlight. The following methods are available:
     </para>
 
     <informaltable>
@@ -1016,11 +715,59 @@ $ dbus-send --system --print-reply --dest=org.freedesktop.Hal \
     </para>
   </sect1>
 
-  <sect1 id="interface-device-keyboard-backlight">
-    <title>org.freedesktop.Hal.Device.KeyboardBacklight interface</title>
+  <sect1 id="interface-device-killswitch">
+    <title>org.freedesktop.Hal.Device.KillSwitch interface</title>
+    <para>
+      This interface provides a mechanism for both querying whether a
+      radio is on as well as turning it on and off.  The following
+      methods are available:
+    </para>
+
+    <informaltable>
+      <tgroup cols="2">
+        <thead>
+          <row>
+            <entry>Method</entry>
+            <entry>Returns</entry>
+            <entry>Parameters</entry>
+            <entry>Throws</entry>
+            <entry>Description</entry>
+          </row>
+        </thead>
+        <tbody>
+          <row>
+            <entry>GetPower</entry>
+            <entry>Int</entry>
+            <entry></entry>
+            <entry></entry>
+            <entry>
+              Returns 1 if, and only if, the power is on.
+            </entry>
+          </row>
+          <row>
+            <entry>SetPower</entry>
+            <entry></entry>
+            <entry>Bool</entry>
+            <entry></entry>
+            <entry>
+              Set the power of the radio.
+            </entry>
+          </row>
+
+        </tbody>
+      </tgroup>
+    </informaltable>
+
+    <para>
+      This interface does not emit any signals.
+    </para>
+  </sect1>
+
+  <sect1 id="interface-device-laptop-panel">
+    <title>org.freedesktop.Hal.Device.LaptopPanel interface</title>
     <para>
       This interface provides a mechanism to get/set the brightness of
-      the keyboard backlight. The following methods are available:
+      a laptop panel. The following methods are available:
     </para>
 
     <informaltable>
@@ -1189,6 +936,122 @@ $ dbus-send --system --print-reply --dest=org.freedesktop.Hal \
     </para>
   </sect1>
 
+  <sect1 id="interface-device-systempower">
+    <title>org.freedesktop.Hal.Device.SystemPowerManagement interface</title>
+    <para>
+      This interface provides a mechanism to affect system-wide power
+      management. Normally only the root computer device object
+      (<literal>/org/freedesktop/Hal/devices/computer</literal>)
+      implements this interface. The following methods are available:
+    </para>
+
+    <informaltable>
+      <tgroup cols="2">
+        <thead>
+          <row>
+            <entry>Method</entry>
+            <entry>Returns</entry>
+            <entry>Parameters</entry>
+            <entry>Throws</entry>
+            <entry>Description</entry>
+          </row>
+        </thead>
+        <tbody>
+          <row>
+            <entry>Suspend</entry>
+            <entry>Int</entry>
+            <entry>Int num_secs_to_wakeup</entry>
+            <entry>SystemPowerManagement.NotSupported, SystemPowerManagement.AlarmNotSupported</entry>
+            <entry>
+              Puts the system in a suspended state (typically ACPI S3)
+              for <literal>num_secs_to_wakeup</literal> seconds. If
+              the given time is zero, the system is put in the
+              suspended state indefinitely. If wake-up isn't supported
+              the the AlarmNotSupported exception is thrown. Latency
+              for the system to return to an operational state is in
+              the order of magnitude of 5 seconds.
+            </entry>
+          </row>
+
+          <row>
+            <entry>Hibernate</entry>
+            <entry>Int</entry>
+            <entry></entry>
+            <entry>SystemPowerManagement.NotSupported</entry>
+            <entry>
+              Save system state to persistent storage and power off
+              the system (typically ACPI S4). Latency for the system
+              to return to an operational state is in the order of
+              magnitude of one minute.
+            </entry>
+          </row>
+
+          <row>
+            <entry>SuspendHybrid</entry>
+            <entry>Int</entry>
+            <entry>Int num_secs_to_wakeup</entry>
+            <entry>SystemPowerManagement.NotSupported, SystemPowerManagement.AlarmNotSupported</entry>
+            <entry>
+              Puts the system in a suspended state (typically ACPI S3)
+              for <literal>num_secs_to_wakeup</literal> seconds but
+              also write the system state to persistent storage so the
+              system can resume even if power is removed. Like with
+              Suspend(), if the given time is zero, the system is put
+              in the suspended state indefinitely. If wake-up isn't
+              supported the the AlarmNotSupported exception is thrown.
+            </entry>
+          </row>
+
+          <row>
+            <entry>Shutdown</entry>
+            <entry>Int</entry>
+            <entry></entry>
+            <entry>SystemPowerManagement.NotSupported</entry>
+            <entry>
+              Shut down the system.
+            </entry>
+          </row>
+
+          <row>
+            <entry>Reboot</entry>
+            <entry>Int</entry>
+            <entry></entry>
+            <entry>SystemPowerManagement.NotSupported</entry>
+            <entry>
+              Reboot the system.
+            </entry>
+          </row>
+
+          <row>
+            <entry>SetPowerSave</entry>
+            <entry>Int</entry>
+            <entry>Bool should_save_power</entry>
+            <entry>SystemPowerManagement.NotSupported</entry>
+            <entry>
+              If the boolean passed is TRUE, the system will be
+              configured to save as much power as possible by
+              e.g. enabling <literal>laptop mode</literal> to avoid
+              spinning up disks. Typically, power management daemons
+              will call this method when it determines that the system
+              is running on battery power.
+            </entry>
+          </row>
+
+        </tbody>
+      </tgroup>
+    </informaltable>
+
+    <para>
+      This interface does not emit any signals.
+    </para>
+
+    <para>
+      Implementors of power management daemons should make sure that
+      their software respects the locking guidelines described in
+      <xref linkend="interfaces"/>.
+    </para>
+  </sect1>
+
   <sect1 id="interface-device-volume">
     <title>org.freedesktop.Hal.Device.Volume interface</title>
     <para>
@@ -1323,12 +1186,11 @@ $ dbus-send --system --print-reply --dest=org.freedesktop.Hal \
 
   </sect1>
 
-  <sect1 id="interface-device-killswitch">
-    <title>org.freedesktop.Hal.Device.KillSwitch interface</title>
+  <sect1 id="interface-wakeonlan">
+    <title>org.freedesktop.Hal.Device.WakeOnLan interface</title>
     <para>
-      This interface provides a mechanism for both querying whether a
-      radio is on as well as turning it on and off.  The following
-      methods are available:
+      This interface provides a mechanism to configure Wake On LAN
+      capabilities. The following methods are available:
     </para>
 
     <informaltable>
@@ -1344,24 +1206,32 @@ $ dbus-send --system --print-reply --dest=org.freedesktop.Hal \
         </thead>
         <tbody>
           <row>
-            <entry>GetPower</entry>
-            <entry>Int</entry>
+            <entry>GetSupported</entry>
+            <entry>Bool</entry>
             <entry></entry>
-            <entry></entry>
+            <entry>WakeOnLan.NoEthtool</entry>
             <entry>
-              Returns 1 if, and only if, the power is on.
+	      Get if device supports Wake On LAN 
             </entry>
           </row>
           <row>
-            <entry>SetPower</entry>
-            <entry></entry>
+            <entry>GetEnabled</entry>
             <entry>Bool</entry>
             <entry></entry>
+            <entry>WakeOnLan.NoEthtool</entry>
             <entry>
-              Set the power of the radio.
+              Get if Wake On LAN is enabled
             </entry>
           </row>
-
+          <row>
+            <entry>SetEnabled</entry>
+            <entry>Void</entry>
+            <entry>Bool</entry>
+            <entry>WakeOnLan.NoEthtool</entry>
+            <entry>
+	      Enable or disable Wake On LAN
+            </entry>
+          </row>
         </tbody>
       </tgroup>
     </informaltable>
@@ -1369,15 +1239,14 @@ $ dbus-send --system --print-reply --dest=org.freedesktop.Hal \
     <para>
       This interface does not emit any signals.
     </para>
-
   </sect1>
 
-  <sect1 id="interface-device-accesscontrol">
-    <title>org.freedesktop.Hal.Device.AccessControl interface</title>
+  <sect1 id="interface-manager">
+    <title>org.freedesktop.Hal.Manager interface</title>
     <para>
-      This interface provides a mechanism for discovering when an ACL
-      is added or removed for a device file. The following signals are
-      available:
+      Only the <literal>/org/freedesktop/Hal/Manager</literal> object
+      implements this interface. It's primarily used to discover
+      devices. The following methods are available:
     </para>
 
     <informaltable>
@@ -1385,39 +1254,168 @@ $ dbus-send --system --print-reply --dest=org.freedesktop.Hal \
         <thead>
           <row>
             <entry>Method</entry>
+            <entry>Returns</entry>
+            <entry>Parameters</entry>
+            <entry>Throws</entry>
+            <entry>Description</entry>
+          </row>
+        </thead>
+        <tbody>
+          <row>
+            <entry>GetAllDevices</entry>
+            <entry>Objref[]</entry>
+            <entry></entry>
+            <entry></entry>
+            <entry>
+              Get all UDI's in the database.
+            </entry>
+          </row>
+          <row>
+            <entry>DeviceExists</entry>
+            <entry>Bool</entry>
+            <entry></entry>
+            <entry></entry>
+            <entry>
+              Determines if a given object exists.
+            </entry>
+          </row>
+          <row>
+            <entry>FindDeviceStringMatch</entry>
+            <entry>Objref[]</entry>
+            <entry>String key, String value</entry>
+            <entry></entry>
+            <entry>
+              Find devices for which the given string property assumes the given value.
+            </entry>
+          </row>
+          <row>
+            <entry>FindDeviceByCapability</entry>
+            <entry>Objref[]</entry>
+            <entry>String capability</entry>
+            <entry></entry>
+            <entry>
+              Finds devices of the given capability.
+            </entry>
+          </row>
+          <row>
+            <entry>NewDevice</entry>
+            <entry>Objref</entry>
+            <entry></entry>
+            <entry>PermissionDenied</entry>
+            <entry>
+              Creates a new device object in the temporary device list
+              (TDL) and return the UDI. Caller must be uid 0.
+            </entry>
+          </row>
+          <row>
+            <entry>Remove</entry>
+            <entry></entry>
+            <entry>Objref tmp_udi</entry>
+            <entry>NoSuchDevice, PermissionDenied</entry>
+            <entry>
+              Removes a device object that was created in the
+              TDL. Caller must be uid 0.
+            </entry>
+          </row>
+          <row>
+            <entry>CommitToGdl</entry>
+            <entry></entry>
+            <entry>Objref tmp_udi, Objref udi</entry>
+            <entry>NoSuchDevice, PermissionDenied</entry>
+            <entry>
+              Moves a device from the temporary device list (TDL) to
+              the global device list (GDL). Caller must be uid 0.
+            </entry>
+          </row>
+
+          <row>
+            <entry>AcquireGlobalInterfaceLock</entry>
+            <entry></entry>
+            <entry>String interface_name, Bool exclusive</entry>
+            <entry>Device.InterfaceAlreadyLocked</entry>
+            <entry>
+              Acquires a global lock on an interface. See
+              <xref linkend="locking"/> for details.
+            </entry>
+          </row>
+          <row>
+            <entry>ReleaseGlobalInterfaceLock</entry>
+            <entry></entry>
+            <entry>String interface_name</entry>
+            <entry>Device.InterfaceNotLocked</entry>
+            <entry>
+              Releases a global lock on an interface. See
+              <xref linkend="locking"/> for details.
+            </entry>
+          </row>
+          <row>
+            <entry>SingletonAddonIsReady</entry>
+            <entry></entry>
+            <entry>String command_line</entry>
+            <entry>PermissionDenied, SyntaxError</entry>
+            <entry>
+              Called by singleton addons to signal that they are
+              ready to handle devices.  A singleton addon should
+              implement the <link linkend="interface-singleton-addon">
+                org.freedesktop.Hal.Singleton</link> interface.
+            </entry>
+          </row>
+        </tbody>
+      </tgroup>
+    </informaltable>
+
+    <para>
+      The following signals are emitted:
+    </para>
+
+    <informaltable>
+      <tgroup cols="2">
+        <thead>
+          <row>
+            <entry>Signal</entry>
             <entry>Parameters</entry>
             <entry>Description</entry>
           </row>
         </thead>
         <tbody>
           <row>
-            <entry>ACLAdded</entry>
-            <entry>UInt unix_user_id</entry>
+            <entry>DeviceAdded</entry>
+            <entry>Objref obj</entry>
             <entry>
-              Emitted when an ACL have been added for a UNIX user on a
-              device object with the <literal>access_control</literal>
-              capability.
+              A device was added to the global device list (GDL).
             </entry>
           </row>
-
           <row>
-            <entry>ACLRemoved</entry>
-            <entry>UInt unix_user_id</entry>
+            <entry>DeviceRemoved</entry>
+            <entry>Objref obj</entry>
             <entry>
-              Emitted when an ACL have been removed for a UNIX user on
-              a device object with
-              the <literal>access_control</literal> capability.
+              A device was removed from the global device list (GDL).
             </entry>
           </row>
-
+          <row>
+            <entry>NewCapability</entry>
+            <entry>Objref obj, String cap</entry>
+            <entry>
+              A device gained a new capability.
+            </entry>
+          </row>
+          <row>
+            <entry>GlobalInterfaceLockAcquired</entry>
+            <entry>String lock_name, String lock_owner, Int num_holders</entry>
+            <entry>
+              Sent when a process acquires a global interface lock.
+            </entry>
+          </row>
+          <row>
+            <entry>GlobalInterfaceLockReleased</entry>
+            <entry>String lock_name, String lock_owner, Int num_holders</entry>
+            <entry>
+              Sent when a process releases a global interface lock.
+            </entry>
+          </row>
         </tbody>
       </tgroup>
     </informaltable>
-
-    <para>
-      This interface does not export any methods.
-    </para>
-
   </sect1>
 
   <sect1 id="interface-singleton-addon">
