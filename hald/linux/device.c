@@ -1414,6 +1414,8 @@ mmc_host_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *pare
 	sscanf (last_elem, "mmc%d", &host_num);
 	hal_device_property_set_int (d, "mmc_host.host", host_num);
 
+	hal_util_set_string_from_file (d, "mmc_host.slot_name", sysfs_path, "slot_name");
+
 out:
 	return d;
 }
