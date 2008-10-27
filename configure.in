@@ -1022,11 +1022,10 @@ AC_ARG_WITH([linux-input-header],
 if test "x$with_linux_input_header" != "x"; then
 	AC_DEFINE_UNQUOTED(HAL_LINUX_INPUT_HEADER_H, "$with_linux_input_header", [If set, the header to use instead of <linux/input.h>])
 	LINUX_INPUT_H=$with_linux_input_header
-	AC_SUBST(LINUX_INPUT_H)
 else
 	LINUX_INPUT_H=/usr/include/linux/input.h
-	AC_SUBST(LINUX_INPUT_H)
 fi
+AC_SUBST(LINUX_INPUT_H)
 
 dnl
 dnl SUBSETTING END
