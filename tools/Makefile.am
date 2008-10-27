@@ -79,7 +79,7 @@ endif
 if BUILD_KEYMAPS
 
 if HAVE_GPERF
-hal-setup-keymap-keys.txt: /usr/include/linux/input.h
+hal-setup-keymap-keys.txt: @LINUX_INPUT_H@
 	awk '/^#define.*KEY_/ { if ($$2 != "KEY_MAX") { print substr($$2, 5) } }' < $< > $@
 
 hal-setup-keymap-hash-name.gperf: hal-setup-keymap-keys.txt
