@@ -4296,6 +4296,56 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
       </informaltable>
     </sect2>
 
+    <sect2 id="device-properties-biometric">
+      <title>
+        biometric namespace
+      </title>
+      <para>
+	Device objects with the capability <literal>biometric</literal> represent
+	a biometric device (e.g. fingerprint reader) . No namespace specific
+        properties.
+      </para>
+    </sect2>
+
+    <sect2 id="device-properties-biometric-fingerprint_reader">
+      <title>
+        biometric.fingerprint_reader namespace
+      </title>
+      <para>
+	Device objects with the capabilities <literal>biometric.fingerprint_reader</literal> 
+	and <literal>biometric</literal> represent a biometric fingerprint reader.
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry>
+                <literal>biometric.fingerprint_reader.access_method</literal> (strlist)
+              </entry>
+              <entry>example: libfprint</entry>
+              <entry>No</entry>
+              <entry>
+                Indicates installed device driver libraries that can handle this device.  
+		These drivers can export information in 
+		<literal>biometric.fingerprint_reader.[access_method]</literal> sub-namespaces.
+		Can also be used by libraries or programs providing extra device information 
+		to indicate the presence of this information in the appropriate sub-namespace.
+              </entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
+
+
     <sect2 id="device-properties-button">
       <title>
         button namespace
