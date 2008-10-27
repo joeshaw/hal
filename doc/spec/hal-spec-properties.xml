@@ -7415,6 +7415,28 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
             </row>
             <row>
               <entry>
+                <literal>volume.mount.valid_options</literal> (string list)
+              </entry>
+              <entry>examples: ro, sync, noexec</entry>
+              <entry>
+	        Yes, if the <literal>org.freedesktop.Hal.Device.Volume</literal> interface is 
+		defined.
+	      </entry>
+              <entry>List of the allowed (valid) mount options for the defined fstype.</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>volume.unmount.valid_options</literal> (string list)
+              </entry>
+              <entry>examples: lazy</entry>
+              <entry>
+		No (only available if the <literal>org.freedesktop.Hal.Device.Volume</literal> 
+		interface is defined)
+	      </entry>
+              <entry>List of the allowed (valid) unmount options for the defined fstype.</entry>
+            </row>
+            <row>
+              <entry>
                 <literal>volume.fsversion</literal> (string)
               </entry>
               <entry>example: FAT32</entry>
