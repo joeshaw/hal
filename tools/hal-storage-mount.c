@@ -469,6 +469,7 @@ handle_mount (LibHalContext *hal_ctx,
 	char *action;
 	gboolean is_remount;
 	gboolean explicit_mount_point_given;
+	gboolean found_alternative_fstype = FALSE;
 	const char *end;
 #ifdef __FreeBSD__
 	struct passwd *pw;
@@ -640,10 +641,76 @@ handle_mount (LibHalContext *hal_ctx,
 			
 			i++;
 		}
+	}	
+
+	/* construct arguments to mount */
+	na = 0;
+	
+	args[na++] = MOUNT;
+
+	if (strlen (mount_fstype) > 0) {
+		mount_do_fstype = (char *) map_fstype (mount_fstype);
+		if (volume && strcmp(mount_do_fstype, mount_fstype) == 0) {
+			/* there was nothing mapped and we have a volume */
+			const char *_fstype;
+
+			_fstype = libhal_volume_get_fstype (volume);
+			/* check if the given fstype differs from the volume.fstype */
+			if (_fstype && (strcmp(_fstype, mount_fstype) != 0)) {
+				/* the fstype differs from the give fstype mount options, check if it's allowed as alternative */
+				char **alternative;
+
+				dbus_error_init (&error);
+			        alternative = libhal_device_get_property_strlist (hal_ctx, udi, "volume.fstype.alternative", &error);
+			        if (dbus_error_is_set (&error)) {
+			                unknown_error ("Cannot get volume.fstype.alternative");
+			                dbus_error_free (&error);
+        			} else if (alternative != NULL) {
+					for (i = 0; alternative[i] != NULL; i++) {
+#ifdef DEBUG
+						printf ("check volume.fstype.alternative[%d]='%s' for given fstype '%s'\n", i, alternative[i], mount_fstype);
+#endif
+						if (strcmp(alternative[i], mount_fstype) == 0) {
+							printf ("found_alternative_fstype = TRUE\n");
+							found_alternative_fstype = TRUE;
+							break;
+						}
+					}
+					libhal_free_string_array(alternative);
+				}
+				if (!found_alternative_fstype) {
+					/* We have a given fstype option, which isn't allowed as 
+					   as alternative fstype.
+					   TODO: add error message and handling or exit/refuse mount
+					*/
+				}
+
+			}
+		}
+
+	} else if (volume == NULL) {
+		/* non-pollable drive; force auto */
+		mount_do_fstype = "auto";
+	} else if (libhal_volume_get_fstype (volume) != NULL && strlen (libhal_volume_get_fstype (volume)) > 0) {
+		mount_do_fstype = (char *) map_fstype (libhal_volume_get_fstype (volume));
+	} else {
+		mount_do_fstype = "auto";
 	}
 
+	/* check the mount options */
 	dbus_error_init (&error);
-	allowed_options = libhal_device_get_property_strlist (hal_ctx, udi, "volume.mount.valid_options", &error);
+	
+	if (found_alternative_fstype) {
+		char key[128];
+
+		sprintf(key, "volume.mount.%s.valid_options", mount_do_fstype);		
+#ifdef DEBUG
+		printf ("found alternative fstype='mount_do_fstype' checking now '%s'", key);
+#endif
+		allowed_options = libhal_device_get_property_strlist (hal_ctx, udi, key, &error);
+	} else {
+		allowed_options = libhal_device_get_property_strlist (hal_ctx, udi, "volume.mount.valid_options", &error);
+	}
 	if (dbus_error_is_set (&error)) {
 		unknown_error ("Cannot get volume.mount.valid_options");
 		dbus_error_free (&error);
@@ -727,21 +794,6 @@ handle_mount (LibHalContext *hal_ctx,
 		}
 	}
 
-
-	/* construct arguments to mount */
-	na = 0;
-	
-	args[na++] = MOUNT;
-	if (strlen (mount_fstype) > 0) {
-		mount_do_fstype = (char *) map_fstype (mount_fstype);
-	} else if (volume == NULL) {
-		/* non-pollable drive; force auto */
-		mount_do_fstype = "auto";
-	} else if (libhal_volume_get_fstype (volume) != NULL && strlen (libhal_volume_get_fstype (volume)) > 0) {
-		mount_do_fstype = (char *) map_fstype (libhal_volume_get_fstype (volume));
-	} else {
-		mount_do_fstype = "auto";
-	}
 	args[na++] = MOUNT_TYPE_OPT;
 	args[na++] = mount_do_fstype;
 
