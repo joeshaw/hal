@@ -74,6 +74,13 @@
 	<merge key="access_control.type" type="string">scanner</merge>
       </match>
     </match>
+    <match key="info.capabilities" contains="usbraw">
+      <match key="info.capabilities" sibling_contains="biometic.fingerprint_reader">
+	<append key="info.capabilities" type="strlist">access_control</append>
+	<merge key="access_control.file" type="copy_property">usbraw.device</merge>
+	<merge key="access_control.type" type="string">fingerprint-reader</merge>
+      </match>
+    </match>
 
     <!-- support for Linux USB stack where linux.device_file is set (e.g. device node is on the main usb device) -->
     <match key="info.subsystem" string="usb">
@@ -96,6 +103,11 @@
         <match key="info.capabilities" contains="obex">
           <append key="info.capabilities" type="strlist">access_control</append>
           <merge key="access_control.type" type="string">obex</merge>
+          <merge key="access_control.file" type="copy_property">@info.parent:linux.device_file</merge>
+        </match>
+        <match key="info.capabilities" contains="biometric.fingerprint_reader">
+          <append key="info.capabilities" type="strlist">access_control</append>
+          <merge key="access_control.type" type="string">fingerprint-reader</merge>
           <merge key="access_control.file" type="copy_property">@info.parent:linux.device_file</merge>
         </match>
       </match>

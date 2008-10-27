@@ -19,6 +19,15 @@ NOTE: Please keep the actions in alpabetical order
 
 <policyconfig>
 
+  <action id="org.freedesktop.hal.device-access.fingerprint-reader">
+    <description>Directly access to fingerprint reader devices</description>
+    <message>System policy prevents access to fingerprint readers</message>
+    <defaults>
+      <allow_inactive>no</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+  </action>
+
   <action id="org.freedesktop.hal.device-access.audio-player">
     <description>Directly access audio players</description>
     <message>System policy prevents access to audio players</message>
