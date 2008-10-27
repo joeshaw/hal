@@ -7437,6 +7437,50 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
             </row>
             <row>
               <entry>
+                <literal>volume.fstype.alternative</literal> (string list)
+              </entry>
+              <entry>examples: ntfs-3g, ntfs-fuse</entry>
+              <entry>No (only if there is a alternative mount handler)</entry>
+              <entry>The allowed (and installed) alternative mount handler/filesystem(s).</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>volume.mount.[alternative].valid_options</literal> (string list)
+              </entry>
+              <entry>examples: locale=, uid=</entry>
+              <entry>
+		Yes, if <literal>volume.fstype.alternative</literal> is set and if the 
+		<literal>org.freedesktop.Hal.Device.Volume</literal> interface is defined.
+	      </entry>
+              <entry>
+		List of the allowed (valid) mount options for the defined alternative filesystem
+		handler. Replace <literal>[alternative]</literal> in the property string with the 
+		name of the alternative filesystem handler. For e.g. ntfs-3g the property would be: 
+		<literal>volume.mount.ntfs-3g.valid_options</literal>.
+		
+		NOTE: To mount the volume with the alternative handler/filesystem you have
+		      to pass the correct (alternative) fstype parameter to the Mount() method
+		      of the <literal>org.freedesktop.Hal.Device.Volume</literal> interface
+	      </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>volume.unmount.[alternative].valid_options</literal> (string list)
+              </entry>
+              <entry>examples: lazy</entry>
+              <entry>
+		No, only available if <literal>volume.fstype.alternative</literal> is set and 
+		if the <literal>org.freedesktop.Hal.Device.Volume</literal> interface is defined.
+	      </entry>
+              <entry>
+		List of the allowed (valid) unmount options for the defined alternative filesystem
+		handler. Replace <literal>[alternative]</literal> in the property string with the 
+		name of the alternative filesystem handler. For e.g. ntfs-3g the property would be: 
+		<literal>volume.unmount.ntfs-3g.valid_options</literal>
+	      </entry>
+            </row>
+            <row>
+              <entry>
                 <literal>volume.fsversion</literal> (string)
               </entry>
               <entry>example: FAT32</entry>
