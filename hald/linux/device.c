@@ -4466,8 +4466,10 @@ static DevHandler *dev_handlers[] = {
 	&dev_handler_sound,
 	&dev_handler_tape,
 	&dev_handler_tape390,
+	/* Don't change order of usbclass and usb */
 	&dev_handler_usbclass,
 	&dev_handler_usb,
+	/* -------------------------------------- */
 	&dev_handler_usbraw,
 	&dev_handler_video4linux,
 	&dev_handler_vio,
