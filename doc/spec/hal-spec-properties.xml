@@ -7374,14 +7374,17 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
             </row>
             <row>
               <entry>
-                <literal>volume.fstype.alternative.prefered</literal> (string)
+                <literal>volume.fstype.alternative.preferred</literal> (string)
               </entry>
               <entry>examples: ntfs-3g</entry>
               <entry>No</entry>
               <entry>
-                The prefered alternative mount handler/filesystem. Allows e.g. a distributor
-                do define a prefered handler especially if <literal>volume.fstype.alternative</literal>
-		contains more than one value.
+                The preferred alternative mount handler/filesystem. Allows e.g. a distributor
+                do define a preferred of the alternative handlers.
+		If not set, the default filesystem (defined by <literal>volume.fstype</literal>) 
+		should be used (or let the <literal>fstype</literal> parameter of Mount() empty), 
+		otherwise it must be the name of one of the alternative handlers, as in 
+		<literal>volume.fstype.alternative</literal>.
               </entry>
             </row>
             <row>
