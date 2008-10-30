@@ -864,11 +864,13 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 	int floppy_num;
 	gboolean is_device_mapper;
         gboolean is_md_device;
+	gboolean is_cciss_device;
         int md_number;
 
 	is_device_mapper = FALSE;
         is_fakevolume = FALSE;
         is_md_device = FALSE;
+	is_cciss_device = FALSE;
 
 	HAL_INFO (("block_add: sysfs_path=%s dev=%s is_part=%d, parent=0x%08x", 
 		   sysfs_path, device_file, is_partition, parent));
@@ -905,63 +907,78 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 
 	d = hal_device_new ();
 
-	/* OK, no parent... it might a device-mapper device => check slaves/ subdir in sysfs */
+	/* OK, no parent... */
 	if (parent == NULL && !is_partition && !is_fakevolume && !hotplug_event->reposted) {
-		DIR * dir;
-		struct dirent *dp;
 		char path[HAL_PATH_MAX];
-
 		g_snprintf (path, HAL_PATH_MAX, "%s/slaves", sysfs_path);
-		HAL_INFO (("Looking in %s for Device Mapper", path));
 
-		if ((dir = opendir (path)) == NULL) {
-			HAL_WARNING (("Unable to open %s: %s", path, strerror(errno)));
+		if (device_file && (strstr(device_file, "/dev/cciss/") != NULL)) {
+			/* ... it's a cciss (HP Smart Array CCISS) device */
+			if (g_file_test (path, (G_FILE_TEST_EXISTS | G_FILE_TEST_IS_DIR))) {
+				HAL_DEBUG(("block_add: found cciss a base device"));
+
+				is_cciss_device = TRUE;
+                		parent = hal_device_store_find (hald_get_gdl (), "/org/freedesktop/Hal/devices/computer");
+		                if (parent == NULL)
+                		        parent = hal_device_store_find (hald_get_tdl (), "/org/freedesktop/Hal/devices/computer");
+			} 
 		} else {
-			while (((dp = readdir (dir)) != NULL) && (parent == NULL)) {
-				char *link;
-				char *target;
+			/* ... it might a device-mapper device => check slaves/ subdir in sysfs */
+			DIR * dir;
+			struct dirent *dp;
 
-				link = g_strdup_printf ("%s/%s", path, dp->d_name);
-				target = resolve_symlink (link);
-				HAL_INFO ((" %s -> %s", link, target));
+			HAL_INFO (("Looking in %s for Device Mapper", path));
 
-				if (target != NULL) {
-					HalDevice *slave_volume;
+			if ((dir = opendir (path)) == NULL) {
+				HAL_WARNING (("Unable to open %s: %s", path, strerror(errno)));
+			} else {
+				while (((dp = readdir (dir)) != NULL) && (parent == NULL)) {
+					char *link;
+					char *target;
 
-					slave_volume = hal_device_store_match_key_value_string (hald_get_gdl (),
-												"linux.sysfs_path", 
-												target);
-					if (slave_volume != NULL) {
-						const char *slave_volume_stordev_udi;
-						const char *slave_volume_fstype;
+					link = g_strdup_printf ("%s/%s", path, dp->d_name);
+					target = resolve_symlink (link);
+					HAL_INFO ((" %s -> %s", link, target));
 
-						slave_volume_stordev_udi = hal_device_property_get_string (slave_volume, "block.storage_device");
-						slave_volume_fstype = hal_device_property_get_string (slave_volume, "volume.fstype");
+					if (target != NULL) {
+						HalDevice *slave_volume;
 
-						/* Yup, we only support crypto_LUKS right now.
-						 *
-						 * In the future we can support other device-mapper mappings
-						 * such as LVM etc.
-						 */ 
-						if (slave_volume_stordev_udi != NULL &&
-						    slave_volume_fstype != NULL &&
-						    (strcmp (slave_volume_fstype, "crypto_LUKS") == 0)) {
-							HAL_INFO ((" slave_volume_stordev_udi='%s'!", slave_volume_stordev_udi));
-							parent = hal_device_store_find (hald_get_gdl (), slave_volume_stordev_udi);
-							if (parent != NULL) {
-								HAL_INFO ((" parent='%s'!", hal_device_get_udi (parent)));
-								hal_device_property_set_string (d, "volume.crypto_luks.clear.backing_volume", hal_device_get_udi (slave_volume));
-								is_device_mapper = TRUE;
+						slave_volume = hal_device_store_match_key_value_string (hald_get_gdl (),
+													"linux.sysfs_path", 
+													target);
+						if (slave_volume != NULL) {
+							const char *slave_volume_stordev_udi;
+							const char *slave_volume_fstype;
+
+							slave_volume_stordev_udi = hal_device_property_get_string (slave_volume, "block.storage_device");
+							slave_volume_fstype = hal_device_property_get_string (slave_volume, "volume.fstype");
+
+							/* Yup, we only support crypto_LUKS right now.
+							 *
+							 * In the future we can support other device-mapper mappings
+							 * such as LVM etc.
+							 */ 
+							if (slave_volume_stordev_udi != NULL &&
+							    slave_volume_fstype != NULL &&
+							    (strcmp (slave_volume_fstype, "crypto_LUKS") == 0)) {
+								HAL_INFO ((" slave_volume_stordev_udi='%s'!", slave_volume_stordev_udi));
+								parent = hal_device_store_find (hald_get_gdl (), slave_volume_stordev_udi);
+								if (parent != NULL) {
+									HAL_INFO ((" parent='%s'!", hal_device_get_udi (parent)));
+									hal_device_property_set_string (d, "volume.crypto_luks.clear.backing_volume", 
+													hal_device_get_udi (slave_volume));
+									is_device_mapper = TRUE;
+								}
 							}
+						} else {
+							HAL_INFO(("Couldn't find slave volume in devices"));
 						}
-					} else {
-						HAL_INFO(("Couldn't find slave volume in devices"));
 					}
+					g_free (target);
 				}
-				g_free (target);
+				closedir(dir);
+				HAL_INFO (("Done looking in %s", path));
 			}
-			closedir(dir);
-			HAL_INFO (("Done looking in %s", path));
 		}
 
 	}
@@ -1136,12 +1153,17 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
                                                 is_hotpluggable = hal_device_property_get_bool (
                                                         d, "storage.hotpluggable");
 
-                                        }
+					} else if (is_cciss_device) {
+						HAL_DEBUG (("block_add: parent=/org/freedesktop/Hal/devices/computer, is_cciss_device=true"));
+						hal_device_property_set_string (d, "storage.bus", "cciss");
+					}
                                         break;
                         }
 
 			/* Check info.subsystem */
 			if ((bus = hal_device_property_get_string (d_it, "info.subsystem")) != NULL) {
+				HAL_DEBUG(("block_add: info.subsystem='%s'", bus));
+
 				if (strcmp (bus, "scsi") == 0) {
 					scsidev = d_it;
 					physdev = d_it;
