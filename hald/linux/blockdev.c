@@ -891,7 +891,7 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
                 /* set parent to root computer device object */
                 parent = hal_device_store_find (hald_get_gdl (), "/org/freedesktop/Hal/devices/computer");
                 if (parent == NULL)
-                        d = hal_device_store_find (hald_get_tdl (), "/org/freedesktop/Hal/devices/computer");
+                        parent = hal_device_store_find (hald_get_tdl (), "/org/freedesktop/Hal/devices/computer");
 	} else {
 		sysfs_path_real = g_strdup (sysfs_path);
 	}
