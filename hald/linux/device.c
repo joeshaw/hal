@@ -98,6 +98,7 @@ backlight_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *phy
 {
 	HalDevice *d;
 	int max_brightness;
+	const char *id;
 
 	d = hal_device_new ();
 	hal_device_add_capability (d, "laptop_panel");
@@ -106,6 +107,23 @@ backlight_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *phy
 	hal_device_property_set_string (d, "info.category", "laptop_panel");
 	hal_device_property_set_string (d, "info.product", "Generic Backlight Device");
 	hal_device_property_set_string (d, "laptop_panel.access_method", "general");
+
+	id = hal_util_get_last_element (sysfs_path);
+	if (strstr(id, "acpi_video") != NULL) {
+		/* looks like the generic acpi video module */
+		const char *param;
+
+		/* Try to check the module parameter to decide if brightness_in_hardware should get set to true.
+		   NOTE: this leads to wrong values if someone change the module parameter via 
+                         sysfs while HAL is running, but we can live with this situation! */
+		param = hal_util_get_string_from_file ("/sys/module/video/parameters/", "brightness_switch_enabled");
+
+		if (param && !strcmp(param, "Y")) {
+			hal_device_property_set_bool (d, "laptop_panel.brightness_in_hardware", TRUE);
+		} else {
+			hal_device_property_set_bool (d, "laptop_panel.brightness_in_hardware", FALSE);
+		}
+	}	
 
 	hal_util_get_int_from_file (sysfs_path, "max_brightness", &max_brightness, 10);
 	hal_device_property_set_int (d, "laptop_panel.num_levels", max_brightness + 1);
