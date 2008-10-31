@@ -66,6 +66,9 @@ typedef struct
 			unsigned long long seqnum;		/* kernel uevent sequence number */
 			int net_ifindex;			/* Kernel ifindex for network devices */
 
+			/* if the device is a Device mapper device, used to prevent multiple string compares */
+			gboolean is_dm_device;
+
 			/* stuff udev may tell us about the device and we don't want to query */
 			char vendor[HAL_NAME_MAX];
 			char model[HAL_NAME_MAX];

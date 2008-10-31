@@ -398,6 +398,12 @@ compare_events (HotplugEvent *hotplug_event, GList *events)
 			if (compare_event (hotplug_event, loop_event)) {
 				HAL_DEBUG (("event %s dependant on %s", hotplug_event->sysfs.sysfs_path, loop_event->sysfs.sysfs_path));
 				return TRUE;
+			} else if (hotplug_event->sysfs.is_dm_device) {
+				if ((loop_event->type == HOTPLUG_EVENT_SYSFS_BLOCK) && !loop_event->sysfs.is_dm_device) {
+					HAL_DEBUG (("event %s is dm-device, have at least one (%s) non-dm block device in queue -> held event.",
+						    hotplug_event->sysfs.sysfs_path, loop_event->sysfs.sysfs_path ));
+					return TRUE;
+				}
 			}
 		}
 		return FALSE;
