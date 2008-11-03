@@ -752,7 +752,6 @@ decode_dmi_from_sysfs (HalDevice *d)
 	hal_util_set_string_from_file(d, "system.board.vendor", DMI_SYSFS_PATH, "board_vendor");
 	computer_dmi_map (d, FALSE);
 
-	computer_probing_helper_done (d);
 	return TRUE;
 }
 
