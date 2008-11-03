@@ -305,13 +305,14 @@ hal_util_get_string_from_file (const gchar *directory, const gchar *file)
 		//HAL_ERROR (("Cannot read from '%s'", path));
 		goto out;
 	}
-       
-	len = strlen (buf);
-	if (len>0)
-		buf[len-1] = '\0';
 
-	/* Clear remaining whitespace */
-	for (i = len - 2; i >= 0; --i) {
+	/* blank file, no data */
+	len = strlen (buf);
+	if (len == 0)
+		goto out;
+
+	/* clear remaining whitespace */
+	for (i = len - 1; i >= 0; --i) {
 		if (!g_ascii_isspace (buf[i]))
 			break;
 		buf[i] = '\0';
