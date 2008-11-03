@@ -723,61 +723,62 @@ detect_openfirmware_formfactor(HalDevice *root)
 	}
 }
 
-static void
-probe_openfirmware(HalDevice *root) 
+static gboolean
+decode_dmi_from_openfirmware (HalDevice *root)
 {
 #define DEVICE_TREE "/proc/device-tree/"
-	if (!g_file_test(DEVICE_TREE, G_FILE_TEST_IS_DIR)) {
-		return;
-	}
+	if (!g_file_test(DEVICE_TREE, G_FILE_TEST_IS_DIR))
+		return FALSE;
+
 	get_openfirmware_entry(root, "openfirmware.model", 
 		DEVICE_TREE "model", FALSE);
 	get_openfirmware_entry(root, "openfirmware.compatible", 
 		DEVICE_TREE "compatible", TRUE);
 	detect_openfirmware_formfactor(root);
+	return TRUE;
 }
 
 static gboolean
 decode_dmi_from_sysfs (HalDevice *d)
 {
-	if (g_file_test (DMI_SYSFS_PATH, (G_FILE_TEST_EXISTS | G_FILE_TEST_IS_DIR))) {
-
-		osspec_privileged_init_preparse_set_dmi(TRUE, d);
-		hal_util_set_string_from_file(d, "system.firmware.vendor", DMI_SYSFS_PATH, "bios_vendor");
-		hal_util_set_string_from_file(d, "system.firmware.version", DMI_SYSFS_PATH, "bios_version");
-		hal_util_set_string_from_file(d, "system.firmware.release_date", DMI_SYSFS_PATH, "bios_date");
-		hal_util_set_string_from_file(d, "system.hardware.vendor", DMI_SYSFS_PATH, "sys_vendor");
-		hal_util_set_string_from_file(d, "system.hardware.product", DMI_SYSFS_PATH, "product_name");
-		hal_util_set_string_from_file(d, "system.hardware.version", DMI_SYSFS_PATH, "product_version");
-		hal_util_set_string_from_file(d, "system.chassis.manufacturer", DMI_SYSFS_PATH, "chassis_vendor");
-		hal_util_set_string_from_file(d, "system.board.product", DMI_SYSFS_PATH, "board_name");
-		hal_util_set_string_from_file(d, "system.board.version", DMI_SYSFS_PATH, "board_version");
-		hal_util_set_string_from_file(d, "system.board.vendor", DMI_SYSFS_PATH, "board_vendor");
-		computer_dmi_map (d, FALSE);
-
-		computer_probing_helper_done (d);
-		return TRUE;
-
-	} else {
+	if (!g_file_test (DMI_SYSFS_PATH, (G_FILE_TEST_EXISTS | G_FILE_TEST_IS_DIR)))
 		return FALSE;
-	}
 
+	osspec_privileged_init_preparse_set_dmi(TRUE, d);
+	hal_util_set_string_from_file(d, "system.firmware.vendor", DMI_SYSFS_PATH, "bios_vendor");
+	hal_util_set_string_from_file(d, "system.firmware.version", DMI_SYSFS_PATH, "bios_version");
+	hal_util_set_string_from_file(d, "system.firmware.release_date", DMI_SYSFS_PATH, "bios_date");
+	hal_util_set_string_from_file(d, "system.hardware.vendor", DMI_SYSFS_PATH, "sys_vendor");
+	hal_util_set_string_from_file(d, "system.hardware.product", DMI_SYSFS_PATH, "product_name");
+	hal_util_set_string_from_file(d, "system.hardware.version", DMI_SYSFS_PATH, "product_version");
+	hal_util_set_string_from_file(d, "system.chassis.manufacturer", DMI_SYSFS_PATH, "chassis_vendor");
+	hal_util_set_string_from_file(d, "system.board.product", DMI_SYSFS_PATH, "board_name");
+	hal_util_set_string_from_file(d, "system.board.version", DMI_SYSFS_PATH, "board_version");
+	hal_util_set_string_from_file(d, "system.board.vendor", DMI_SYSFS_PATH, "board_vendor");
+	computer_dmi_map (d, FALSE);
+
+	return TRUE;
 }
 
 static void
 decode_dmi (HalDevice *d)
 {
 	/* try to get the dmi infos from sysfs instead of call dmidecode*/
-	if(!decode_dmi_from_sysfs(d)) {
+	if (decode_dmi_from_sysfs(d) ||
+	    decode_dmi_from_openfirmware (d)) {
+		HAL_INFO (("got DMI from files"));
+		computer_probing_helper_done (d);
+	} else {
 		if (g_file_test ("/usr/sbin/dmidecode", G_FILE_TEST_IS_EXECUTABLE) ||
 		    g_file_test ("/bin/dmidecode", G_FILE_TEST_IS_EXECUTABLE) ||
 		    g_file_test ("/sbin/dmidecode", G_FILE_TEST_IS_EXECUTABLE) ||
 		    g_file_test ("/usr/local/sbin/dmidecode", G_FILE_TEST_IS_EXECUTABLE)) {
+			HAL_INFO (("getting DMI from prober"));
 			hald_runner_run (d, "hald-probe-smbios", NULL, HAL_HELPER_TIMEOUT,
 					 computer_probing_pcbios_helper_done, NULL, NULL);
 		} else {
-			/* no probing */
-			probe_openfirmware (d);
+			/* no probing possible */
+			HAL_INFO (("failed to probe DMI"));
 			computer_probing_helper_done (d);
 		}
 	}
