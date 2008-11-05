@@ -45,7 +45,7 @@ hald_probe_storage_LDADD = @GLIB_LIBS@ @VOLUME_ID_LIBS@ $(top_builddir)/libhal/l
 hald_probe_pc_floppy_SOURCES = probe-pc-floppy.c ../../logger.c
 
 hald_probe_volume_SOURCES = probe-volume.c linux_dvd_rw_utils.c ../../logger.c 
-hald_probe_volume_LDADD = $(top_builddir)/libhal/libhal.la $(top_builddir)/partutil/libpartutil.la @GLIB_LIBS@ @VOLUME_ID_LIBS@
+hald_probe_volume_LDADD = $(top_builddir)/libhal/libhal.la $(top_builddir)/partutil/libpartutil.la @GLIB_LIBS@ 
 
 hald_probe_ieee1394_unit_SOURCES = probe-ieee1394-unit.c ../../logger.c
 hald_probe_ieee1394_unit_LDADD = $(top_builddir)/libhal/libhal.la

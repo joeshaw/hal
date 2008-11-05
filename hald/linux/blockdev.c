@@ -57,6 +57,34 @@
 
 #include "blockdev.h"
 
+static gchar *
+strdup_valid_utf8 (const char *str)
+{
+        char *endchar;
+        char *newstr;
+        unsigned int fixes;
+
+        if (str == NULL)
+                return NULL;
+
+        newstr = g_strdup (str);
+
+        fixes = 0;
+        while (!g_utf8_validate (newstr, -1, (const char **) &endchar)) {
+                *endchar = '_';
+                ++fixes;
+        }
+
+        /* If we had to fix more than 20% of the characters, give up */
+        if (fixes > 0 && g_utf8_strlen (newstr, -1) / fixes < 5) {
+            g_free (newstr);
+            newstr = g_strdup("");
+        }
+
+        return newstr;
+}
+
+
 /*--------------------------------------------------------------------------------------------------------------*/
 
 static gboolean
@@ -1420,6 +1448,8 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 	} else {
 		guint sysfs_path_len;
 		gboolean is_physical_partition;
+		char *volume_label;
+		char buf[64];
 
 		/*************************
 		 *
@@ -1435,12 +1465,32 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 		hal_device_property_set_string (d, "volume.uuid", "");
 		hal_device_property_set_string (d, "volume.label", "");
 		hal_device_property_set_string (d, "volume.mount_point", "");
+
+		/* persistent properties from udev (may be empty) */
+                hal_device_property_set_string (d, "volume.fsusage", hotplug_event->sysfs.fsusage);
+                hal_device_property_set_string (d, "volume.fsversion", hotplug_event->sysfs.fsversion);
+                hal_device_property_set_string (d, "volume.uuid", hotplug_event->sysfs.fsuuid);
+                hal_device_property_set_string (d, "volume.fstype", hotplug_event->sysfs.fstype);
+		if (hotplug_event->sysfs.fstype[0] != '\0') {
+			snprintf (buf, sizeof (buf), "Volume (%s)", hotplug_event->sysfs.fstype);
+		} else {
+			snprintf (buf, sizeof (buf), "Volume");
+		}
+		hal_device_property_set_string (d, "info.product", buf);
+
+		volume_label = strdup_valid_utf8 (hotplug_event->sysfs.fslabel);
+		if (volume_label) {
+	                hal_device_property_set_string (d, "volume.label", volume_label);
+			if (volume_label[0] != '\0') {
+	                	hal_device_property_set_string (d, "info.product", volume_label);
+			}
+			g_free(volume_label);
+		}
+
 		hal_device_property_set_bool (d, "volume.is_mounted", FALSE);
 		hal_device_property_set_bool (d, "volume.is_mounted_read_only", FALSE);
 		hal_device_property_set_bool (d, "volume.linux.is_device_mapper", is_device_mapper);
-		hal_device_property_set_bool (
-			d, "volume.is_disc", 
-			strcmp (hal_device_property_get_string (parent, "storage.drive_type"), "cdrom") == 0);
+		hal_device_property_set_bool (d, "volume.is_disc", strcmp (hal_device_property_get_string (parent, "storage.drive_type"), "cdrom") == 0);
 
 
 		is_physical_partition = TRUE;

@@ -42,115 +42,11 @@
 #include <signal.h>
 
 #include <glib.h>
-#include <libvolume_id.h>
 
 #include "libhal/libhal.h"
 #include "partutil/partutil.h"
 #include "linux_dvd_rw_utils.h"
 #include "../../logger.h"
-
-static void vid_log(int priority, const char *file, int line, const char *format, ...)
-{
-	char log_str[1024];
-	va_list args;
-
-	va_start(args, format);
-	vsnprintf(log_str, sizeof(log_str), format, args);
-	logger_forward_debug("%s:%i %s\n", file, line, log_str);
-	va_end(args);
-}
-
-static gchar *
-strdup_valid_utf8 (const char *str)
-{
-	char *endchar;
-	char *newstr;
-	unsigned int fixes;
-
-	if (str == NULL)
-		return NULL;
-
-	newstr = g_strdup (str);
-
-	fixes = 0;
-	while (!g_utf8_validate (newstr, -1, (const char **) &endchar)) {
-		*endchar = '_';
-		++fixes;
-	}
-
-	/* If we had to fix more than 20% of the characters, give up */
-	if (fixes > 0 && g_utf8_strlen (newstr, -1) / fixes < 5) {
-	    g_free (newstr);
-	    newstr = g_strdup("");
-	}
-
-	return newstr;
-}
-
-
-static void
-set_volume_id_values (LibHalChangeSet *cs, struct volume_id *vid)
-{
-	char buf[256];
-	const char *usage;
-	const char *type;
-	const char *type_version;
-	const char *label;
-	const char *uuid;
-	DBusError error;
-
-	dbus_error_init (&error);
-
-	if (!volume_id_get_usage(vid, &usage))
-		usage = "";
-	libhal_changeset_set_property_string (cs, "volume.fsusage", usage);
-	HAL_DEBUG (("volume.fsusage = '%s'", usage));
-
-	if (!volume_id_get_type(vid, &type))
-		type = "";
-	if (!libhal_changeset_set_property_string (cs, "volume.fstype", type))
-		libhal_changeset_set_property_string (cs, "volume.fstype", "");
-	HAL_DEBUG(("volume.fstype = '%s'", type));
-
-	if (!volume_id_get_type_version(vid, &type_version))
-		type_version = "";
-	libhal_changeset_set_property_string (cs, "volume.fsversion", type_version);
-	HAL_DEBUG(("volume.fsversion = '%s'", type_version));
-
-	if (!volume_id_get_uuid(vid, &uuid))
-		uuid = "";
-	libhal_changeset_set_property_string (cs, "volume.uuid", uuid);
-	HAL_DEBUG(("volume.uuid = '%s'", uuid));
-
-	if (!volume_id_get_label(vid, &label))
-		label = "";
-
-	if (label[0] != '\0') {
-		char *volume_label;
-
-		/* we need to be sure for a utf8 valid label, because dbus accept only utf8 valid strings */
-		volume_label = strdup_valid_utf8 (label);
-		if( volume_label != NULL ) {
-			libhal_changeset_set_property_string (cs, "volume.label", volume_label);
-			HAL_DEBUG(("volume.label = '%s'", volume_label));
-
-			if (volume_label[0] != '\0') {
-				libhal_changeset_set_property_string (cs, "info.product", volume_label);
-				g_free(volume_label);
-				return;
-			}
-
-			g_free(volume_label);
-		}
-	}
-
-	if (type[0] != '\0') {
-		snprintf (buf, sizeof (buf), "Volume (%s)", type);
-	} else {
-		snprintf (buf, sizeof (buf), "Volume (unknown)");
-	}
-	libhal_changeset_set_property_string (cs, "info.product", buf);
-}
 
 static void
 advanced_disc_detect (LibHalChangeSet *cs, int fd, const char *device_file)
@@ -311,7 +207,6 @@ main (int argc, char *argv[])
 	LibHalContext *ctx = NULL;
 	DBusError error;
 	char *parent_udi;
-	struct volume_id *vid;
 	char *stordev_dev_file;
 	char *partition_number_str;
 	char *partition_start_str;
@@ -329,9 +224,6 @@ main (int argc, char *argv[])
 
 	cs = NULL;
 	disc_may_have_data = FALSE;
-
-	/* hook in our debug into libvolume_id */
-	volume_id_log_fn = vid_log;
 
 	setup_logger ();
 
@@ -618,76 +510,9 @@ main (int argc, char *argv[])
 			vol_size = 0;
 		}
 
-		/* probe for file system */
-		vid = volume_id_open_fd (fd);
-		if (vid != NULL) {
-			int vid_ret;
-			HAL_INFO (("invoking volume_id_probe_all, offset=%d, size=%d", vol_probe_offset, vol_size));
-			vid_ret = volume_id_probe_all (vid, vol_probe_offset, vol_size);
-			HAL_INFO (("volume_id_probe_all returned %d", vid_ret));
-
-			if (vid_ret != 0 && is_disc && vol_probe_offset != 0) {
-				/* Some cd-rom drives report the offset of the session in the cd's TOC
-				 * wrong.  Fallback to probing at offset 0, just to be sure */
-				HAL_INFO (("invoking volume_id_probe_all, offset=0, size=%d", vol_size));
-				vid_ret = volume_id_probe_all (vid, 0 , vol_size);
-				HAL_INFO (("volume_id_probe_all returned %d", vid_ret));
-			}
-
-			if (vid_ret == 0) {
-				set_volume_id_values(cs, vid);
-				if (disc_may_have_data) {
-					libhal_changeset_set_property_bool (cs, "volume.disc.is_blank", FALSE);
-					libhal_changeset_set_property_bool (cs, "volume.disc.has_data", TRUE);
-				}
-			} else {
-				libhal_changeset_set_property_string (cs, "info.product", "Volume");
-			}
-
-			/* If we didn't detect anything, look whether it's a partition table (some Apple discs
-			 * uses Apple Partition Map) and look at partitions
-			 *
-			 * (kind of a hack - ugh  - we ought to export all these as fakevolumes... but
-			 *  this is good enough for now... the only discs I know of that does this
-			 *  is in fact Apple's install disc.)
-			 */
-			if (vid_ret != 0 && is_disc) {
-				PartitionTable *p;
-				p = part_table_load_from_disk (stordev_dev_file);
-				if (p != NULL) {
-					int i;
-
-					HAL_INFO (("Partition table with scheme '%s' on optical disc",
-						   part_get_scheme_name (part_table_get_scheme (p))));
-
-					for (i = 0; i < part_table_get_num_entries (p); i++) {
-						char *part_type;
-
-						part_type = part_table_entry_get_type (p, i);
-						HAL_INFO ((" partition %d has type '%s'", i, part_type));
-						if (strcmp (part_type, "Apple_HFS") == 0) {
-							guint64 part_offset;
-
-							part_offset = part_table_entry_get_offset (p, i);
-							if (volume_id_probe_all (
-								    vid, vol_probe_offset + part_offset, 0) == 0) {
-
-								set_volume_id_values(cs, vid);
-							}
-
-							/* and we're done */
-							break;
-						}
-						g_free (part_type);
-					}
-					
-
-					HAL_INFO (("Done looking at part table"));
-					part_table_free (p);
-				}
-			}
-
-			volume_id_close(vid);
+		if (disc_may_have_data) {
+			libhal_changeset_set_property_bool (cs, "volume.disc.is_blank", FALSE);
+			libhal_changeset_set_property_bool (cs, "volume.disc.has_data", TRUE);
 		}
 
 		/* get partition type number, if we find a msdos partition table */
