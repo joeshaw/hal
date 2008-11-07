@@ -1646,6 +1646,51 @@ of_platform_compute_udi (HalDevice *d)
 
 /*--------------------------------------------------------------------------------------------------------------*/
 
+
+static HalDevice *
+memstick_host_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_dev, const gchar *parent_path)
+{
+	HalDevice *d;
+	gint host_num;
+	const gchar *last_elem;
+
+	d = NULL;
+
+	if (parent_dev == NULL || parent_path == NULL) {
+		goto out;
+	}
+
+	d = hal_device_new ();
+	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
+
+	hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
+
+	hal_device_property_set_string (d, "info.category", "memstick_host");
+	hal_device_add_capability (d, "memstick_host");
+
+	hal_device_property_set_string (d, "info.product", "Memory Stick Host Adapter");
+
+	last_elem = hal_util_get_last_element (sysfs_path);
+	sscanf (last_elem, "memstick%d", &host_num);
+	hal_device_property_set_int (d, "memstick_host.host", host_num);
+
+out:
+	return d;
+}
+
+static gboolean
+memstick_host_compute_udi (HalDevice *d)
+{
+	gchar udi[256];
+
+	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
+			      "%s_memstick_host",
+			      hal_device_property_get_string (d, "info.parent"));
+	hal_device_set_udi (d, udi);
+	hal_device_property_set_string (d, "info.udi", udi);
+	return TRUE;
+}
+
 static HalDevice *
 pci_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_dev, const gchar *parent_path)
 {
@@ -2530,6 +2575,47 @@ pseudo_compute_udi (HalDevice *d)
 			  hal_device_property_get_string (d, "platform.id"));
 	hal_device_set_udi (d, udi);
 
+	return TRUE;
+
+}
+
+static HalDevice *
+memstick_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_dev, const gchar *parent_path)
+{
+	HalDevice *d;
+	const gchar *bus_id;
+
+	if (parent_dev == NULL) {
+		d = NULL;
+		goto out;
+	}
+
+	d = hal_device_new ();
+	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
+	hal_device_property_set_string (d, "info.subsystem", "memstick");
+	hal_device_property_set_string (d, "info.bus", "memstick");
+	hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
+
+	hal_util_set_driver (d, "info.linux.driver", sysfs_path);
+
+	bus_id = hal_util_get_last_element (sysfs_path);
+	
+	hal_util_set_string_from_file (d, "info.product", sysfs_path, "attr_modelname");
+	
+out:
+	return d;
+}
+
+static gboolean
+memstick_compute_udi (HalDevice *d)
+{
+	gchar udi[256];
+
+	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
+			      "%s_memstick_card",
+			      hal_device_property_get_string (d, "info.parent"));
+	hal_device_set_udi (d, udi);
+	hal_device_property_set_string (d, "info.udi", udi);
 	return TRUE;
 
 }
@@ -4110,6 +4196,13 @@ static DevHandler dev_handler_ide = {
 	.remove      = dev_remove
 };
 
+static DevHandler dev_handler_memstick = { 
+	.subsystem   = "memstick",
+	.add         = memstick_add,
+	.compute_udi = memstick_compute_udi,
+	.remove      = dev_remove
+};
+
 static DevHandler dev_handler_ieee1394 = { 
 	.subsystem   = "ieee1394",
 	.add         = ieee1394_add,
@@ -4168,6 +4261,16 @@ static DevHandler dev_handler_of_platform =
 	.add         = of_platform_add,
 	.compute_udi = of_platform_compute_udi,
 	.remove      = dev_remove
+};
+
+static DevHandler dev_handler_memstick_host =
+{
+	.subsystem    = "memstick_host",
+	.add          = memstick_host_add,
+	.get_prober   = NULL,
+	.post_probing = NULL,
+	.compute_udi  = memstick_host_compute_udi,
+	.remove       = dev_remove
 };
 
 static DevHandler dev_handler_pci = { 
@@ -4405,6 +4508,8 @@ static DevHandler *dev_handlers[] = {
 	&dev_handler_input,
 	&dev_handler_iucv,
 	&dev_handler_mmc,
+	&dev_handler_memstick,
+	&dev_handler_memstick_host,
 	&dev_handler_mmc_host,
 	&dev_handler_net,
 	&dev_handler_of_platform,

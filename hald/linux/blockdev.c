@@ -1230,6 +1230,12 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 					is_hotpluggable = TRUE;
 					hal_device_property_set_string (d, "storage.bus", "mmc");
 					break;
+				} else if (strcmp (bus, "memstick") == 0) {
+					physdev = d_it;
+					physdev_udi = udi_it;
+					is_hotpluggable = TRUE;
+					hal_device_property_set_string (d, "storage.bus", "memstick");
+					break;
 				} else if (strcmp (bus, "ccw") == 0) {
 					physdev = d_it;
 					physdev_udi = udi_it;
@@ -1377,6 +1383,8 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 
 		} else if (strcmp (parent_bus, "mmc") == 0) {
 			hal_device_property_set_string (d, "storage.drive_type", "sd_mmc");
+		} else if (strcmp (parent_bus, "memstick") == 0) {
+			hal_device_property_set_string (d, "storage.drive_type", "memstick");
 		} else if (strcmp (parent_bus, "vio") == 0) {
 			char buf[256];
 			const gchar *prop;
