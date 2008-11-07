@@ -1275,8 +1275,6 @@ memstick_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *pare
 
 	d = hal_device_new ();
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
-	hal_device_property_set_string (d, "info.subsystem", "memstick");
-	hal_device_property_set_string (d, "info.bus", "memstick");
 	hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
 
 	hal_util_set_driver (d, "info.linux.driver", sysfs_path);
