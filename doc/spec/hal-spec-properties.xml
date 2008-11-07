@@ -2070,6 +2070,50 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
       </informaltable>
     </sect2>
 
+    <sect2 id="device-properties-memstick">
+      <title>
+        memstick namespace
+      </title>
+      <para>
+	Device objects with the capability <literal>memstick</literal> represent
+	a Sony MemoryStick device. No namespace specific properties.
+      </para>
+    </sect2>
+
+    <sect2 id="device-properties-memstick_host">
+      <title>
+        memstick_host namespace
+      </title>
+      <para>
+        Device objects with <literal>info.subsystem</literal> set to
+        <literal>memstick_host</literal> represent Sony MemoryStick
+	host adaptors. The following properties are available for such 
+	device objects.
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry>
+                <literal>memstick_host.host</literal> (int)
+              </entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>A unique number identifying the Sony MemoryStick host adaptor</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
+
     <sect2 id="device-properties-mmc">
       <title>
         mmc namespace
