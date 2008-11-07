@@ -6239,6 +6239,12 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
             </row>
             <row>
               <entry></entry>
+              <entry>memstick</entry>
+              <entry></entry>
+              <entry>Sony MemoryStick device/interface</entry>
+            </row>
+            <row>
+              <entry></entry>
               <entry>mmc</entry>
               <entry></entry>
               <entry>MultiMediaCard (MMC) interface</entry>
