@@ -787,6 +787,8 @@ handle_mount (LibHalContext *hal_ctx,
 		 * (since these doesn't contain uid/gid bits) 
 		 */
 		if (strcmp (libhal_volume_get_fstype (volume), "vfat") != 0 &&
+		    strcmp (libhal_volume_get_fstype (volume), "ntfs") != 0 &&
+		    strcmp (libhal_volume_get_fstype (volume), "ntfs-3g") != 0 &&
 		    strcmp (libhal_volume_get_fstype (volume), "iso9660") != 0 &&
 		    strcmp (libhal_volume_get_fstype (volume), "hfs") != 0 &&
 		    strcmp (libhal_volume_get_fstype (volume), "udf") != 0) {
