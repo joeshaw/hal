@@ -454,8 +454,10 @@ hotplug_event_process_queue (void)
 
 	processing = FALSE;
 
-	hotplug_queue_now_empty ();
-
+	if (hotplug_event_queue->length == 0 && g_list_length (hotplug_events_in_progress) == 0) {
+		HAL_DEBUG(("Hotplug-queue empty now ... no hotplug events in progress"));
+		hotplug_queue_now_empty ();
+	}
 }
 
 gboolean 
