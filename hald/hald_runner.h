@@ -40,7 +40,7 @@
 #define HALD_RUN_KILLED 0x4
 
 /* Default sane timeout */
-#define HAL_HELPER_TIMEOUT 10000
+#define HAL_HELPER_TIMEOUT 20000
 
 typedef void (*HalRunTerminatedCB) (HalDevice *d, guint32 exit_type, 
                                        gint return_code, gchar **error,
