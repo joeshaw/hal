@@ -2652,6 +2652,8 @@ rfkill_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent
 		hal_device_property_set_string (d, "killswitch.type", type);
 	}
 
+	hal_device_property_set_string (d, "killswitch.access_method", "rfkill");
+
 	hal_util_set_string_from_file (d, "killswitch.name", sysfs_path, "name");
 
         g_snprintf(buf, sizeof(buf), "%s %s Killswitch", hal_device_property_get_string (d, "killswitch.name"),

@@ -18,5 +18,6 @@ hald-addon-macbookpro-backlight
 hald-addon-cpufreq
 hald-addon-dell-backlight
 hald-addon-imac-backlight
+hald-addon-rfkill-killswitch
 *.o
 *~
