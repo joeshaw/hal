@@ -2652,6 +2652,8 @@ rfkill_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent
 		hal_device_property_set_string (d, "killswitch.type", type);
 	}
 
+	hal_util_set_int_from_file (d, "killswitch.state", sysfs_path, "state", 10);
+
 	hal_device_property_set_string (d, "killswitch.access_method", "rfkill");
 
 	hal_util_set_string_from_file (d, "killswitch.name", sysfs_path, "name");
@@ -2661,6 +2663,19 @@ rfkill_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent
         hal_device_property_set_string (d, "info.product", buf);
 
 	return d;
+}
+
+static gboolean
+rfkill_refresh (HalDevice *d)
+{
+	const char *sysfs_path;
+
+	if ((sysfs_path = hal_device_property_get_string (d, "linux.sysfs_path")) != NULL) {
+		/* refresh the killswitch state */
+		hal_util_set_int_from_file (d, "killswitch.state", sysfs_path, "state", 10);
+	}
+
+	return TRUE;
 }
 
 static gboolean
@@ -4342,6 +4357,7 @@ static DevHandler dev_handler_rfkill =
        .subsystem    = "rfkill",
        .add          = rfkill_add,
        .compute_udi  = rfkill_compute_udi,
+       .refresh      = rfkill_refresh,
        .remove       = dev_remove
 };
 

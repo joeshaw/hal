@@ -4778,6 +4778,32 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
             </row>
             <row>
               <entry>
+                <literal>killswitch.state</literal> (int)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>Current state of the killswitch (as reported by the kernel)</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>0</entry>
+              <entry></entry>
+              <entry>Radio output is blocked</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>1</entry>
+              <entry></entry>
+              <entry>Radio output is allowed/enabled</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>2</entry>
+              <entry></entry>
+              <entry>Radio output is (hard) blocked, non-overrideable via SetPower()</entry>
+            </row>
+            <row>
+              <entry>
                 <literal>killswitch.name</literal> (string)
               </entry>
               <entry></entry>
