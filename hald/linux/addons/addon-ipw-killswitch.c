@@ -155,9 +155,9 @@ set_killswitch (gboolean status)
 	}	
 
 	if (status) {
-		ret = fputc (0, f);
+		ret = fputs ("0", f);
 	} else {
-		ret = fputc (1, f);
+		ret = fputs ("1", f);
 	}
 
 	if (ret == EOF) {

@@ -57,6 +57,34 @@
 
 #include "blockdev.h"
 
+static gchar *
+strdup_valid_utf8 (const char *str)
+{
+        char *endchar;
+        char *newstr;
+        unsigned int fixes;
+
+        if (str == NULL)
+                return NULL;
+
+        newstr = g_strdup (str);
+
+        fixes = 0;
+        while (!g_utf8_validate (newstr, -1, (const char **) &endchar)) {
+                *endchar = '_';
+                ++fixes;
+        }
+
+        /* If we had to fix more than 20% of the characters, give up */
+        if (fixes > 0 && g_utf8_strlen (newstr, -1) / fixes < 5) {
+            g_free (newstr);
+            newstr = g_strdup("");
+        }
+
+        return newstr;
+}
+
+
 /*--------------------------------------------------------------------------------------------------------------*/
 
 static gboolean
@@ -864,11 +892,13 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 	int floppy_num;
 	gboolean is_device_mapper;
         gboolean is_md_device;
+	gboolean is_cciss_device;
         int md_number;
 
 	is_device_mapper = FALSE;
         is_fakevolume = FALSE;
         is_md_device = FALSE;
+	is_cciss_device = FALSE;
 
 	HAL_INFO (("block_add: sysfs_path=%s dev=%s is_part=%d, parent=0x%08x", 
 		   sysfs_path, device_file, is_partition, parent));
@@ -889,7 +919,7 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
                 /* set parent to root computer device object */
                 parent = hal_device_store_find (hald_get_gdl (), "/org/freedesktop/Hal/devices/computer");
                 if (parent == NULL)
-                        d = hal_device_store_find (hald_get_tdl (), "/org/freedesktop/Hal/devices/computer");
+                        parent = hal_device_store_find (hald_get_tdl (), "/org/freedesktop/Hal/devices/computer");
 	} else {
 		sysfs_path_real = g_strdup (sysfs_path);
 	}
@@ -905,63 +935,78 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 
 	d = hal_device_new ();
 
-	/* OK, no parent... it might a device-mapper device => check slaves/ subdir in sysfs */
+	/* OK, no parent... */
 	if (parent == NULL && !is_partition && !is_fakevolume && !hotplug_event->reposted) {
-		DIR * dir;
-		struct dirent *dp;
 		char path[HAL_PATH_MAX];
-
 		g_snprintf (path, HAL_PATH_MAX, "%s/slaves", sysfs_path);
-		HAL_INFO (("Looking in %s for Device Mapper", path));
 
-		if ((dir = opendir (path)) == NULL) {
-			HAL_WARNING (("Unable to open %s: %s", path, strerror(errno)));
+		if (device_file && (strstr(device_file, "/dev/cciss/") != NULL)) {
+			/* ... it's a cciss (HP Smart Array CCISS) device */
+			if (g_file_test (path, (G_FILE_TEST_EXISTS | G_FILE_TEST_IS_DIR))) {
+				HAL_DEBUG(("block_add: found cciss a base device"));
+
+				is_cciss_device = TRUE;
+                		parent = hal_device_store_find (hald_get_gdl (), "/org/freedesktop/Hal/devices/computer");
+		                if (parent == NULL)
+                		        parent = hal_device_store_find (hald_get_tdl (), "/org/freedesktop/Hal/devices/computer");
+			} 
 		} else {
-			while (((dp = readdir (dir)) != NULL) && (parent == NULL)) {
-				char *link;
-				char *target;
+			/* ... it might a device-mapper device => check slaves/ subdir in sysfs */
+			DIR * dir;
+			struct dirent *dp;
 
-				link = g_strdup_printf ("%s/%s", path, dp->d_name);
-				target = resolve_symlink (link);
-				HAL_INFO ((" %s -> %s", link, target));
+			HAL_INFO (("Looking in %s for Device Mapper", path));
 
-				if (target != NULL) {
-					HalDevice *slave_volume;
+			if ((dir = opendir (path)) == NULL) {
+				HAL_WARNING (("Unable to open %s: %s", path, strerror(errno)));
+			} else {
+				while (((dp = readdir (dir)) != NULL) && (parent == NULL)) {
+					char *link;
+					char *target;
 
-					slave_volume = hal_device_store_match_key_value_string (hald_get_gdl (),
-												"linux.sysfs_path", 
-												target);
-					if (slave_volume != NULL) {
-						const char *slave_volume_stordev_udi;
-						const char *slave_volume_fstype;
+					link = g_strdup_printf ("%s/%s", path, dp->d_name);
+					target = resolve_symlink (link);
+					HAL_INFO ((" %s -> %s", link, target));
 
-						slave_volume_stordev_udi = hal_device_property_get_string (slave_volume, "block.storage_device");
-						slave_volume_fstype = hal_device_property_get_string (slave_volume, "volume.fstype");
+					if (target != NULL) {
+						HalDevice *slave_volume;
 
-						/* Yup, we only support crypto_LUKS right now.
-						 *
-						 * In the future we can support other device-mapper mappings
-						 * such as LVM etc.
-						 */ 
-						if (slave_volume_stordev_udi != NULL &&
-						    slave_volume_fstype != NULL &&
-						    (strcmp (slave_volume_fstype, "crypto_LUKS") == 0)) {
-							HAL_INFO ((" slave_volume_stordev_udi='%s'!", slave_volume_stordev_udi));
-							parent = hal_device_store_find (hald_get_gdl (), slave_volume_stordev_udi);
-							if (parent != NULL) {
-								HAL_INFO ((" parent='%s'!", hal_device_get_udi (parent)));
-								hal_device_property_set_string (d, "volume.crypto_luks.clear.backing_volume", hal_device_get_udi (slave_volume));
-								is_device_mapper = TRUE;
+						slave_volume = hal_device_store_match_key_value_string (hald_get_gdl (),
+													"linux.sysfs_path", 
+													target);
+						if (slave_volume != NULL) {
+							const char *slave_volume_stordev_udi;
+							const char *slave_volume_fstype;
+
+							slave_volume_stordev_udi = hal_device_property_get_string (slave_volume, "block.storage_device");
+							slave_volume_fstype = hal_device_property_get_string (slave_volume, "volume.fstype");
+
+							/* Yup, we only support crypto_LUKS right now.
+							 *
+							 * In the future we can support other device-mapper mappings
+							 * such as LVM etc.
+							 */ 
+							if (slave_volume_stordev_udi != NULL &&
+							    slave_volume_fstype != NULL &&
+							    (strcmp (slave_volume_fstype, "crypto_LUKS") == 0)) {
+								HAL_INFO ((" slave_volume_stordev_udi='%s'!", slave_volume_stordev_udi));
+								parent = hal_device_store_find (hald_get_gdl (), slave_volume_stordev_udi);
+								if (parent != NULL) {
+									HAL_INFO ((" parent='%s'!", hal_device_get_udi (parent)));
+									hal_device_property_set_string (d, "volume.crypto_luks.clear.backing_volume", 
+													hal_device_get_udi (slave_volume));
+									is_device_mapper = TRUE;
+								}
 							}
+						} else {
+							HAL_INFO(("Couldn't find slave volume in devices"));
 						}
-					} else {
-						HAL_INFO(("Couldn't find slave volume in devices"));
 					}
+					g_free (target);
 				}
-				g_free (target);
+				closedir(dir);
+				HAL_INFO (("Done looking in %s", path));
 			}
-			closedir(dir);
-			HAL_INFO (("Done looking in %s", path));
 		}
 
 	}
@@ -1136,12 +1181,17 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
                                                 is_hotpluggable = hal_device_property_get_bool (
                                                         d, "storage.hotpluggable");
 
-                                        }
+					} else if (is_cciss_device) {
+						HAL_DEBUG (("block_add: parent=/org/freedesktop/Hal/devices/computer, is_cciss_device=true"));
+						hal_device_property_set_string (d, "storage.bus", "cciss");
+					}
                                         break;
                         }
 
 			/* Check info.subsystem */
 			if ((bus = hal_device_property_get_string (d_it, "info.subsystem")) != NULL) {
+				HAL_DEBUG(("block_add: info.subsystem='%s'", bus));
+
 				if (strcmp (bus, "scsi") == 0) {
 					scsidev = d_it;
 					physdev = d_it;
@@ -1179,6 +1229,12 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 					physdev_udi = udi_it;
 					is_hotpluggable = TRUE;
 					hal_device_property_set_string (d, "storage.bus", "mmc");
+					break;
+				} else if (strcmp (bus, "memstick") == 0) {
+					physdev = d_it;
+					physdev_udi = udi_it;
+					is_hotpluggable = TRUE;
+					hal_device_property_set_string (d, "storage.bus", "memstick");
 					break;
 				} else if (strcmp (bus, "ccw") == 0) {
 					physdev = d_it;
@@ -1327,6 +1383,8 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 
 		} else if (strcmp (parent_bus, "mmc") == 0) {
 			hal_device_property_set_string (d, "storage.drive_type", "sd_mmc");
+		} else if (strcmp (parent_bus, "memstick") == 0) {
+			hal_device_property_set_string (d, "storage.drive_type", "memstick");
 		} else if (strcmp (parent_bus, "vio") == 0) {
 			char buf[256];
 			const gchar *prop;
@@ -1398,6 +1456,8 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 	} else {
 		guint sysfs_path_len;
 		gboolean is_physical_partition;
+		char *volume_label;
+		char buf[64];
 
 		/*************************
 		 *
@@ -1413,12 +1473,32 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 		hal_device_property_set_string (d, "volume.uuid", "");
 		hal_device_property_set_string (d, "volume.label", "");
 		hal_device_property_set_string (d, "volume.mount_point", "");
+
+		/* persistent properties from udev (may be empty) */
+                hal_device_property_set_string (d, "volume.fsusage", hotplug_event->sysfs.fsusage);
+                hal_device_property_set_string (d, "volume.fsversion", hotplug_event->sysfs.fsversion);
+                hal_device_property_set_string (d, "volume.uuid", hotplug_event->sysfs.fsuuid);
+                hal_device_property_set_string (d, "volume.fstype", hotplug_event->sysfs.fstype);
+		if (hotplug_event->sysfs.fstype[0] != '\0') {
+			snprintf (buf, sizeof (buf), "Volume (%s)", hotplug_event->sysfs.fstype);
+		} else {
+			snprintf (buf, sizeof (buf), "Volume");
+		}
+		hal_device_property_set_string (d, "info.product", buf);
+
+		volume_label = strdup_valid_utf8 (hotplug_event->sysfs.fslabel);
+		if (volume_label) {
+	                hal_device_property_set_string (d, "volume.label", volume_label);
+			if (volume_label[0] != '\0') {
+	                	hal_device_property_set_string (d, "info.product", volume_label);
+			}
+			g_free(volume_label);
+		}
+
 		hal_device_property_set_bool (d, "volume.is_mounted", FALSE);
 		hal_device_property_set_bool (d, "volume.is_mounted_read_only", FALSE);
 		hal_device_property_set_bool (d, "volume.linux.is_device_mapper", is_device_mapper);
-		hal_device_property_set_bool (
-			d, "volume.is_disc", 
-			strcmp (hal_device_property_get_string (parent, "storage.drive_type"), "cdrom") == 0);
+		hal_device_property_set_bool (d, "volume.is_disc", strcmp (hal_device_property_get_string (parent, "storage.drive_type"), "cdrom") == 0);
 
 
 		is_physical_partition = TRUE;

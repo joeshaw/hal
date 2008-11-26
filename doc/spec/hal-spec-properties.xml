@@ -2070,6 +2070,50 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
       </informaltable>
     </sect2>
 
+    <sect2 id="device-properties-memstick">
+      <title>
+        memstick namespace
+      </title>
+      <para>
+	Device objects with the capability <literal>memstick</literal> represent
+	a Sony MemoryStick device. No namespace specific properties.
+      </para>
+    </sect2>
+
+    <sect2 id="device-properties-memstick_host">
+      <title>
+        memstick_host namespace
+      </title>
+      <para>
+        Device objects with <literal>info.subsystem</literal> set to
+        <literal>memstick_host</literal> represent Sony MemoryStick
+	host adaptors. The following properties are available for such 
+	device objects.
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry>
+                <literal>memstick_host.host</literal> (int)
+              </entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>A unique number identifying the Sony MemoryStick host adaptor</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
+
     <sect2 id="device-properties-mmc">
       <title>
         mmc namespace
@@ -4734,6 +4778,32 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
             </row>
             <row>
               <entry>
+                <literal>killswitch.state</literal> (int)
+              </entry>
+              <entry></entry>
+              <entry>No</entry>
+              <entry>Current state of the killswitch (as reported by the kernel)</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>0</entry>
+              <entry></entry>
+              <entry>Radio output is blocked</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>1</entry>
+              <entry></entry>
+              <entry>Radio output is allowed/enabled</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>2</entry>
+              <entry></entry>
+              <entry>Radio output is (hard) blocked, non-overrideable via SetPower()</entry>
+            </row>
+            <row>
+              <entry>
                 <literal>killswitch.name</literal> (string)
               </entry>
               <entry></entry>
@@ -6165,6 +6235,12 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
             </row>
             <row>
               <entry></entry>
+              <entry>cciss</entry>
+              <entry></entry>
+              <entry>HP Smart Array CCISS interface</entry>
+            </row>
+            <row>
+              <entry></entry>
               <entry>ccw</entry>
               <entry></entry>
               <entry>IBM s390/s390x ccw interface</entry>
@@ -6186,6 +6262,12 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
               <entry>linux_raid</entry>
               <entry></entry>
               <entry>Linux MD (multi disk) RAID device</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>memstick</entry>
+              <entry></entry>
+              <entry>Sony MemoryStick device/interface</entry>
             </row>
             <row>
               <entry></entry>
@@ -7365,6 +7447,21 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
               <entry>examples: ntfs-3g, ntfs-fuse</entry>
               <entry>No (only if there is a alternative mount handler)</entry>
               <entry>The allowed (and installed) alternative mount handler/filesystem(s).</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>volume.fstype.alternative.preferred</literal> (string)
+              </entry>
+              <entry>examples: ntfs-3g</entry>
+              <entry>No</entry>
+              <entry>
+                The preferred alternative mount handler/filesystem. Allows e.g. a distributor
+                do define a preferred of the alternative handlers.
+		If not set, the default filesystem (defined by <literal>volume.fstype</literal>) 
+		should be used (or let the <literal>fstype</literal> parameter of Mount() empty), 
+		otherwise it must be the name of one of the alternative handlers, as in 
+		<literal>volume.fstype.alternative</literal>.
+              </entry>
             </row>
             <row>
               <entry>

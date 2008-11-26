@@ -9,6 +9,10 @@
 	<append key="info.addons" type="strlist">hald-addon-ipw-killswitch</append>
       </match>
 
+      <match key="killswitch.access_method" string="rfkill">
+	<append key="info.addons.singleton" type="strlist">hald-addon-rfkill-killswitch</append>
+      </match>
+
       <!-- For all other KillSwitch devices -->
       <match key="killswitch.access_method" contains_not="ipw">
         <match key="info.subsystem" contains_not="rfkill">

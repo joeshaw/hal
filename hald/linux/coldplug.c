@@ -96,7 +96,11 @@ udev_info_to_hotplug_event (const UdevInfo *info)
 	if (info->device_file) {
 		g_snprintf (hotplug_event->sysfs.device_file, sizeof(hotplug_event->sysfs.device_file),
 			"%s/%s", dev_root, info->device_file);
-	HAL_INFO(("with device file %s", hotplug_event->sysfs.device_file));
+		HAL_INFO(("with device file %s", hotplug_event->sysfs.device_file));
+		if (strstr(hotplug_event->sysfs.device_file, "/" DMPREFIX) != NULL) {
+			HAL_INFO (("Found a dm-device (%s) , mark it", hotplug_event->sysfs.device_file));
+			hotplug_event->sysfs.is_dm_device = TRUE;
+		}
 	}
 	if ((str = hal_util_strdup_valid_utf8(info->vendor)) != NULL) {
 		g_strlcpy (hotplug_event->sysfs.vendor, str, sizeof(hotplug_event->sysfs.vendor));
@@ -301,6 +305,10 @@ static HotplugEvent
 
 		HAL_INFO (("new event (dev node from kernel name) '%s' '%s'", sysfs_path, path));
 		g_strlcpy(hotplug_event->sysfs.device_file, path, sizeof(hotplug_event->sysfs.device_file));
+		if (strstr(hotplug_event->sysfs.device_file, "/" DMPREFIX) != NULL) {
+			HAL_INFO (("Found a dm-device (%s) , mark it", hotplug_event->sysfs.device_file));
+			hotplug_event->sysfs.is_dm_device = TRUE;
+		}
 	}
 
 no_node:

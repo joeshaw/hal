@@ -98,6 +98,7 @@ backlight_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *phy
 {
 	HalDevice *d;
 	int max_brightness;
+	const char *id;
 
 	d = hal_device_new ();
 	hal_device_add_capability (d, "laptop_panel");
@@ -106,6 +107,23 @@ backlight_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *phy
 	hal_device_property_set_string (d, "info.category", "laptop_panel");
 	hal_device_property_set_string (d, "info.product", "Generic Backlight Device");
 	hal_device_property_set_string (d, "laptop_panel.access_method", "general");
+
+	id = hal_util_get_last_element (sysfs_path);
+	if (strstr(id, "acpi_video") != NULL) {
+		/* looks like the generic acpi video module */
+		const char *param;
+
+		/* Try to check the module parameter to decide if brightness_in_hardware should get set to true.
+		   NOTE: this leads to wrong values if someone change the module parameter via 
+                         sysfs while HAL is running, but we can live with this situation! */
+		param = hal_util_get_string_from_file ("/sys/module/video/parameters/", "brightness_switch_enabled");
+
+		if (param && !strcmp(param, "Y")) {
+			hal_device_property_set_bool (d, "laptop_panel.brightness_in_hardware", TRUE);
+		} else {
+			hal_device_property_set_bool (d, "laptop_panel.brightness_in_hardware", FALSE);
+		}
+	}	
 
 	hal_util_get_int_from_file (sysfs_path, "max_brightness", &max_brightness, 10);
 	hal_device_property_set_int (d, "laptop_panel.num_levels", max_brightness + 1);
@@ -1240,6 +1258,93 @@ iucv_compute_udi (HalDevice *d)
 	hal_device_set_udi (d, udi);
 	return TRUE;
 
+}
+
+/*--------------------------------------------------------------------------------------------------------------*/
+
+static HalDevice *
+memstick_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_dev, const gchar *parent_path)
+{
+	HalDevice *d;
+	const gchar *bus_id;
+
+	if (parent_dev == NULL) {
+		d = NULL;
+		goto out;
+	}
+
+	d = hal_device_new ();
+	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
+	hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
+
+	hal_util_set_driver (d, "info.linux.driver", sysfs_path);
+
+	bus_id = hal_util_get_last_element (sysfs_path);
+	
+	hal_util_set_string_from_file (d, "info.product", sysfs_path, "attr_modelname");
+	
+out:
+	return d;
+}
+
+static gboolean
+memstick_compute_udi (HalDevice *d)
+{
+	gchar udi[256];
+
+	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
+			      "%s_memstick_card",
+			      hal_device_property_get_string (d, "info.parent"));
+	hal_device_set_udi (d, udi);
+	hal_device_property_set_string (d, "info.udi", udi);
+	return TRUE;
+
+}
+
+/*--------------------------------------------------------------------------------------------------------------*/
+
+static HalDevice *
+memstick_host_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_dev, const gchar *parent_path)
+{
+	HalDevice *d;
+	gint host_num;
+	const gchar *last_elem;
+
+	d = NULL;
+
+	if (parent_dev == NULL || parent_path == NULL) {
+		goto out;
+	}
+
+	d = hal_device_new ();
+	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
+
+	hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
+
+	hal_device_property_set_string (d, "info.category", "memstick_host");
+	hal_device_add_capability (d, "memstick_host");
+
+	hal_device_property_set_string (d, "info.product", "Memory Stick Host Adapter");
+
+	last_elem = hal_util_get_last_element (sysfs_path);
+	sscanf (last_elem, "memstick%d", &host_num);
+	hal_device_property_set_int (d, "memstick_host.host", host_num);
+
+out:
+	return d;
+}
+
+static gboolean
+memstick_host_compute_udi (HalDevice *d)
+{
+	gchar udi[256];
+
+	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
+			      "%s_memstick_host",
+			      hal_device_property_get_string (d, "info.parent"));
+	hal_device_set_udi (d, udi);
+	hal_device_property_set_string (d, "info.udi", udi);
+	return TRUE;
 }
 
 /*--------------------------------------------------------------------------------------------------------------*/
@@ -2547,6 +2652,10 @@ rfkill_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent
 		hal_device_property_set_string (d, "killswitch.type", type);
 	}
 
+	hal_util_set_int_from_file (d, "killswitch.state", sysfs_path, "state", 10);
+
+	hal_device_property_set_string (d, "killswitch.access_method", "rfkill");
+
 	hal_util_set_string_from_file (d, "killswitch.name", sysfs_path, "name");
 
         g_snprintf(buf, sizeof(buf), "%s %s Killswitch", hal_device_property_get_string (d, "killswitch.name"),
@@ -2554,6 +2663,19 @@ rfkill_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent
         hal_device_property_set_string (d, "info.product", buf);
 
 	return d;
+}
+
+static gboolean
+rfkill_refresh (HalDevice *d)
+{
+	const char *sysfs_path;
+
+	if ((sysfs_path = hal_device_property_get_string (d, "linux.sysfs_path")) != NULL) {
+		/* refresh the killswitch state */
+		hal_util_set_int_from_file (d, "killswitch.state", sysfs_path, "state", 10);
+	}
+
+	return TRUE;
 }
 
 static gboolean
@@ -4116,6 +4238,23 @@ static DevHandler dev_handler_iucv = {
 	.remove      = dev_remove
 };
 
+static DevHandler dev_handler_memstick = { 
+	.subsystem   = "memstick",
+	.add         = memstick_add,
+	.compute_udi = memstick_compute_udi,
+	.remove      = dev_remove
+};
+
+static DevHandler dev_handler_memstick_host =
+{
+	.subsystem    = "memstick_host",
+	.add          = memstick_host_add,
+	.get_prober   = NULL,
+	.post_probing = NULL,
+	.compute_udi  = memstick_host_compute_udi,
+	.remove       = dev_remove
+};
+
 static DevHandler dev_handler_mmc = { 
 	.subsystem   = "mmc",
 	.add         = mmc_add,
@@ -4218,6 +4357,7 @@ static DevHandler dev_handler_rfkill =
        .subsystem    = "rfkill",
        .add          = rfkill_add,
        .compute_udi  = rfkill_compute_udi,
+       .refresh      = rfkill_refresh,
        .remove       = dev_remove
 };
 
@@ -4387,6 +4527,8 @@ static DevHandler *dev_handlers[] = {
 	&dev_handler_input,
 	&dev_handler_iucv,
 	&dev_handler_mmc,
+	&dev_handler_memstick,
+	&dev_handler_memstick_host,
 	&dev_handler_mmc_host,
 	&dev_handler_net,
 	&dev_handler_of_platform,

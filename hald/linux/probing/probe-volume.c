@@ -316,6 +316,7 @@ main (int argc, char *argv[])
 	char *partition_number_str;
 	char *partition_start_str;
 	char *is_disc_str;
+	char *fsusage;
 	dbus_bool_t is_disc;
 	unsigned int partition_number;
 	guint64 partition_start;
@@ -363,6 +364,8 @@ main (int argc, char *argv[])
 		is_disc = TRUE;
 	else
 		is_disc = FALSE;
+
+	fsusage = getenv ("HAL_PROP_VOLUME_FSUSAGE");
 
 	dbus_error_init (&error);
 	if ((ctx = libhal_ctx_init_direct (&error)) == NULL)
@@ -603,7 +606,14 @@ main (int argc, char *argv[])
 		}
 	}
 
+	if (fsusage != NULL && strlen(fsusage) > 0) {
+		HAL_DEBUG(("have already information about fsusage from udev, no need to probe for filesystem"));
+		should_probe_for_fs = FALSE;
+	}
+
 	if (should_probe_for_fs) {
+
+		HAL_DEBUG(("start probing for filesystem ..."));
 
 		if ((stordev_dev_file = libhal_device_get_property_string (
 			     ctx, parent_udi, "block.device", &error)) == NULL) {

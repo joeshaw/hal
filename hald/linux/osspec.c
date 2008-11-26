@@ -236,6 +236,11 @@ hald_udev_data (GIOChannel *source, GIOCondition condition, gpointer user_data)
 		HAL_INFO (("Temporary workaround: ignoring temporary cryptsetup file"));
 		goto invalid;
 	}
+	if (hotplug_event->sysfs.device_file && (strstr (hotplug_event->sysfs.device_file, "/dm-") != NULL)) {
+		HAL_DEBUG (("Found a dm-device (%s), mark it", hotplug_event->sysfs.device_file));
+		hotplug_event->sysfs.is_dm_device = TRUE;
+	}
+		
 
 	HAL_INFO (("SEQNUM=%lld, ACTION=%s, SUBSYSTEM=%s, DEVPATH=%s, DEVNAME=%s, IFINDEX=%d",
 		   hotplug_event->sysfs.seqnum, action, hotplug_event->sysfs.subsystem, hotplug_event->sysfs.sysfs_path,
