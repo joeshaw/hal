@@ -28,6 +28,15 @@
       <merge key="access_control.type" type="string">video4linux</merge>
     </match>
 
+    <!-- Removable block devices -->
+    <match key="info.capabilities" contains="block">
+      <match key="@block.storage_device:storage.removable" bool="true">
+        <append key="info.capabilities" type="strlist">access_control</append>
+        <merge key="access_control.file" type="copy_property">block.device</merge>
+        <merge key="access_control.type" type="string">removable-block</merge>
+      </match>
+    </match>
+
     <!-- optical drives -->
     <match key="info.capabilities" contains="storage.cdrom">
       <append key="info.capabilities" type="strlist">access_control</append>
