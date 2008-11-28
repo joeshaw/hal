@@ -8,6 +8,7 @@ dist_polkit_policy_DATA =    				\
 	org.freedesktop.hal.power-management.policy	\
 	org.freedesktop.hal.killswitch.policy		\
 	org.freedesktop.hal.dockstation.policy		\
+	org.freedesktop.hal.leds.policy			\
 	org.freedesktop.hal.wol.policy
 
 if HAVE_ACLMGMT
