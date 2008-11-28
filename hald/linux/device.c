@@ -1259,6 +1259,72 @@ iucv_compute_udi (HalDevice *d)
 	return TRUE;
 
 }
+/*--------------------------------------------------------------------------------------------------------------*/
+
+static HalDevice *
+leds_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_dev, const gchar *parent_path)
+{
+	HalDevice *d;
+	const gchar *dev_name;
+        gchar **attributes;
+
+	d = hal_device_new ();
+
+	if (parent_dev != NULL)
+                hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
+        else
+                hal_device_property_set_string (d, "info.parent", "/org/freedesktop/Hal/devices/computer");
+
+	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
+	hal_util_set_driver (d, "info.linux.driver", sysfs_path);
+
+	hal_device_property_set_string (d, "info.category", "leds");
+	hal_device_add_capability (d, "leds");
+
+	dev_name = hal_util_get_last_element (sysfs_path);
+	if (dev_name) {
+	        attributes = g_strsplit_set (dev_name, ":", 0);
+	
+		if (attributes != NULL) {
+			if (attributes[0] != NULL && attributes[0][0] != '\0')
+				hal_device_property_set_string (d, "leds.device_name", attributes[0]);
+			if (attributes[1] != NULL && attributes[1][0] != '\0')
+				hal_device_property_set_string (d, "leds.colour", attributes[1]);
+			if (attributes[2] != NULL && attributes[2][0] != '\0')
+				hal_device_property_set_string (d, "leds.function", attributes[2]);
+		}
+		g_strfreev (attributes);
+	}
+	
+	return d;
+}
+
+static gboolean
+leds_compute_udi (HalDevice *d)
+{
+	gchar udi[256];
+	const char *name;
+	const char *colour;
+	const char *function;
+
+        name = hal_device_property_get_string (d, "leds.device_name");
+        colour = hal_device_property_get_string (d, "leds.colour");
+        function = hal_device_property_get_string (d, "leds.function");
+
+	if (name && function && colour) {
+		hald_compute_udi (udi, sizeof (udi), "/org/freedesktop/Hal/devices/leds_%s_%s_%s", name, function, colour);
+	} else if (name && function) {
+		hald_compute_udi (udi, sizeof (udi), "/org/freedesktop/Hal/devices/leds_%s_%s", name, function);
+	} else if (name) {
+		hald_compute_udi (udi, sizeof (udi), "/org/freedesktop/Hal/devices/leds_%s", name);
+	} else {
+		hald_compute_udi (udi, sizeof (udi), "/org/freedesktop/Hal/devices/leds_unknown");
+	}
+	
+	hal_device_set_udi (d, udi);
+	return TRUE;
+}
+
 
 /*--------------------------------------------------------------------------------------------------------------*/
 
@@ -4238,6 +4304,13 @@ static DevHandler dev_handler_iucv = {
 	.remove      = dev_remove
 };
 
+static DevHandler dev_handler_leds = {
+	.subsystem   = "leds",
+	.add         = leds_add,
+	.compute_udi = leds_compute_udi,
+	.remove      = dev_remove
+};
+
 static DevHandler dev_handler_memstick = { 
 	.subsystem   = "memstick",
 	.add         = memstick_add,
@@ -4526,6 +4599,7 @@ static DevHandler *dev_handlers[] = {
 	&dev_handler_ieee1394,
 	&dev_handler_input,
 	&dev_handler_iucv,
+	&dev_handler_leds,
 	&dev_handler_mmc,
 	&dev_handler_memstick,
 	&dev_handler_memstick_host,
