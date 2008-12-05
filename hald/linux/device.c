@@ -1065,42 +1065,52 @@ static void
 input_test_abs (HalDevice *d, const char *sysfs_path)
 {
 	char *s;
-	long bitmask[NBITS(ABS_MAX)];
-	int num_bits;
+	long bitmask_abs[NBITS(ABS_MAX)];
+	long bitmask_key[NBITS(KEY_MAX)];
+	int num_bits_abs;
+	int num_bits_key;
 
 	s = hal_util_get_string_from_file (sysfs_path, "capabilities/abs");
 	if (s == NULL)
 		goto out;
-	num_bits = input_str_to_bitmask (s, bitmask, sizeof (bitmask));
+	num_bits_abs = input_str_to_bitmask (s, bitmask_abs, sizeof (bitmask_abs));
 
-	if (test_bit (ABS_X, bitmask) && test_bit (ABS_Y, bitmask)) {
-		if (test_bit (ABS_PRESSURE, bitmask)) {
-			hal_device_add_capability (d, "input.touchpad");
-			goto out;
-		} else {
-			/*
-			 * This path is taken by VMware's USB mouse, which has
-			 * absolute axes, but no touch/pressure button.
-			 */
-			hal_device_add_capability (d, "input.mouse");
-			goto out;
-		}
-        }
-
-        /* TODO: Hmm; this code looks sketchy... why do we do !test_bit on the Y axis ?? */
-	if (test_bit(ABS_X, bitmask) && !test_bit(ABS_Y, bitmask)) {
-		long bitmask_touch[NBITS(KEY_MAX)];
-
-		hal_device_add_capability (d, "input.joystick");
+	if (test_bit (ABS_X, bitmask_abs) && test_bit (ABS_Y, bitmask_abs)) {
 
 		s = hal_util_get_string_from_file (sysfs_path, "capabilities/key");
-		if (s == NULL)
-			goto out;
-		input_str_to_bitmask (s, bitmask_touch, sizeof (bitmask_touch));
+		if (s != NULL)
+		{
+			num_bits_key = input_str_to_bitmask (s, bitmask_key, sizeof (bitmask_key));
 
-		if (test_bit(BTN_TOUCH, bitmask_touch)) {
-			hal_device_add_capability (d, "input.tablet");
-                }
+			if (test_bit (BTN_STYLUS, bitmask_key)) {
+				hal_device_add_capability (d, "input.tablet");
+				goto out;
+			}
+
+			if (test_bit (BTN_TOUCH, bitmask_key)) {
+				hal_device_add_capability (d, "input.touchpad");
+				goto out;
+			}
+
+			if (test_bit (BTN_TRIGGER, bitmask_key) || test_bit (BTN_A, bitmask_key) || test_bit (BTN_1, bitmask_key)) {
+				hal_device_add_capability (d, "input.joystick");
+				goto out;
+			}
+
+			if (test_bit (BTN_MOUSE, bitmask_key)) {
+				/*
+				 * This path is taken by VMware's USB mouse, which has
+				 * absolute axes, but no touch/pressure button.
+				 */
+				hal_device_add_capability (d, "input.mouse");
+				goto out;
+			}
+		}
+
+		if (test_bit (ABS_PRESSURE, bitmask_abs)) {
+			hal_device_add_capability (d, "input.touchpad");
+			goto out;
+		}
 	}
 out:
 	;
