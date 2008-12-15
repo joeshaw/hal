@@ -2883,8 +2883,9 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
               <entry>example: 0</entry>
               <entry>Yes</entry>
               <entry>
-                The port number of the device, based on the number in
-                <literal>serial.device</literal>
+                The port number of the device. For USB serial devices it's the port number of the
+		serial device itself. For other serial devices, where is no device port info 
+		available, it's based on the number in <literal>serial.device</literal>.
               </entry>
             </row>
             <row>

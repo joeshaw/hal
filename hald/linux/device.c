@@ -3102,8 +3102,14 @@ serial_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent
 						hal_device_property_get_string (parent_dev, "info.product"));
 	} else if (sscanf (last_elem, "ttyUSB%d", &portnum) == 1) {
 		HalDevice *usbdev;
+		int port_number;
 
-		hal_device_property_set_int (d, "serial.port", portnum);
+		/* try to get the port number of the device and not of the whole USB subsystem */
+		if (hal_util_get_int_from_file (sysfs_path, "device/port_number", &port_number, 10)) {
+			hal_device_property_set_int (d, "serial.port", port_number);
+		} else {
+			hal_device_property_set_int (d, "serial.port", portnum);
+		}
 		hal_device_property_set_string (d, "serial.type", "usb");
 
 		usbdev = hal_device_store_find (hald_get_gdl (), 
