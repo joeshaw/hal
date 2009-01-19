@@ -197,7 +197,7 @@
     <!-- graphics cards, e.g. for 3d accelleration -->
     <match key="info.capabilities" contains="drm">
 	<append key="info.capabilities" type="strlist">access_control</append>
-	<merge key="access_control.file" type="copy_property">input.device</merge>
+	<merge key="access_control.file" type="copy_property">linux.device_file</merge>
 	<merge key="access_control.type" type="string">video</merge>
     </match>
 
