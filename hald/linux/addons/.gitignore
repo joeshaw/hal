@@ -19,5 +19,6 @@ hald-addon-cpufreq
 hald-addon-dell-backlight
 hald-addon-imac-backlight
 hald-addon-rfkill-killswitch
+hald-addon-leds
 *.o
 *~

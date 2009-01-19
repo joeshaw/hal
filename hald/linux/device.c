@@ -1065,42 +1065,52 @@ static void
 input_test_abs (HalDevice *d, const char *sysfs_path)
 {
 	char *s;
-	long bitmask[NBITS(ABS_MAX)];
-	int num_bits;
+	long bitmask_abs[NBITS(ABS_MAX)];
+	long bitmask_key[NBITS(KEY_MAX)];
+	int num_bits_abs;
+	int num_bits_key;
 
 	s = hal_util_get_string_from_file (sysfs_path, "capabilities/abs");
 	if (s == NULL)
 		goto out;
-	num_bits = input_str_to_bitmask (s, bitmask, sizeof (bitmask));
+	num_bits_abs = input_str_to_bitmask (s, bitmask_abs, sizeof (bitmask_abs));
 
-	if (test_bit (ABS_X, bitmask) && test_bit (ABS_Y, bitmask)) {
-		if (test_bit (ABS_PRESSURE, bitmask)) {
-			hal_device_add_capability (d, "input.touchpad");
-			goto out;
-		} else {
-			/*
-			 * This path is taken by VMware's USB mouse, which has
-			 * absolute axes, but no touch/pressure button.
-			 */
-			hal_device_add_capability (d, "input.mouse");
-			goto out;
-		}
-        }
-
-        /* TODO: Hmm; this code looks sketchy... why do we do !test_bit on the Y axis ?? */
-	if (test_bit(ABS_X, bitmask) && !test_bit(ABS_Y, bitmask)) {
-		long bitmask_touch[NBITS(KEY_MAX)];
-
-		hal_device_add_capability (d, "input.joystick");
+	if (test_bit (ABS_X, bitmask_abs) && test_bit (ABS_Y, bitmask_abs)) {
 
 		s = hal_util_get_string_from_file (sysfs_path, "capabilities/key");
-		if (s == NULL)
-			goto out;
-		input_str_to_bitmask (s, bitmask_touch, sizeof (bitmask_touch));
+		if (s != NULL)
+		{
+			num_bits_key = input_str_to_bitmask (s, bitmask_key, sizeof (bitmask_key));
 
-		if (test_bit(BTN_TOUCH, bitmask_touch)) {
-			hal_device_add_capability (d, "input.tablet");
-                }
+			if (test_bit (BTN_STYLUS, bitmask_key)) {
+				hal_device_add_capability (d, "input.tablet");
+				goto out;
+			}
+
+			if (test_bit (BTN_TOUCH, bitmask_key)) {
+				hal_device_add_capability (d, "input.touchpad");
+				goto out;
+			}
+
+			if (test_bit (BTN_TRIGGER, bitmask_key) || test_bit (BTN_A, bitmask_key) || test_bit (BTN_1, bitmask_key)) {
+				hal_device_add_capability (d, "input.joystick");
+				goto out;
+			}
+
+			if (test_bit (BTN_MOUSE, bitmask_key)) {
+				/*
+				 * This path is taken by VMware's USB mouse, which has
+				 * absolute axes, but no touch/pressure button.
+				 */
+				hal_device_add_capability (d, "input.mouse");
+				goto out;
+			}
+		}
+
+		if (test_bit (ABS_PRESSURE, bitmask_abs)) {
+			hal_device_add_capability (d, "input.touchpad");
+			goto out;
+		}
 	}
 out:
 	;
@@ -1259,6 +1269,72 @@ iucv_compute_udi (HalDevice *d)
 	return TRUE;
 
 }
+/*--------------------------------------------------------------------------------------------------------------*/
+
+static HalDevice *
+leds_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_dev, const gchar *parent_path)
+{
+	HalDevice *d;
+	const gchar *dev_name;
+        gchar **attributes;
+
+	d = hal_device_new ();
+
+	if (parent_dev != NULL)
+                hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
+        else
+                hal_device_property_set_string (d, "info.parent", "/org/freedesktop/Hal/devices/computer");
+
+	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
+	hal_util_set_driver (d, "info.linux.driver", sysfs_path);
+
+	hal_device_property_set_string (d, "info.category", "leds");
+	hal_device_add_capability (d, "leds");
+
+	dev_name = hal_util_get_last_element (sysfs_path);
+	if (dev_name) {
+	        attributes = g_strsplit_set (dev_name, ":", 0);
+	
+		if (attributes != NULL) {
+			if (attributes[0] != NULL && attributes[0][0] != '\0')
+				hal_device_property_set_string (d, "leds.device_name", attributes[0]);
+			if (attributes[1] != NULL && attributes[1][0] != '\0')
+				hal_device_property_set_string (d, "leds.colour", attributes[1]);
+			if (attributes[2] != NULL && attributes[2][0] != '\0')
+				hal_device_property_set_string (d, "leds.function", attributes[2]);
+		}
+		g_strfreev (attributes);
+	}
+	
+	return d;
+}
+
+static gboolean
+leds_compute_udi (HalDevice *d)
+{
+	gchar udi[256];
+	const char *name;
+	const char *colour;
+	const char *function;
+
+        name = hal_device_property_get_string (d, "leds.device_name");
+        colour = hal_device_property_get_string (d, "leds.colour");
+        function = hal_device_property_get_string (d, "leds.function");
+
+	if (name && function && colour) {
+		hald_compute_udi (udi, sizeof (udi), "/org/freedesktop/Hal/devices/leds_%s_%s_%s", name, function, colour);
+	} else if (name && function) {
+		hald_compute_udi (udi, sizeof (udi), "/org/freedesktop/Hal/devices/leds_%s_%s", name, function);
+	} else if (name) {
+		hald_compute_udi (udi, sizeof (udi), "/org/freedesktop/Hal/devices/leds_%s", name);
+	} else {
+		hald_compute_udi (udi, sizeof (udi), "/org/freedesktop/Hal/devices/leds_unknown");
+	}
+	
+	hal_device_set_udi (d, udi);
+	return TRUE;
+}
+
 
 /*--------------------------------------------------------------------------------------------------------------*/
 
@@ -3026,8 +3102,14 @@ serial_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent
 						hal_device_property_get_string (parent_dev, "info.product"));
 	} else if (sscanf (last_elem, "ttyUSB%d", &portnum) == 1) {
 		HalDevice *usbdev;
+		int port_number;
 
-		hal_device_property_set_int (d, "serial.port", portnum);
+		/* try to get the port number of the device and not of the whole USB subsystem */
+		if (hal_util_get_int_from_file (sysfs_path, "device/port_number", &port_number, 10)) {
+			hal_device_property_set_int (d, "serial.port", port_number);
+		} else {
+			hal_device_property_set_int (d, "serial.port", portnum);
+		}
 		hal_device_property_set_string (d, "serial.type", "usb");
 
 		usbdev = hal_device_store_find (hald_get_gdl (), 
@@ -4238,6 +4320,13 @@ static DevHandler dev_handler_iucv = {
 	.remove      = dev_remove
 };
 
+static DevHandler dev_handler_leds = {
+	.subsystem   = "leds",
+	.add         = leds_add,
+	.compute_udi = leds_compute_udi,
+	.remove      = dev_remove
+};
+
 static DevHandler dev_handler_memstick = { 
 	.subsystem   = "memstick",
 	.add         = memstick_add,
@@ -4526,6 +4615,7 @@ static DevHandler *dev_handlers[] = {
 	&dev_handler_ieee1394,
 	&dev_handler_input,
 	&dev_handler_iucv,
+	&dev_handler_leds,
 	&dev_handler_mmc,
 	&dev_handler_memstick,
 	&dev_handler_memstick_host,

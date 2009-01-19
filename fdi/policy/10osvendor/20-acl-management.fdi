@@ -51,6 +51,11 @@
 	<merge key="access_control.file" type="copy_property">scsi_generic.device</merge>
 	<merge key="access_control.type" type="string">cdrom</merge>
       </match>
+      <match key="info.capabilities" contains="scanner">
+	<append key="info.capabilities" type="strlist">access_control</append>
+	<merge key="access_control.file" type="copy_property">scsi_generic.device</merge>
+	<merge key="access_control.type" type="string">scanner</merge>
+      </match>
       <!-- usb floppy bnc#336327 -->
       <match key="@info.parent:@info.parent:@info.parent:usb.interface.class" int="8">
 	<match key="@info.parent:@info.parent:@info.parent:usb.interface.subclass" int="4">

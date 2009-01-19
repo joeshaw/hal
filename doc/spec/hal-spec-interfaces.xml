@@ -763,6 +763,54 @@ $ dbus-send --system --print-reply --dest=org.freedesktop.Hal \
     </para>
   </sect1>
 
+  <sect1 id="interface-device-leds">
+    <title>org.freedesktop.Hal.Device.Leds interface</title>
+    <para>
+      This interface provides a mechanism to get/set the brightness of
+      a LED (light-emitting diode). The following methods are available:
+    </para>
+
+    <informaltable>
+      <tgroup cols="2">
+        <thead>
+          <row>
+            <entry>Method</entry>
+            <entry>Returns</entry>
+            <entry>Parameters</entry>
+            <entry>Throws</entry>
+            <entry>Description</entry>
+          </row>
+        </thead>
+        <tbody>
+          <row>
+            <entry>GetBrightness</entry>
+            <entry>Int</entry>
+            <entry></entry>
+            <entry></entry>
+            <entry>
+              Get the current brightness of the LED.
+            </entry>
+          </row>
+          <row>
+            <entry>SetBrightness</entry>
+            <entry></entry>
+            <entry>Int brightness</entry>
+            <entry></entry>
+            <entry>
+              Set the current brightness of the LED. The value 0 deactivate
+	      normally the LED, any higher value active the LED again.
+            </entry>
+          </row>
+
+        </tbody>
+      </tgroup>
+    </informaltable>
+
+    <para>
+      This interface does not emit any signals.
+    </para>
+  </sect1>
+
   <sect1 id="interface-device-laptop-panel">
     <title>org.freedesktop.Hal.Device.LaptopPanel interface</title>
     <para>

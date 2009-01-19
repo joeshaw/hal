@@ -2012,6 +2012,54 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
       </informaltable>
     </sect2>
 
+    <sect2 id="device-properties-leds">
+      <title>
+        leds namespace
+      </title>
+      <para>
+        Device objects with <literal>info.subsystem</literal> set to <literal>leds
+        </literal> are LED (light-emitting diode) devices.
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry>
+                <literal>leds.device_name</literal> (string)
+              </entry>
+              <entry>example: iwl-phy0, tpacpi</entry>
+              <entry>Yes</entry>
+              <entry>The name of the related led device</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>leds.colour</literal> (string)
+              </entry>
+              <entry>example: green, orange</entry>
+              <entry>No</entry>
+              <entry>The colour of the LED</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>leds.function</literal> (string)
+              </entry>
+              <entry>example: radio, power, standby, batt</entry>
+              <entry>Yes</entry>
+              <entry>The function of the LED.</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
+
     <sect2 id="device-properties-modemif">
       <title>
         modem namespace
@@ -2835,8 +2883,9 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
               <entry>example: 0</entry>
               <entry>Yes</entry>
               <entry>
-                The port number of the device, based on the number in
-                <literal>serial.device</literal>
+                The port number of the device. For USB serial devices it's the port number of the
+		serial device itself. For other serial devices, where is no device port info 
+		available, it's based on the number in <literal>serial.device</literal>.
               </entry>
             </row>
             <row>

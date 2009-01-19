@@ -14,6 +14,7 @@ libexec_PROGRAMS  = 			\
 	hald-addon-hid-ups 		\
 	hald-addon-input 		\
 	hald-addon-ipw-killswitch	\
+	hald-addon-leds			\
 	hald-addon-rfkill-killswitch	\
 	hald-addon-storage
 
@@ -105,3 +106,5 @@ hald_addon_ipw_killswitch_LDADD = $(top_builddir)/libhal/libhal.la @GLIB_LIBS@
 hald_addon_rfkill_killswitch_SOURCES = addon-rfkill-killswitch.c ../../logger.c ../../util_helper.c ../../util_helper_priv.c 
 hald_addon_rfkill_killswitch_LDADD = $(top_builddir)/libhal/libhal.la @GLIB_LIBS@
 
+hald_addon_leds_SOURCES = addon-leds.c ../../logger.c ../../util_helper.c ../../util_helper_priv.c 
+hald_addon_leds_LDADD = $(top_builddir)/libhal/libhal.la @GLIB_LIBS@

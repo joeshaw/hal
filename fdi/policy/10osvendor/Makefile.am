@@ -5,6 +5,7 @@ dist_fdi_DATA = 			\
 	10-input-policy.fdi		\
 	10-dockstation.fdi		\
 	10-laptop-panel-mgmt-policy.fdi	\
+	10-leds.fdi			\
 	10-power-mgmt-policy.fdi	\
 	10-rfkill-switch.fdi		\
 	10-tabletPCs.fdi		\
