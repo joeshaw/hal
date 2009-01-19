@@ -31,9 +31,19 @@
     <!-- Removable block devices -->
     <match key="info.capabilities" contains="block">
       <match key="@block.storage_device:storage.removable" bool="true">
-        <append key="info.capabilities" type="strlist">access_control</append>
-        <merge key="access_control.file" type="copy_property">block.device</merge>
-        <merge key="access_control.type" type="string">removable-block</merge>
+        <!-- do not set acls on unpartitioned volumes, parent gets them -->
+        <match key="block.is_volume" bool="true"> 
+          <match key="volume.is_partition" bool="true"> 
+            <append key="info.capabilities" type="strlist">access_control</append>
+            <merge key="access_control.file" type="copy_property">block.device</merge>
+            <merge key="access_control.type" type="string">removable-block</merge>
+          </match>
+        </match>
+        <match key="block.is_volume" bool="false"> 
+          <append key="info.capabilities" type="strlist">access_control</append>
+          <merge key="access_control.file" type="copy_property">block.device</merge>
+          <merge key="access_control.type" type="string">removable-block</merge>
+        </match>
       </match>
     </match>
 
