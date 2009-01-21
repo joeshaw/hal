@@ -8173,7 +8173,7 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
               <entry>Example: /dev/snd/pcmC0D1p</entry>
               <entry>Yes</entry>
               <entry>
-                Name of the special device file that access can be granted to.
+                Path to the special device file that access can be granted to.
               </entry>
             </row>
             <row>
@@ -8186,7 +8186,7 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
                 Type of access - only makes sense when PolicyKit
                 support is enabled; it's used by PolicyKit to compute
                 what privilege to check for by
-                prepending <literal>hal-device-file-</literal> to the
+                prepending <literal>org.freedesktop.hal.device-access.</literal> to the
                 value.
               </entry>
             </row>
