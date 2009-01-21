@@ -37,7 +37,7 @@
       HAL uses PolicyKit to decide what users should have access
       according to PolicyKit configuration; see the PolicyKit
       privilege definition
-      file <literal>/etc/PolicyKit/privileges/hal-device-file.priv</literal>
+      file <literal>/usr/share/PolicyKit/policy/org.freedesktop.hal.device-access.policy</literal>
       on a system with HAL installed for the default access suggested
       by the HAL package and/or OS vendor.
     </para>
