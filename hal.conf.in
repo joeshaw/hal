@@ -44,7 +44,6 @@
        for access control you will need to modify this -->
   <policy context="default">
     <allow send_interface="org.freedesktop.Hal.Device.SystemPowerManagement"/>
-    <allow send_interface="org.freedesktop.Hal.Device.VideoAdapterPM"/>
     <allow send_interface="org.freedesktop.Hal.Device.LaptopPanel"/>
     <allow send_interface="org.freedesktop.Hal.Device.Volume"/>
     <allow send_interface="org.freedesktop.Hal.Device.Volume.Crypto"/>
