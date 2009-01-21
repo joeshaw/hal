@@ -16,6 +16,8 @@
 
   <!-- Allow anyone to invoke methods on the Manager and Device interfaces -->
   <policy context="default">
+    <allow send_destination="org.freedesktop.Hal"
+           send_interface="org.freedesktop.DBus.Introspectable"/>
     <allow send_interface="org.freedesktop.Hal.Manager"/>
     <allow send_interface="org.freedesktop.Hal.Device"/>
     <allow receive_interface="org.freedesktop.Hal.Manager"
@@ -26,6 +28,7 @@
     <allow send_interface="org.freedesktop.Hal.Device.SystemPowerManagement"/>
     <allow send_interface="org.freedesktop.Hal.Device.LaptopPanel"/>
     <allow send_interface="org.freedesktop.Hal.Device.Volume"/>
+    <allow send_interface="org.freedesktop.Hal.Device.KillSwitch"/>
     <allow send_interface="org.freedesktop.Hal.Device.Volume.Crypto"/>
     <allow receive_interface="org.freedesktop.Hal.Device.SystemPowerManagement"
 	   receive_sender="org.freedesktop.Hal"/>
