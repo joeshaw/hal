@@ -33,6 +33,7 @@
     <allow send_interface="org.freedesktop.Hal.Device.LaptopPanel"/>
     <allow send_interface="org.freedesktop.Hal.Device.Leds"/>
     <allow send_interface="org.freedesktop.Hal.Device.LightSensor"/>
+    <allow send_interface="org.freedesktop.Hal.Device.Storage.Removable"/>
     <allow send_interface="org.freedesktop.Hal.Device.SystemPowerManagement"/>
     <allow send_interface="org.freedesktop.Hal.Device.Volume"/>
     <allow send_interface="org.freedesktop.Hal.Device.Volume.Crypto"/>
@@ -48,6 +49,8 @@
     <allow receive_interface="org.freedesktop.Hal.Device.Leds"
 	   receive_sender="org.freedesktop.Hal"/>
     <allow receive_interface="org.freedesktop.Hal.Device.LightSensor"
+	   receive_sender="org.freedesktop.Hal"/>
+    <allow receive_interface="org.freedesktop.Hal.Device.Storage.Removable"
 	   receive_sender="org.freedesktop.Hal"/>
     <allow receive_interface="org.freedesktop.Hal.Device.SystemPowerManagement"
 	   receive_sender="org.freedesktop.Hal"/>
