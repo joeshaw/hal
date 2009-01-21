@@ -33,6 +33,8 @@
     <allow send_interface="org.freedesktop.Hal.Device.Volume"/>
     <allow send_interface="org.freedesktop.Hal.Device.Volume.Crypto"/>
 
+    <allow receive_interface="org.freedesktop.Hal.Device.KillSwitch"
+	   receive_sender="org.freedesktop.Hal"/>
     <allow receive_interface="org.freedesktop.Hal.Device.LaptopPanel"
 	   receive_sender="org.freedesktop.Hal"/>
     <allow receive_interface="org.freedesktop.Hal.Device.SystemPowerManagement"
