@@ -37,6 +37,7 @@
     <allow send_interface="org.freedesktop.Hal.Device.SystemPowerManagement"/>
     <allow send_interface="org.freedesktop.Hal.Device.Volume"/>
     <allow send_interface="org.freedesktop.Hal.Device.Volume.Crypto"/>
+    <allow send_interface="org.freedesktop.Hal.Device.WakeOnLan"/>
 
     <allow receive_interface="org.freedesktop.Hal.Device.CPUFreq"
 	   receive_sender="org.freedesktop.Hal"/>
@@ -57,6 +58,8 @@
     <allow receive_interface="org.freedesktop.Hal.Device.Volume"
 	   receive_sender="org.freedesktop.Hal"/>
     <allow receive_interface="org.freedesktop.Hal.Device.Volume.Crypto"
+	   receive_sender="org.freedesktop.Hal"/>
+    <allow receive_interface="org.freedesktop.Hal.Device.WakeOnLan"
 	   receive_sender="org.freedesktop.Hal"/>
   </policy>
 
