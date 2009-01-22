@@ -18,6 +18,8 @@
   <policy context="default">
     <allow send_destination="org.freedesktop.Hal"
            send_interface="org.freedesktop.DBus.Introspectable"/>
+    <allow send_destination="org.freedesktop.Hal"
+           send_interface="org.freedesktop.DBus.Properties" />
 
     <allow send_interface="org.freedesktop.Hal.Device"/>
     <allow send_interface="org.freedesktop.Hal.Manager"/>
