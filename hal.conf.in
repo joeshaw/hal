@@ -21,22 +21,37 @@
     <allow send_destination="org.freedesktop.Hal"
            send_interface="org.freedesktop.DBus.Properties" />
 
-    <allow send_interface="org.freedesktop.Hal.Device"/>
-    <allow send_interface="org.freedesktop.Hal.Manager"/>
+    <allow send_destination="org.freedesktop.Hal"
+           send_interface="org.freedesktop.Hal.Device"/>
+    <allow send_destination="org.freedesktop.Hal"
+           send_interface="org.freedesktop.Hal.Manager"/>
 
-    <allow send_interface="org.freedesktop.Hal.Device.CPUFreq"/>
-    <allow send_interface="org.freedesktop.Hal.Device.DockStation"/>
-    <allow send_interface="org.freedesktop.Hal.Device.KillSwitch"/>
-    <allow send_interface="org.freedesktop.Hal.Device.KeyboardBacklight"/>
-    <allow send_interface="org.freedesktop.Hal.Device.LaptopPanel"/>
-    <allow send_interface="org.freedesktop.Hal.Device.Leds"/>
-    <allow send_interface="org.freedesktop.Hal.Device.LightSensor"/>
-    <allow send_interface="org.freedesktop.Hal.Device.Storage"/>
-    <allow send_interface="org.freedesktop.Hal.Device.Storage.Removable"/>
-    <allow send_interface="org.freedesktop.Hal.Device.SystemPowerManagement"/>
-    <allow send_interface="org.freedesktop.Hal.Device.Volume"/>
-    <allow send_interface="org.freedesktop.Hal.Device.Volume.Crypto"/>
-    <allow send_interface="org.freedesktop.Hal.Device.WakeOnLan"/>
+    <allow send_destination="org.freedesktop.Hal"
+           send_interface="org.freedesktop.Hal.Device.CPUFreq"/>
+    <allow send_destination="org.freedesktop.Hal"
+    	   send_interface="org.freedesktop.Hal.Device.DockStation"/>
+    <allow send_destination="org.freedesktop.Hal"
+    	   send_interface="org.freedesktop.Hal.Device.KillSwitch"/>
+    <allow send_destination="org.freedesktop.Hal"
+    	   send_interface="org.freedesktop.Hal.Device.KeyboardBacklight"/>
+    <allow send_destination="org.freedesktop.Hal"
+    	   send_interface="org.freedesktop.Hal.Device.LaptopPanel"/>
+    <allow send_destination="org.freedesktop.Hal"
+    	   send_interface="org.freedesktop.Hal.Device.Leds"/>
+    <allow send_destination="org.freedesktop.Hal"
+    	   send_interface="org.freedesktop.Hal.Device.LightSensor"/>
+    <allow send_destination="org.freedesktop.Hal"
+    	   send_interface="org.freedesktop.Hal.Device.Storage"/>
+    <allow send_destination="org.freedesktop.Hal"
+    	   send_interface="org.freedesktop.Hal.Device.Storage.Removable"/>
+    <allow send_destination="org.freedesktop.Hal"
+    	   send_interface="org.freedesktop.Hal.Device.SystemPowerManagement"/>
+    <allow send_destination="org.freedesktop.Hal"
+    	   send_interface="org.freedesktop.Hal.Device.Volume"/>
+    <allow send_destination="org.freedesktop.Hal"
+    	   send_interface="org.freedesktop.Hal.Device.Volume.Crypto"/>
+    <allow send_destination="org.freedesktop.Hal"
+    	   send_interface="org.freedesktop.Hal.Device.WakeOnLan"/>
 
   </policy>
 
