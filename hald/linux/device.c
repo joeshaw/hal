@@ -1296,12 +1296,16 @@ leds_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_d
 	        attributes = g_strsplit_set (dev_name, ":", 0);
 	
 		if (attributes != NULL) {
-			if (attributes[0] != NULL && attributes[0][0] != '\0')
-				hal_device_property_set_string (d, "leds.device_name", attributes[0]);
-			if (attributes[1] != NULL && attributes[1][0] != '\0')
-				hal_device_property_set_string (d, "leds.colour", attributes[1]);
-			if (attributes[2] != NULL && attributes[2][0] != '\0')
-				hal_device_property_set_string (d, "leds.function", attributes[2]);
+			if (attributes[0] != NULL) {
+				if (attributes[0][0] != '\0')
+					hal_device_property_set_string (d, "leds.device_name", attributes[0]);
+				if (attributes[1] != NULL ) {
+					if (attributes[1][0] != '\0')
+						hal_device_property_set_string (d, "leds.colour", attributes[1]);
+					if (attributes[2] != NULL && attributes[2][0] != '\0')
+						hal_device_property_set_string (d, "leds.function", attributes[2]);
+				}
+			}
 		}
 		g_strfreev (attributes);
 	}
