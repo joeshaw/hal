@@ -6092,7 +6092,7 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
               </entry>
               <entry></entry>
               <entry>Yes</entry>
-              <entry>TODO</entry>
+              <entry>Special device file to interact with the printer device.</entry>
             </row>
             <row>
               <entry>
@@ -6100,7 +6100,7 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
               </entry>
               <entry></entry>
               <entry>Yes</entry>
-              <entry>TODO</entry>
+              <entry>Name of the device vendor</entry>
             </row>
             <row>
               <entry>
@@ -6108,7 +6108,7 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
               </entry>
               <entry></entry>
               <entry>Yes</entry>
-              <entry>TODO</entry>
+              <entry>Name of the product.</entry>
             </row>
             <row>
               <entry>
@@ -6116,15 +6116,19 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
               </entry>
               <entry></entry>
               <entry>Yes</entry>
-              <entry>TODO</entry>
+              <entry>
+		A string uniquely identifying the instance of the device; 
+		ie. it will be different for two devices of the same type. 
+		Note that the serial number is broken on some USB devices.
+	       </entry>
             </row>
             <row>
               <entry>
                 <literal>printer.description</literal> (string)
               </entry>
               <entry></entry>
-              <entry>Yes</entry>
-              <entry>TODO</entry>
+              <entry>No</entry>
+              <entry>Description for the device.</entry>
             </row>
             <row>
               <entry>
