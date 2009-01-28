@@ -155,6 +155,12 @@
             </row>
             <row>
               <entry>
+                <literal>printer</literal>
+              </entry>
+              <entry>Directly access printer devices.</entry>
+            </row>
+            <row>
+              <entry>
                 <literal>removable-block</literal>
               </entry>
               <entry>Directly access removable block devices.</entry>
