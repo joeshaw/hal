@@ -90,15 +90,11 @@
 	<merge key="access_control.file" type="copy_property">usbraw.device</merge>
         <merge key="access_control.type" type="string">camera</merge>
       </match>
-    </match>
-    <match key="info.capabilities" contains="usbraw">
       <match key="info.capabilities" sibling_contains="scanner">
 	<append key="info.capabilities" type="strlist">access_control</append>
 	<merge key="access_control.file" type="copy_property">usbraw.device</merge>
 	<merge key="access_control.type" type="string">scanner</merge>
       </match>
-    </match>
-    <match key="info.capabilities" contains="usbraw">
       <match key="info.capabilities" sibling_contains="biometic.fingerprint_reader">
 	<append key="info.capabilities" type="strlist">access_control</append>
 	<merge key="access_control.file" type="copy_property">usbraw.device</merge>
@@ -211,9 +207,9 @@
 
     <!-- graphics cards, e.g. for 3d accelleration -->
     <match key="info.capabilities" contains="drm">
-	<append key="info.capabilities" type="strlist">access_control</append>
-	<merge key="access_control.file" type="copy_property">linux.device_file</merge>
-	<merge key="access_control.type" type="string">video</merge>
+      <append key="info.capabilities" type="strlist">access_control</append>
+      <merge key="access_control.file" type="copy_property">linux.device_file</merge>
+      <merge key="access_control.type" type="string">video</merge>
     </match>
 
     <!-- enforcement of policy goes here -->
