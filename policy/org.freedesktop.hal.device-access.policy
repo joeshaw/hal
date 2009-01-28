@@ -154,6 +154,15 @@ NOTE: Please keep the actions in alpabetical order
     </defaults>
   </action>
 
+  <action id="org.freedesktop.hal.device-access.printer">
+    <description>Directly access printers</description>
+    <message>System policy prevents access to printers</message>
+    <defaults>
+      <allow_inactive>no</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+  </action>
+
   <action id="org.freedesktop.hal.device-access.scanner">
     <description>Directly access scanners</description>
     <message>System policy prevents access to scanners</message>

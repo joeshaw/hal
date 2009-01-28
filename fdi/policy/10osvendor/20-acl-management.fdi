@@ -212,6 +212,13 @@
       <merge key="access_control.type" type="string">video</merge>
     </match>
 
+    <!-- printer devices -->
+    <match key="info.capabilities" contains="printer">
+      <addset key="info.capabilities" type="strlist">access_control</addset>
+      <merge key="access_control.file" type="copy_property">printer.device</merge>
+      <merge key="access_control.type" type="string">printer</merge>
+    </match>
+
     <!-- enforcement of policy goes here -->
 
     <!-- add / remove ACL's when devices are added and removed -->
