@@ -189,6 +189,7 @@ int dump_devices(LibHalContext *hal_ctx, char *arg)
 {
 	int i;
 	int num_devices;
+	int retval;
 	char **device_names;
 	DBusError error;
 	char *udi = NULL;
@@ -222,6 +223,9 @@ int dump_devices(LibHalContext *hal_ctx, char *arg)
 		num_devices = 1;
 	}
 
+	/* if _any_ device matches, we return success */
+	retval = 1;
+
 	for(i = 0; i < num_devices; i++) {
 		LibHalPropertySet *props;
 		LibHalPropertySetIterator it;
@@ -232,6 +236,9 @@ int dump_devices(LibHalContext *hal_ctx, char *arg)
 			dbus_error_init(&error);
 			continue;
 		}
+
+		/* we got some properties */
+		retval = 0;
 
 		if (!udi)
 			printf("%d: ", i);
@@ -298,7 +305,7 @@ int dump_devices(LibHalContext *hal_ctx, char *arg)
 	libhal_free_string_array(device_names);
 	dbus_error_free(&error);
 
-	return 0;
+	return retval;
 }
 
 
