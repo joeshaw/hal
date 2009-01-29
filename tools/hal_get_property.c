@@ -177,7 +177,7 @@ main (int argc, char *argv[])
 	}
 	if (dbus_error_is_set(&error)) {
 		fprintf (stderr, "error: libhal_device_exists: %s: %s\n", error.name, error.message);
-		LIBHAL_FREE_DBUS_ERROR (&error);
+		dbus_error_free (&error);
 		return 1;
 	}
 
