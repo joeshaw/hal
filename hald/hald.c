@@ -299,6 +299,9 @@ usage (void)
 		 "        --daemon=yes|no       Become a daemon\n"
 		 "        --verbose=yes|no      Print out debug (overrides HALD_VERBOSE)\n"
 		 "        --retain-privileges   Retain privileges (for debugging)\n"
+		 "        --child-timeout=time  Set this timout for the child prober. A larger\n"
+		 "                              number than the default 250s is required for systems\n"
+		 "                              with many resources to be probed at boot time\n"
  		 "        --use-syslog          Print out debug messages to syslog instead of\n"
 		 "                              stderr. Use this option to get debug messages\n"
 		 "                              if hald runs as a daemon.\n"
@@ -392,7 +395,7 @@ handle_sigchld (int value)
 }
 
 static int 
-parent_wait_for_child (int child_fd, pid_t child_pid)
+parent_wait_for_child (guint timeout, int child_fd, pid_t child_pid)
 {
 	fd_set rfds;
 	fd_set efds;
@@ -419,8 +422,8 @@ parent_wait_for_child (int child_fd, pid_t child_pid)
 	FD_SET(child_fd, &rfds);
 	FD_ZERO(&efds);
 	FD_SET(child_fd, &efds);
-	/* Wait up to 250 seconds for device probing */
-	tv.tv_sec = 250;
+	/* Wait up to a set time for device probing */
+	tv.tv_sec = timeout;
 	tv.tv_usec = 0;
 
 	retval = select (child_fd + 1, &rfds, NULL, &efds, &tv);
@@ -537,6 +540,7 @@ main (int argc, char *argv[])
 	guint sigterm_iochn_listener_source_id;
 	char *path;
 	char newpath[512];
+	guint opt_child_timeout;
 #ifdef HAVE_POLKIT
         PolKitError *p_error;
 #endif
@@ -584,7 +588,9 @@ main (int argc, char *argv[])
 	g_strlcat (newpath, PACKAGE_SCRIPT_DIR, sizeof (newpath));
 
 	setenv ("PATH", newpath, TRUE);
-	
+
+	/* set the default child timeout to 250 seconds */
+	opt_child_timeout = 250;
 
 	while (1) {
 		int c;
@@ -595,6 +601,7 @@ main (int argc, char *argv[])
 			{"daemon", 1, NULL, 0},
 			{"verbose", 1, NULL, 0},
 			{"retain-privileges", 0, NULL, 0},
+			{"child-timeout", 1, NULL, 0},
 			{"use-syslog", 0, NULL, 0},
 			{"help", 0, NULL, 0},
 			{"version", 0, NULL, 0},
@@ -618,6 +625,8 @@ main (int argc, char *argv[])
 				return 0;
 			} else if (strcmp (opt, "exit-after-probing") == 0) {
 				hald_debug_exit_after_probing = TRUE;
+			} else if (strcmp (opt, "child-timeout") == 0) {
+				opt_child_timeout = atoi (optarg);
 			} else if (strcmp (opt, "daemon") == 0) {
 				if (strcmp ("yes", optarg) == 0) {
 					opt_become_daemon = TRUE;
@@ -669,6 +678,7 @@ main (int argc, char *argv[])
 	loop = g_main_loop_new (NULL, FALSE);
 
 	HAL_INFO ((PACKAGE_STRING));
+	HAL_INFO (("using child timeout %is", opt_child_timeout));
 	
 	if (opt_become_daemon) {
 		int child_pid;
@@ -715,7 +725,7 @@ main (int argc, char *argv[])
 
 		default:
 			/* parent, block until child writes */
-			exit (parent_wait_for_child (startup_daemonize_pipe[0], child_pid));
+			exit (parent_wait_for_child (opt_child_timeout, startup_daemonize_pipe[0], child_pid));
 			break;
 		}
 
