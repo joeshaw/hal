@@ -891,6 +891,11 @@ hal_util_get_driver_name (const char *sysfs_path, gchar *driver_name)
 	gchar driver_path[HAL_PATH_MAX];
 	struct stat statbuf;
 
+	if (sysfs_path == NULL) {
+		HAL_WARNING (("hal_util_get_driver_name: sysfs_path == NULL"));
+		return FALSE;
+	}
+
 	g_snprintf (driver_path, sizeof (driver_path), "%s/driver", sysfs_path);
 	if (stat (driver_path, &statbuf) == 0) {
 		gchar buf[256];
@@ -908,6 +913,11 @@ hal_util_set_driver (HalDevice *d, const char *property_name, const char *sysfs_
 {
 	gboolean ret;
 	gchar driver_name[256];
+
+	if (d == NULL || property_name == NULL || sysfs_path == NULL) {
+		HAL_WARNING (("hal_util_set_driver: d, property_name or sysfs_path == NULL"));
+		return FALSE;
+	}
 
 	memset (driver_name, '\0', sizeof (driver_name));
 	ret = hal_util_get_driver_name (sysfs_path, driver_name);

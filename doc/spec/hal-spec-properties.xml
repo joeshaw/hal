@@ -6092,7 +6092,7 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
               </entry>
               <entry></entry>
               <entry>Yes</entry>
-              <entry>TODO</entry>
+              <entry>Special device file to interact with the printer device.</entry>
             </row>
             <row>
               <entry>
@@ -6100,7 +6100,7 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
               </entry>
               <entry></entry>
               <entry>Yes</entry>
-              <entry>TODO</entry>
+              <entry>Name of the device vendor</entry>
             </row>
             <row>
               <entry>
@@ -6108,7 +6108,7 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
               </entry>
               <entry></entry>
               <entry>Yes</entry>
-              <entry>TODO</entry>
+              <entry>Name of the product.</entry>
             </row>
             <row>
               <entry>
@@ -6116,15 +6116,19 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
               </entry>
               <entry></entry>
               <entry>Yes</entry>
-              <entry>TODO</entry>
+              <entry>
+		A string uniquely identifying the instance of the device; 
+		ie. it will be different for two devices of the same type. 
+		Note that the serial number is broken on some USB devices.
+	       </entry>
             </row>
             <row>
               <entry>
                 <literal>printer.description</literal> (string)
               </entry>
               <entry></entry>
-              <entry>Yes</entry>
-              <entry>TODO</entry>
+              <entry>No</entry>
+              <entry>Description for the device.</entry>
             </row>
             <row>
               <entry>
@@ -8173,7 +8177,7 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
               <entry>Example: /dev/snd/pcmC0D1p</entry>
               <entry>Yes</entry>
               <entry>
-                Name of the special device file that access can be granted to.
+                Path to the special device file that access can be granted to.
               </entry>
             </row>
             <row>
@@ -8186,7 +8190,7 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
                 Type of access - only makes sense when PolicyKit
                 support is enabled; it's used by PolicyKit to compute
                 what privilege to check for by
-                prepending <literal>hal-device-file-</literal> to the
+                prepending <literal>org.freedesktop.hal.device-access.</literal> to the
                 value.
               </entry>
             </row>

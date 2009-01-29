@@ -37,7 +37,7 @@
       HAL uses PolicyKit to decide what users should have access
       according to PolicyKit configuration; see the PolicyKit
       privilege definition
-      file <literal>/etc/PolicyKit/privileges/hal-device-file.priv</literal>
+      file <literal>/usr/share/PolicyKit/policy/org.freedesktop.hal.device-access.policy</literal>
       on a system with HAL installed for the default access suggested
       by the HAL package and/or OS vendor.
     </para>
@@ -52,6 +52,191 @@
       user. This interface is supposed to be stable so 3rd party
       packages can depend on it.
     </para>
+
+      <sect2 id="access-control-device-file-policies">
+        <title>Device Files policies</title>
+	<para>
+          This is a list of the device file policies/rules delivered with
+	  the HAL package to manage ACL's as defined via <literal>
+	  access_control.type</literal> and the current default Policykit
+	  policies for inactive and active users.
+        </para>
+	<informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Type</entry>
+              <entry>Description</entry>
+              <entry>allow_inactive</entry>
+              <entry>allow_active</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry>
+                <literal>audio-player</literal>
+              </entry>
+              <entry>Directly access audio players.</entry>
+	      <entry>no</entry>
+	      <entry>yes</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>camera</literal>
+              </entry>
+              <entry>Directly access digital cameras.</entry>
+	      <entry>no</entry>
+	      <entry>yes</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>cdrom</literal>
+              </entry>
+              <entry>Directly access optical drives.</entry>
+	      <entry>yes</entry>
+	      <entry>yes</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>dvb</literal>
+              </entry>
+              <entry>Directly access DVB devices.</entry>
+	      <entry>no</entry>
+	      <entry>yes</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>fingerprint-reader</literal>
+              </entry>
+              <entry>Directly access to fingerprint reader devices.</entry>
+	      <entry>no</entry>
+	      <entry>yes</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>floppy</literal>
+              </entry>
+              <entry>Directly access Floppy devices.</entry>
+	      <entry>yes</entry>
+	      <entry>yes</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>ieee1394-avc</literal>
+              </entry>
+              <entry>Directly access Firewire AVC devices.</entry>
+	      <entry>no</entry>
+	      <entry>yes</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>ieee1394-iidc</literal>
+              </entry>
+              <entry>Directly access Firewire IIDC devices.</entry>
+	      <entry>no</entry>
+	      <entry>yes</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>joystick</literal>
+              </entry>
+              <entry>Directly access Joystick devices.</entry>
+	      <entry>yes</entry>
+	      <entry>yes</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>modem</literal>
+              </entry>
+              <entry>Directly access serial modem devices.</entry>
+	      <entry>auth_admin_keep_always</entry>
+	      <entry>auth_admin_keep_always</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>mouse</literal>
+              </entry>
+              <entry>Directly access Mouse (input) devices</entry>
+	      <entry>yes</entry>
+	      <entry>yes</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>obex</literal>
+              </entry>
+              <entry>Directly access OBEX devices.</entry>
+	      <entry>no</entry>
+	      <entry>yes</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>pda</literal>
+              </entry>
+              <entry>Directly access PDA devices.</entry>
+	      <entry>no</entry>
+	      <entry>yes</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>ppdev</literal>
+              </entry>
+              <entry>Directly access parallel port devices.</entry>
+	      <entry>auth_admin_keep_always</entry>
+	      <entry>auth_admin_keep_always</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>printer</literal>
+              </entry>
+              <entry>Directly access printer devices.</entry>
+	      <entry>no</entry>
+	      <entry>yes</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>removable-block</literal>
+              </entry>
+              <entry>Directly access removable block devices.</entry>
+	      <entry>no</entry>
+	      <entry>no</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>scanner</literal>
+              </entry>
+              <entry>Directly access scanners.</entry>
+	      <entry>no</entry>
+	      <entry>yes</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>sound</literal>
+              </entry>
+              <entry>Directly access sound devices.</entry>
+	      <entry>no</entry>
+	      <entry>yes</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>video</literal>
+              </entry>
+              <entry>Directly access Video devices.</entry>
+	      <entry>yes</entry>
+	      <entry>yes</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>video4linux</literal>
+              </entry>
+              <entry>Directly access video capture devices.</entry>
+	      <entry>no</entry>
+	      <entry>yes</entry>
+            </row>
+          </tbody>
+        </tgroup>
+        </informaltable>
+      </sect2>
+
   </sect1>
 
   <sect1 id="access-control-ipc">

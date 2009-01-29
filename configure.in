@@ -74,6 +74,12 @@ AC_ARG_WITH([socket-dir],
 	    AS_HELP_STRING([--with-socket-dir=<dir>],
 			   [Location of the HAL D-BUS listening sockets (auto)]))
 
+AC_ARG_WITH(udev-prefix,
+        AS_HELP_STRING([--with-udev-prefix=DIR], [add prefix to internal udev path names]),
+        [], [with_udev_prefix='${exec_prefix}'])
+udev_prefix=$with_udev_prefix
+AC_SUBST(udev_prefix)
+
 if ! test -z "$with_hwdata" ; then
   PCI_IDS_DIR="$with_hwdata"
   USB_IDS_DIR="$with_hwdata"
@@ -1098,6 +1104,7 @@ echo "
         dbus-1 system.d dir:              ${DBUS_SYS_DIR}
         pci.ids dir:                      ${PCI_IDS_DIR}
         usb.ids dir:                      ${USB_IDS_DIR}
+	udev prefix:            	  ${udev_prefix}
 
         compiler:                         ${CC}
         cflags:                           ${CFLAGS}
