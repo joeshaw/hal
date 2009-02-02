@@ -840,6 +840,17 @@ osspec_probe (void)
 	if (uname (&un) >= 0) {
 		hal_device_property_set_string (root, "system.kernel.name", un.sysname);
 		hal_device_property_set_string (root, "system.kernel.version", un.release);
+		if (un.release != NULL && un.release[0] != '\0') {
+                        int major, minor, micro ;
+
+			/* check if we can parse the major.minor.micro info and ignore the rest */
+                        if ( sscanf( un.release, "%d.%d.%d", &major, &minor, &micro ) >= 3 ) {
+				hal_device_property_set_int (root, "system.kernel.version.major", major);
+				hal_device_property_set_int (root, "system.kernel.version.minor", minor);
+				hal_device_property_set_int (root, "system.kernel.version.micro", micro);
+			}
+                }
+
 		hal_device_property_set_string (root, "system.kernel.machine", un.machine);
 	}
 

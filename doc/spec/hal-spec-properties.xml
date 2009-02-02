@@ -7027,6 +7027,30 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
             </row>
             <row>
               <entry>
+                <literal>system.kernel.version.major</literal> (int)
+              </entry>
+              <entry>example: 2</entry>
+              <entry>No</entry>
+              <entry>The major version number of the running kernel.</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>system.kernel.version.minor</literal> (int)
+              </entry>
+              <entry>example: 6</entry>
+              <entry>No</entry>
+              <entry>The minor version number of the running kernel.</entry>
+            </row>
+            <row>
+              <entry>
+                <literal>system.kernel.version.micro</literal> (int)
+              </entry>
+              <entry>example: 28</entry>
+              <entry>No</entry>
+              <entry>The micro version number of the running kernel.</entry>
+            </row>
+            <row>
+              <entry>
                 <literal>system.kernel.machine</literal> (string)
               </entry>
               <entry>example: i686</entry>
