@@ -34,26 +34,6 @@
       </match>
     </match>
 
-    <!-- Removable block devices -->
-    <match key="info.capabilities" contains="block">
-      <match key="block.device" exists="true">
-        <match key="@block.storage_device:storage.removable" bool="true">
-          <!-- do not set acls on unpartitioned volumes, parent gets them -->
-          <match key="block.is_volume" bool="true"> 
-            <match key="volume.is_partition" bool="true"> 
-              <addset key="info.capabilities" type="strlist">access_control</addset>
-              <merge key="access_control.file" type="copy_property">block.device</merge>
-              <merge key="access_control.type" type="string">removable-block</merge>
-            </match>
-          </match>
-          <match key="block.is_volume" bool="false"> 
-            <addset key="info.capabilities" type="strlist">access_control</addset>
-            <merge key="access_control.file" type="copy_property">block.device</merge>
-            <merge key="access_control.type" type="string">removable-block</merge>
-          </match>
-        </match>
-      </match>
-    </match>
 
     <!-- optical drives -->
     <match key="info.capabilities" contains="storage.cdrom">
@@ -244,6 +224,31 @@
         <addset key="info.capabilities" type="strlist">access_control</addset>
         <merge key="access_control.file" type="copy_property">printer.device</merge>
         <merge key="access_control.type" type="string">printer</merge>
+      </match>
+    </match>
+
+    <!-- Removable block devices -->
+    <match key="info.capabilities" contains="block">
+      <!-- Don't set removable-block policy to devices which have already another policy 
+           as e.g. floppy devices !!! -->
+      <match key="access_control.type" exists="false">
+        <match key="block.device" exists="true">
+          <match key="@block.storage_device:storage.removable" bool="true">
+            <!-- do not set acls on unpartitioned volumes, parent gets them -->
+            <match key="block.is_volume" bool="true"> 
+              <match key="volume.is_partition" bool="true"> 
+                <addset key="info.capabilities" type="strlist">access_control</addset>
+                <merge key="access_control.file" type="copy_property">block.device</merge>
+                <merge key="access_control.type" type="string">removable-block</merge>
+              </match>
+            </match>
+            <match key="block.is_volume" bool="false"> 
+              <addset key="info.capabilities" type="strlist">access_control</addset>
+              <merge key="access_control.file" type="copy_property">block.device</merge>
+              <merge key="access_control.type" type="string">removable-block</merge>
+            </match>
+          </match>
+        </match>
       </match>
     </match>
 
