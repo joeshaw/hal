@@ -35,35 +35,13 @@
     </match>
 
 
-    <!-- optical drives -->
-    <match key="info.capabilities" contains="storage.cdrom">
-      <match key="block.device" exists="true">
-        <addset key="info.capabilities" type="strlist">access_control</addset>
-        <merge key="access_control.file" type="copy_property">block.device</merge>
-        <merge key="access_control.type" type="string">cdrom</merge>
-      </match>
-    </match>
-
-    <!-- scsi generic device for optical drives -->
+    <!-- scsi generic devices -->
     <match key="info.capabilities" contains="scsi_generic">
       <match key="scsi_generic.device" exists="true">
-        <match key="@info.parent:scsi.type" string="cdrom">
-	  <addset key="info.capabilities" type="strlist">access_control</addset>
-	  <merge key="access_control.file" type="copy_property">scsi_generic.device</merge>
-	  <merge key="access_control.type" type="string">cdrom</merge>
-        </match>
         <match key="info.capabilities" contains="scanner">
   	  <addset key="info.capabilities" type="strlist">access_control</addset>
 	  <merge key="access_control.file" type="copy_property">scsi_generic.device</merge>
 	  <merge key="access_control.type" type="string">scanner</merge>
-        </match>
-        <!-- usb floppy bnc#336327 -->
-        <match key="@info.parent:@info.parent:@info.parent:usb.interface.class" int="8">
- 	  <match key="@info.parent:@info.parent:@info.parent:usb.interface.subclass" int="4">
-	    <addset key="info.capabilities" type="strlist">access_control</addset>
-	    <merge key="access_control.file" type="copy_property">scsi_generic.device</merge>
-	    <merge key="access_control.type" type="string">floppy</merge>
-	  </match>
         </match>
       </match>
     </match>
@@ -129,7 +107,6 @@
       </match>
     </match>
 
-
     <!-- Firewire devices are mostly driven by userspace libraries -->
     <match key="info.capabilities" contains="ieee1394_unit.iidc">
       <match key="@ieee1394_unit.originating_device:ieee1394.device" exists="true">
@@ -178,19 +155,6 @@
       </match>
     </match>
 
-    <!-- plain old floppy -->
-    <match key="storage.drive_type" string="floppy">
-      <match key="block.device" exists="true">
-        <match key="storage.no_partitions_hint" bool="true">
-	  <match key="access_control.type" exists="false">
-	    <addset key="info.capabilities" type="strlist">access_control</addset>
-	    <merge key="access_control.file" type="copy_property">block.device</merge>
-	    <merge key="access_control.type" type="string">floppy</merge>
-	  </match>
-	</match>
-      </match>
-    </match>
-
     <!-- linux input devices (needed e.g. for games) -->
     <match key="linux.subsystem" string="input">
       <match key="input.device" exists="true">
@@ -224,6 +188,47 @@
         <addset key="info.capabilities" type="strlist">access_control</addset>
         <merge key="access_control.file" type="copy_property">printer.device</merge>
         <merge key="access_control.type" type="string">printer</merge>
+      </match>
+    </match>
+
+
+    <!-- keep all storage/block devices in this section together to prevent trouble -->
+    <!-- optical drives -->
+    <match key="info.capabilities" contains="storage.cdrom">
+      <match key="block.device" exists="true">
+        <addset key="info.capabilities" type="strlist">access_control</addset>
+        <merge key="access_control.file" type="copy_property">block.device</merge>
+        <merge key="access_control.type" type="string">cdrom</merge>
+      </match>
+    </match>
+    <!-- plain old floppy -->
+    <match key="storage.drive_type" string="floppy">
+      <match key="block.device" exists="true">
+        <match key="storage.no_partitions_hint" bool="true">
+	  <match key="access_control.type" exists="false">
+	    <addset key="info.capabilities" type="strlist">access_control</addset>
+	    <merge key="access_control.file" type="copy_property">block.device</merge>
+	    <merge key="access_control.type" type="string">floppy</merge>
+	  </match>
+	</match>
+      </match>
+    </match>
+    <!-- scsi generic block device -->
+    <match key="info.capabilities" contains="scsi_generic">
+      <match key="scsi_generic.device" exists="true">
+        <match key="@info.parent:scsi.type" string="cdrom">
+	  <addset key="info.capabilities" type="strlist">access_control</addset>
+	  <merge key="access_control.file" type="copy_property">scsi_generic.device</merge>
+	  <merge key="access_control.type" type="string">cdrom</merge>
+        </match>
+        <!-- usb floppy bnc#336327 -->
+        <match key="@info.parent:@info.parent:@info.parent:usb.interface.class" int="8">
+ 	  <match key="@info.parent:@info.parent:@info.parent:usb.interface.subclass" int="4">
+	    <addset key="info.capabilities" type="strlist">access_control</addset>
+	    <merge key="access_control.file" type="copy_property">scsi_generic.device</merge>
+	    <merge key="access_control.type" type="string">floppy</merge>
+	  </match>
+        </match>
       </match>
     </match>
 
