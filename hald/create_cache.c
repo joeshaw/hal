@@ -703,6 +703,7 @@ di_rules_init (void)
 		HAL_INFO (("Generating rules done (occupying %d bytes)", header.all_rules_size));
 	}
 
+	g_free (cachename_temp);
 	return num_skipped_fdi_files;
 error:
 	HAL_ERROR (("Error generating fdi cache"));

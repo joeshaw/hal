@@ -719,8 +719,10 @@ part_table_parse_gpt (int fd, guint64 offset, guint64 size)
 
 		partition_type_guid = get_le_guid (gpt_part_entry.partition_type_guid);
 
-		if (strcmp (partition_type_guid, GPT_PART_TYPE_GUID_EMPTY) == 0)
+		if (strcmp (partition_type_guid, GPT_PART_TYPE_GUID_EMPTY) == 0) {
+			g_free (partition_type_guid);
 			continue;
+		}
 
 		pe = part_entry_new (NULL,
 				     (guint8*) &gpt_part_entry,

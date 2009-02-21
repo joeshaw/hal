@@ -967,6 +967,7 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 					link = g_strdup_printf ("%s/%s", path, dp->d_name);
 					target = resolve_symlink (link);
 					HAL_INFO ((" %s -> %s", link, target));
+					g_free (link);
 
 					if (target != NULL) {
 						HalDevice *slave_volume;

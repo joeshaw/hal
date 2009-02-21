@@ -4158,8 +4158,12 @@ hald_exec_method_cb (HalDevice *d, guint32 exit_type,
 		dbus_message_unref (reply);
 	} else if (exp_name != NULL && exp_detail != NULL) {
 		if (!is_valid_interface_name (exp_name)) {
-			exp_detail = g_strconcat (exp_name, " \n ", exp_detail, NULL);
+			gchar *old_detail = exp_detail;
+
+			exp_detail = g_strconcat (exp_name, " \n ", old_detail, NULL);
 			exp_name = "org.freedesktop.Hal.Device.UnknownError";
+
+			g_free (old_detail);
 		}
 		reply = dbus_message_new_error (message, exp_name, exp_detail);
                 if (reply == NULL) {
