@@ -657,7 +657,7 @@ property_set_lookup (const LibHalPropertySet *set, const char *key)
 LibHalPropertyType
 libhal_ps_get_type (const LibHalPropertySet *set, const char *key)
 {
-	LibHalProperty *p = property_set_lookup (set, key);
+	LibHalProperty *p;
 
 	LIBHAL_CHECK_PARAM_VALID(set, "*set", LIBHAL_PROPERTY_TYPE_INVALID);
 	LIBHAL_CHECK_PARAM_VALID(key, "*key", LIBHAL_PROPERTY_TYPE_INVALID);
