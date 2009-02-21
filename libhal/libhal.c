@@ -476,8 +476,10 @@ get_property_set (DBusMessageIter *iter)
 
 		p->type = (LibHalPropertyType) dbus_message_iter_get_arg_type (&var_iter);
 
-		if(!libhal_property_fill_value_from_variant (p, &var_iter))
+		if (!libhal_property_fill_value_from_variant (p, &var_iter)) {
+			free (p);
 			goto oom;
+		}
 
                 HASH_ADD_KEYPTR (hh, result->properties, p->key, strlen (p->key), p);
 

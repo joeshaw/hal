@@ -852,6 +852,7 @@ handle_merge (struct rule *rule, HalDevice *d)
 
 					if (d == NULL) {
 						HAL_ERROR (("Could not find device with udi '%s'", udi_to_merge));
+						g_free (key);
 						return FALSE;
 					}
 				}

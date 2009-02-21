@@ -479,6 +479,7 @@ rules_add_fdi_file (const char *filename, int fd)
 	parser = XML_ParserCreate (NULL);
 	if (parser == NULL) {
 		HAL_ERROR (("Couldn't allocate memory for parser"));
+		g_free (fdi_ctx);
 		goto out;
 	}
 	XML_SetUserData (parser, fdi_ctx);
