@@ -476,8 +476,10 @@ main (int argc, char *argv[])
 			case 0x05: /* Advance Storage – Magneto-Optical */
 				libhal_changeset_set_property_string (cs, "volume.disc.type", "mo");
 				libhal_changeset_set_property_bool (cs, "volume.disc.is_rewritable", TRUE);
+				break;
 			case 0x04: /* Magneto Optical write once */
 				libhal_changeset_set_property_string (cs, "volume.disc.type", "mo");
+				break;
 			case 0x08: /* CD-ROM */
 				libhal_changeset_set_property_string (cs, "volume.disc.type", "cd_rom");
 				break;
