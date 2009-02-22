@@ -829,11 +829,11 @@ handle_merge (struct rule *rule, HalDevice *d)
 {
 	const char *value = (char *)RULES_PTR(rule->value_offset);
 	const char *key;
+	char key_to_merge[HAL_PATH_MAX];
 
 	if (rule->rtype == RULE_MERGE || rule->rtype == RULE_APPEND || 
 	    rule->rtype == RULE_PREPEND || rule->rtype == RULE_ADDSET ) {
 		char udi_to_merge[HAL_PATH_MAX];
-        	char key_to_merge[HAL_PATH_MAX];
 
 		/* Resolve key paths like 'someudi/foo/bar/baz:prop.name' '@prop.here.is.an.udi:with.prop.name' */
                 if (!resolve_udiprop_path (rule->key, hal_device_get_udi (d),
@@ -842,7 +842,7 @@ handle_merge (struct rule *rule, HalDevice *d)
                         HAL_ERROR (("Could not resolve keypath '%s' on udi '%s'", rule->key, hal_device_get_udi (d)));
 			return FALSE;
 		} else {
-			key = g_strdup(key_to_merge);	
+			key = key_to_merge;	
 
 			if (strcmp(hal_device_get_udi (d), udi_to_merge) != 0) {
 
@@ -852,7 +852,6 @@ handle_merge (struct rule *rule, HalDevice *d)
 
 					if (d == NULL) {
 						HAL_ERROR (("Could not find device with udi '%s'", udi_to_merge));
-						g_free (key);
 						return FALSE;
 					}
 				}
