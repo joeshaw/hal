@@ -127,6 +127,7 @@ gboolean write_line(const char *filename, const char *fmt, ...)
 {
 	va_list	ap;
 	FILE	*fp;
+	int	l;
 
 	fp = fopen(filename, "w+");
 	if (!fp) {
@@ -136,15 +137,16 @@ gboolean write_line(const char *filename, const char *fmt, ...)
 	}
 
 	va_start(ap, fmt);
+	l = vfprintf(fp, fmt, ap);
+	va_end(ap);
 
-	if (vfprintf(fp, fmt, ap) < 0) {
+	fclose(fp);
+
+	if (l < 0) {
 		HAL_WARNING(("Could not write to file: %s", filename));
-		fclose(fp);
 		return FALSE;
 	}
 
-	va_end(ap);
-	fclose(fp);
 	return TRUE;
 }
 

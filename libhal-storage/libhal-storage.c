@@ -500,6 +500,8 @@ libhal_volume_policy_compute_display_name (LibHalDrive *drive, LibHalVolume *vol
 			else
 				name = strdup (_("Magneto Optical"));
 		}
+		
+		goto out;
 	}
 
 	/* Fallback: size of media */

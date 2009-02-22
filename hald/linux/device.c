@@ -1346,7 +1346,6 @@ static HalDevice *
 memstick_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_dev, const gchar *parent_path)
 {
 	HalDevice *d;
-	const gchar *bus_id;
 
 	if (parent_dev == NULL) {
 		d = NULL;
@@ -1359,8 +1358,6 @@ memstick_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *pare
 
 	hal_util_set_driver (d, "info.linux.driver", sysfs_path);
 
-	bus_id = hal_util_get_last_element (sysfs_path);
-	
 	hal_util_set_string_from_file (d, "info.product", sysfs_path, "attr_modelname");
 	
 out:

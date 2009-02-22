@@ -476,8 +476,10 @@ get_property_set (DBusMessageIter *iter)
 
 		p->type = (LibHalPropertyType) dbus_message_iter_get_arg_type (&var_iter);
 
-		if(!libhal_property_fill_value_from_variant (p, &var_iter))
+		if (!libhal_property_fill_value_from_variant (p, &var_iter)) {
+			free (p);
 			goto oom;
+		}
 
                 HASH_ADD_KEYPTR (hh, result->properties, p->key, strlen (p->key), p);
 
@@ -655,7 +657,7 @@ property_set_lookup (const LibHalPropertySet *set, const char *key)
 LibHalPropertyType
 libhal_ps_get_type (const LibHalPropertySet *set, const char *key)
 {
-	LibHalProperty *p = property_set_lookup (set, key);
+	LibHalProperty *p;
 
 	LIBHAL_CHECK_PARAM_VALID(set, "*set", LIBHAL_PROPERTY_TYPE_INVALID);
 	LIBHAL_CHECK_PARAM_VALID(key, "*key", LIBHAL_PROPERTY_TYPE_INVALID);

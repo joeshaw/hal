@@ -479,6 +479,7 @@ rules_add_fdi_file (const char *filename, int fd)
 	parser = XML_ParserCreate (NULL);
 	if (parser == NULL) {
 		HAL_ERROR (("Couldn't allocate memory for parser"));
+		g_free (fdi_ctx);
 		goto out;
 	}
 	XML_SetUserData (parser, fdi_ctx);
@@ -702,6 +703,7 @@ di_rules_init (void)
 		HAL_INFO (("Generating rules done (occupying %d bytes)", header.all_rules_size));
 	}
 
+	g_free (cachename_temp);
 	return num_skipped_fdi_files;
 error:
 	HAL_ERROR (("Error generating fdi cache"));

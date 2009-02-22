@@ -274,7 +274,6 @@ ups_get_static (LibHalContext *ctx, const char *udi, int fd,
 
 	dbus_error_init (&error);
 	libhal_device_commit_changeset (ctx, cs, &error);
-	libhal_device_free_changeset (cs);
 
 	dbus_error_init (&error);
 	libhal_device_add_capability (ctx, udi, "battery", &error);
@@ -282,6 +281,8 @@ ups_get_static (LibHalContext *ctx, const char *udi, int fd,
 	ret = TRUE;
 
 out:
+	libhal_device_free_changeset (cs);
+
 	return ret;
 }
 

@@ -357,6 +357,7 @@ add_device (LibHalContext *ctx,
 
 	if ((device_file = libhal_ps_get_string (properties, "input.device")) == NULL) {
 		HAL_ERROR(("%s has no property input.device", udi));
+		g_free (data);
 		return;
 	}
 
@@ -369,6 +370,7 @@ add_device (LibHalContext *ctx,
 	eventfp = open(device_file, O_RDONLY | O_NONBLOCK);
 	if (!eventfp) {
 		HAL_ERROR(("Unable to open %s for reading", device_file));
+		g_free (data);
 		return;
 	}
 

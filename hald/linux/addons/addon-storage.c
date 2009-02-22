@@ -250,7 +250,6 @@ is_mounted (const char *device_file)
 	FILE *f;
 	dbus_bool_t rc;
 	struct mntent mnt;
-	struct mntent *mnte;
 	char buf[512];
 
 	rc = FALSE;
@@ -258,7 +257,7 @@ is_mounted (const char *device_file)
 	if ((f = setmntent ("/etc/mtab", "r")) == NULL)
 		goto out;
 
-	while ((mnte = getmntent_r (f, &mnt, buf, sizeof(buf))) != NULL) {
+	while (getmntent_r (f, &mnt, buf, sizeof(buf)) != NULL) {
 		if (strcmp (device_file, mnt.mnt_fsname) == 0) {
 			rc = TRUE;
 			goto out1;

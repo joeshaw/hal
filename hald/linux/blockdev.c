@@ -205,7 +205,6 @@ blockdev_refresh_mount_state (HalDevice *d)
 {
 	FILE *f;
 	struct mntent mnt;
-	struct mntent *mnte;
 	char buf[1024];
 	GSList *volumes = NULL;
 	GSList *volume;
@@ -226,7 +225,7 @@ blockdev_refresh_mount_state (HalDevice *d)
 		goto exit;
 
 	/* loop over /proc/mounts */
-	while ((mnte = getmntent_r (f, &mnt, buf, sizeof(buf))) != NULL) {
+	while (getmntent_r (f, &mnt, buf, sizeof(buf)) != NULL) {
 		struct stat statbuf;
 		dev_t devt;
 
@@ -967,6 +966,7 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 					link = g_strdup_printf ("%s/%s", path, dp->d_name);
 					target = resolve_symlink (link);
 					HAL_INFO ((" %s -> %s", link, target));
+					g_free (link);
 
 					if (target != NULL) {
 						HalDevice *slave_volume;
