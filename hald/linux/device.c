@@ -2127,10 +2127,6 @@ pnp_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 		if( !strncmp(pnp_id, "WACf00", 6) || !strcmp(pnp_id, "FUJ02e5") ||
 		    !strcmp(pnp_id, "FUJ02e6") || !strcmp(pnp_id, "FPI2004")) {
 			/* a internal serial tablet --> this should be a tablet pc */
-			hal_device_add_capability (d, "input");
-			hal_device_add_capability (d, "input.tablet");
-			hal_device_add_capability (d, "input.tablet.tabletPC");
-
 			if ((computer = hal_device_store_find (hald_get_gdl (), "/org/freedesktop/Hal/devices/computer")) != NULL ||
 			    (computer = hal_device_store_find (hald_get_tdl (), "/org/freedesktop/Hal/devices/computer")) != NULL) {
 
