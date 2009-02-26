@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <deviceinfo version="0.2">
   <device>
+
+    <!-- KVM emulates a USB graphics tablet which works in absolute coordinate mode -->
+    <match key="input.product" contains="QEMU USB Tablet">
+       <merge key="input.x11_driver" type="string">evdev</merge>
+    </match>
+
     <!-- FIXME: Support tablets too. -->
     <match key="info.capabilities" contains="input.mouse">
       <merge key="input.x11_driver" type="string">mouse</merge>
