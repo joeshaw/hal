@@ -414,6 +414,7 @@ if test "x$use_smbios" = "xyes" ; then
 	AC_LANG_POP([C++])
 	if test "$LIB_SMBIOS" = "yes" ; then
    		AC_MSG_CHECKING([for libsmbios >= 0.13.4])
+   		LIBS="$LIBS -lsmbios"
    		AC_RUN_IFELSE([AC_LANG_SOURCE([[
    		#include <smbios/version.h>
    		int main ()
