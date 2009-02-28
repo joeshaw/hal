@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-udevrulesdir = $(udev_prefix)/lib/udev/rules.d
+udevrulesdir = $(udev_prefix)/udev/rules.d
 udevrules_DATA = 90-hal.rules
 
 
