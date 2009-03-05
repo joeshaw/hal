@@ -265,6 +265,10 @@ di_cache_coherency_check (gboolean setup_watches)
 			HAL_INFO(("Cache needs update"));
 			regen_cache();
 			did_regen = TRUE;
+		} else if (st.st_size == 0) {
+			HAL_INFO(("Cache zero size, so regenerating"));
+			regen_cache();
+			did_regen = TRUE;
 		}
 	} else {
 		regen_cache();
