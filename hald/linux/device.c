@@ -3496,7 +3496,7 @@ sound_compute_udi (HalDevice *d)
 		hald_compute_udi (udi, sizeof (udi),
 				  "%s_sound_card_%i",
 				  hal_device_property_get_string (d, "info.parent"),
-				  hal_device_property_get_string (d, "sound.card"));
+				  hal_device_property_get_int (d, "sound.card"));
 	} else if (hal_device_has_property(d, "alsa.card")) {
 		/* don't include card number as it may not be persistent across reboots */
 		hald_compute_udi (udi, sizeof (udi),
