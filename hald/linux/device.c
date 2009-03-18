@@ -4829,10 +4829,21 @@ hotplug_event_begin_add_dev (const gchar *subsystem, const gchar *sysfs_path, co
 		handler = dev_handlers[i];
 		if (strcmp (handler->subsystem, subsystem) == 0) {
 			HalDevice *d;
+			HalDevice *check;
 
 			if (strcmp (subsystem, "scsi") == 0)
 				if (missing_scsi_host (sysfs_path, (HotplugEvent *)end_token, HOTPLUG_ACTION_ADD))
 					goto out;
+
+			/* check if there is already a device with this sysfs_path in the system */
+			if ((check = hal_device_store_match_key_value_string (hald_get_gdl (), "linux.sysfs_path", sysfs_path)) != NULL ||
+			    (check = hal_device_store_match_key_value_string (hald_get_tdl (), "linux.sysfs_path", sysfs_path)) != NULL) {
+				HAL_WARNING(("Have already a device with sysfs_path='%s' and udi='%s'. Ignore new add event for now.", 
+					     sysfs_path, hal_device_get_udi(check)));
+				/* maybe we should do a refresh on the found device ??? */
+				hotplug_event_end (end_token);
+				goto out; 
+			}
 
 			/* attempt to add the device */
 			d = handler->add (sysfs_path, device_file, parent_dev, parent_path);
