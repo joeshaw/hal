@@ -159,6 +159,7 @@ hal_util_init_sysfs_to_udev_map (void)
 	int udevinfo_exitcode;
 	UdevInfo *info = NULL;
 	char *p;
+	int len;
 
 	sysfs_to_udev_map = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, udev_info_free);
 
@@ -252,8 +253,10 @@ hal_util_init_sysfs_to_udev_map (void)
 			info->fsversion = &line[17];
 		} else if (strncmp(line, "E: ID_FS_UUID=", 14) == 0) {
 			info->fsuuid = &line[14];
-		} else if (strncmp(line, "E: ID_FS_LABEL=", 15) == 0) {
-			info->fslabel = &line[15];
+		} else if (strncmp(line, "E: ID_FS_LABEL_ENC=", 19) == 0) {
+			len = strlen (&line[15]);
+			info->fslabel = g_malloc0 (len + 1);
+			hal_util_decode_escape (&line[19], info->fslabel, len + 1);
 		}
 	}
 

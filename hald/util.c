@@ -1228,3 +1228,36 @@ is_valid_interface_name (const char *name) {
   	return TRUE;
 }
 
+static int
+hexdigit (char c)
+{
+	if (c >= '0' && c <= '9')
+		return c - '0';
+	if (c >= 'a' && c <= 'f')
+		return c - 'a';
+	if (c >= 'A' && c <= 'F')
+		return c - 'A';
+	HAL_ERROR (("'%c' is not a valid hex digit", c));
+	return 0;
+}
+
+/* Decode string with \xNN escapes */
+void
+hal_util_decode_escape (const char* src, char* result, int maxlen)
+{
+	int len;
+
+	if (src == NULL || maxlen == 0)
+		return;
+
+	for (len = 0; len < maxlen && *src; ++len) {
+		/* note that C's short-circuiting avoids reading past \0 */
+		if (*src == '\\' && src[1] == 'x' && isalnum (src[2]) && isalnum (src[3])) {
+			result[len] = (hexdigit(src[2]) << 4) | hexdigit(src[3]);
+			src += 4;
+		} else
+			result[len] = *src++;
+	}
+}
+
+

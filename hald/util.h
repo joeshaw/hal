@@ -117,4 +117,6 @@ char *hal_util_readlink (const char *link);
 
 gboolean is_valid_interface_name (const char *name);
 
+void hal_util_decode_escape (const char* src, char* result, int maxlen);
+
 #endif /* UTIL_H */

@@ -128,7 +128,7 @@ hald_udev_data (GIOChannel *source, GIOCondition condition, gpointer user_data)
 	while (bufpos < sizeof (buf)) {
 		size_t keylen;
 		char *key;
-		char *str;
+		char *str, *dstr;
 
 		key = &buf[bufpos];
 		keylen = strlen(key);
@@ -206,11 +206,15 @@ hald_udev_data (GIOChannel *source, GIOCondition condition, gpointer user_data)
 				g_strlcpy (hotplug_event->sysfs.fsuuid, str, sizeof(hotplug_event->sysfs.fsuuid));
 				g_free (str);
 			}
-		} else if (strncmp(key, "ID_FS_LABEL=", 12) == 0) {
-			if ((str = hal_util_strdup_valid_utf8(&key[12])) != NULL ) {
+		} else if (strncmp(key, "ID_FS_LABEL_ENC=", 16) == 0) {
+			dstr = g_malloc0 (keylen - 15);
+			hal_util_decode_escape (&key[16], dstr, sizeof(hotplug_event->sysfs.fslabel));
+
+			if ((str = hal_util_strdup_valid_utf8(dstr)) != NULL ) {
 				g_strlcpy (hotplug_event->sysfs.fslabel, str, sizeof(hotplug_event->sysfs.fslabel));
 				g_free (str);
 			}
+			g_free (dstr);
 		}
 	}
 
