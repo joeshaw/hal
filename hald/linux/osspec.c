@@ -227,7 +227,7 @@ hald_udev_data (GIOChannel *source, GIOCondition condition, gpointer user_data)
 		goto invalid;
 	}
 	if (hotplug_event->sysfs.subsystem[0] == '\0') {
-		HAL_INFO (("missing SUSBSYSTEM"));
+		HAL_INFO (("missing SUBSYSTEM"));
 		goto invalid;
 	}
 
