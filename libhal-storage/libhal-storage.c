@@ -769,7 +769,7 @@ struct LibHalVolume_s {
 	dbus_bool_t disc_is_rewritable;
 
 	unsigned int block_size;
-	unsigned int num_blocks;
+	dbus_uint64_t num_blocks;
 
 	char *desired_mount_point;
 	char *mount_filesystem;
@@ -1177,7 +1177,7 @@ libhal_volume_from_udi (LibHalContext *hal_ctx, const char *udi)
 		LIBHAL_PROP_EXTRACT_STRING ("volume.crypto_luks.clear.backing_volume", vol->crypto_backing_volume);
 
 		LIBHAL_PROP_EXTRACT_INT    ("volume.block_size",         vol->block_size);
-		LIBHAL_PROP_EXTRACT_INT    ("volume.num_blocks",         vol->num_blocks);
+		LIBHAL_PROP_EXTRACT_UINT64 ("volume.num_blocks",         vol->num_blocks);
 		LIBHAL_PROP_EXTRACT_UINT64 ("volume.size", 		 vol->volume_size); 
 		LIBHAL_PROP_EXTRACT_STRING ("volume.label",              vol->volume_label);
 		LIBHAL_PROP_EXTRACT_STRING ("volume.mount_point",        vol->mount_point);
@@ -1504,7 +1504,7 @@ libhal_volume_get_size (LibHalVolume *volume)
 	if (volume->volume_size > 0)
 		return volume->volume_size;
 	else
-		return ((dbus_uint64_t)volume->block_size) * ((dbus_uint64_t)volume->num_blocks);
+		return ((dbus_uint64_t)volume->block_size) * volume->num_blocks;
 }
 
 dbus_uint64_t
