@@ -44,7 +44,7 @@
 #include <unistd.h>
 
 #include <glib.h>
-#include <libvolume_id.h>
+#include <blkid.h>
 
 #include "libhal/libhal.h"
 #include "partutil/partutil.h"
@@ -52,19 +52,6 @@
 
 #include "../../logger.h"
 #include "../../util_helper.h"
-
-
-static void vid_log(int priority, const char *file, int line, const char *format, ...)
-{
-	char log_str[1024];
-	va_list args;
-
-	va_start(args, format);
-	vsnprintf(log_str, sizeof(log_str), format, args);
-	logger_forward_debug("%s:%i %s\n", file, line, log_str);
-	va_end(args);
-}
-
 
 /** Check if a filesystem on a special device file is mounted
  *
@@ -116,9 +103,6 @@ main (int argc, char *argv[])
 	cs = NULL;
 
 	fd = -1;
-
-	/* hook in our debug into libvolume_id */
-	volume_id_log_fn = vid_log;
 
         fprintf (stderr, "woohoo\n");
 
@@ -445,7 +429,7 @@ main (int argc, char *argv[])
 		close (fd);
         HAL_DEBUG (("PROBE CLOSED LOCK ON CDROM"));
 	} else {
-		struct volume_id *vid;
+		blkid_probe pr;
 		GDir *dir;
 		const gchar *partition;
 		const gchar *main_device;
@@ -515,25 +499,27 @@ main (int argc, char *argv[])
 		libhal_changeset_set_property_string (cs, "storage.partitioning_scheme", "none");
 
 		/* probe for file system */
-		vid = volume_id_open_fd (fd);
-		if (vid != NULL) {
-			if (volume_id_probe_all (vid, 0, size) == 0) {
+		pr = blkid_new_probe ();
+		if (pr != NULL) {
+			blkid_probe_set_request (pr, BLKID_PROBREQ_LABEL | BLKID_PROBREQ_UUID |
+						 BLKID_PROBREQ_TYPE | BLKID_PROBREQ_SECTYPE |
+						 BLKID_PROBREQ_USAGE | BLKID_PROBREQ_VERSION);
+			if (blkid_probe_set_device (pr, fd, 0, size) == 0 &&
+			    blkid_do_safeprobe (pr) == 0) {
 				const char *usage;
+
 				/* signal to hald that we've found something and a fakevolume
 				 * should be added - see hald/linux/blockdev.c:add_blockdev_probing_helper_done()
 				 * and hald/linux/blockdev.c:block_rescan_storage_done().
 				 */
-
-				if (volume_id_get_usage(vid, &usage) &&
-				    ( strcmp(usage, "filesystem") == 0 ||
-				      strcmp(usage, "raid") == 0 ||
-				      strcmp(usage, "other") == 0 ||
-				      strcmp(usage, "crypto") == 0))
+				if (blkid_probe_lookup_value (pr, "USAGE", &usage, NULL) == 0 &&
+				    (strcmp (usage, "filesystem") == 0 ||
+				     strcmp (usage, "raid") == 0 ||
+				     strcmp (usage, "other") == 0 ||
+				     strcmp (usage, "crypto") == 0))
 					ret = 2;
-			} else {
-				;
 			}
-			volume_id_close(vid);
+			blkid_free_probe (pr);
 		}
 		close (fd);
 	}

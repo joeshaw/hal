@@ -13,7 +13,7 @@ AM_MAINTAINER_MODE
 
 glib_module="glib-2.0 >= 2.10.0 gobject-2.0 > 2.10.0 dbus-glib-1 >= 0.61"
 dbus_module="dbus-1 >= 0.61"
-volume_id_module="libvolume_id >= 0.77"
+blkid_module="blkid >= 1.43"
 polkit_module="polkit >= 0.5"
 
 # libtool versioning - this applies to libhal and libhal-storage
@@ -685,14 +685,14 @@ else
 fi
 AC_MSG_RESULT($have_glib_2_14)
 
-# volume_id
+# blkid
 case "$host" in
 *-*-solaris*)
 	;;
 *)
-	PKG_CHECK_MODULES(VOLUME_ID, [$volume_id_module])
-	AC_SUBST(VOLUME_ID_CFLAGS)
-	AC_SUBST(VOLUME_ID_LIBS)
+	PKG_CHECK_MODULES(BLKID, [$blkid_module])
+	AC_SUBST(BLKID_CFLAGS)
+	AC_SUBST(BLKID_LIBS)
 esac
 
 # OS specific libs

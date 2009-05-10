@@ -417,7 +417,7 @@ device_is_mounted (const char *device, char **mount_point)
 	return ret;
 }
 
-/* maps volume_id fs types to the appropriate -t mount option */
+/* maps blkid fs types to the appropriate -t mount option */
 static const char *
 map_fstype (const char *fstype)
 {

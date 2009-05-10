@@ -42,23 +42,12 @@
 #include <signal.h>
 
 #include <glib.h>
-#include <libvolume_id.h>
+#include <blkid.h>
 
 #include "libhal/libhal.h"
 #include "partutil/partutil.h"
 #include "linux_dvd_rw_utils.h"
 #include "../../logger.h"
-
-static void vid_log(int priority, const char *file, int line, const char *format, ...)
-{
-	char log_str[1024];
-	va_list args;
-
-	va_start(args, format);
-	vsnprintf(log_str, sizeof(log_str), format, args);
-	logger_forward_debug("%s:%i %s\n", file, line, log_str);
-	va_end(args);
-}
 
 static gchar *
 strdup_valid_utf8 (const char *str)
@@ -89,7 +78,7 @@ strdup_valid_utf8 (const char *str)
 
 
 static void
-set_volume_id_values (LibHalChangeSet *cs, struct volume_id *vid)
+set_blkid_values (LibHalChangeSet *cs, blkid_probe pr)
 {
 	char buf[256];
 	const char *usage;
@@ -101,28 +90,28 @@ set_volume_id_values (LibHalChangeSet *cs, struct volume_id *vid)
 
 	dbus_error_init (&error);
 
-	if (!volume_id_get_usage(vid, &usage))
+	if (blkid_probe_lookup_value(pr, "USAGE", &usage, NULL))
 		usage = "";
 	libhal_changeset_set_property_string (cs, "volume.fsusage", usage);
 	HAL_DEBUG (("volume.fsusage = '%s'", usage));
 
-	if (!volume_id_get_type(vid, &type))
+	if (blkid_probe_lookup_value(pr, "TYPE", &type, NULL))
 		type = "";
-	if (!libhal_changeset_set_property_string (cs, "volume.fstype", type))
+	if (libhal_changeset_set_property_string (cs, "volume.fstype", type))
 		libhal_changeset_set_property_string (cs, "volume.fstype", "");
 	HAL_DEBUG(("volume.fstype = '%s'", type));
 
-	if (!volume_id_get_type_version(vid, &type_version))
+	if (blkid_probe_lookup_value(pr, "VERSION", &type_version, NULL))
 		type_version = "";
 	libhal_changeset_set_property_string (cs, "volume.fsversion", type_version);
 	HAL_DEBUG(("volume.fsversion = '%s'", type_version));
 
-	if (!volume_id_get_uuid(vid, &uuid))
+	if (blkid_probe_lookup_value(pr, "UUID", &uuid, NULL))
 		uuid = "";
 	libhal_changeset_set_property_string (cs, "volume.uuid", uuid);
 	HAL_DEBUG(("volume.uuid = '%s'", uuid));
 
-	if (!volume_id_get_label(vid, &label))
+	if (blkid_probe_lookup_value(pr, "LABEL", &label, NULL))
 		label = "";
 
 	if (label[0] != '\0') {
@@ -311,7 +300,7 @@ main (int argc, char *argv[])
 	LibHalContext *ctx = NULL;
 	DBusError error;
 	char *parent_udi;
-	struct volume_id *vid;
+	blkid_probe pr;
 	char *stordev_dev_file;
 	char *partition_number_str;
 	char *partition_start_str;
@@ -330,9 +319,6 @@ main (int argc, char *argv[])
 
 	cs = NULL;
 	disc_may_have_data = FALSE;
-
-	/* hook in our debug into libvolume_id */
-	volume_id_log_fn = vid_log;
 
 	setup_logger ();
 
@@ -631,23 +617,33 @@ main (int argc, char *argv[])
 		}
 
 		/* probe for file system */
-		vid = volume_id_open_fd (fd);
-		if (vid != NULL) {
-			int vid_ret;
-			HAL_INFO (("invoking volume_id_probe_all, offset=%d, size=%d", vol_probe_offset, vol_size));
-			vid_ret = volume_id_probe_all (vid, vol_probe_offset, vol_size);
-			HAL_INFO (("volume_id_probe_all returned %d", vid_ret));
+		pr = blkid_new_probe ();
+		if (pr != NULL) {
+			int bid_ret;
 
-			if (vid_ret != 0 && is_disc && vol_probe_offset != 0) {
-				/* Some cd-rom drives report the offset of the session in the cd's TOC
-				 * wrong.  Fallback to probing at offset 0, just to be sure */
-				HAL_INFO (("invoking volume_id_probe_all, offset=0, size=%d", vol_size));
-				vid_ret = volume_id_probe_all (vid, 0 , vol_size);
-				HAL_INFO (("volume_id_probe_all returned %d", vid_ret));
+			blkid_probe_set_request (pr, BLKID_PROBREQ_LABEL | BLKID_PROBREQ_UUID |
+						 BLKID_PROBREQ_TYPE | BLKID_PROBREQ_SECTYPE |
+						 BLKID_PROBREQ_USAGE | BLKID_PROBREQ_VERSION);
+
+			HAL_INFO (("invoking blkid_do_safeprobe, offset=%d, size=%d", vol_probe_offset, vol_size));
+			bid_ret = blkid_probe_set_device (pr, fd, vol_probe_offset, vol_size);
+			if (bid_ret == 0) {
+				bid_ret = blkid_do_safeprobe (pr);
+				HAL_INFO (("blkid_do_safeprobe returned %d", bid_ret));
 			}
 
-			if (vid_ret == 0) {
-				set_volume_id_values(cs, vid);
+			if (bid_ret != 0 && is_disc && vol_probe_offset != 0) {
+				/* Some cd-rom drives report the offset of the session in the cd's TOC
+				 * wrong.  Fallback to probing at offset 0, just to be sure */
+				HAL_INFO (("invoking blkid_do_safeprobe, offset=0, size=%d", vol_size));
+				bid_ret = blkid_probe_set_device (pr, fd, 0, vol_size);
+				if (bid_ret == 0)
+					bid_ret = blkid_do_safeprobe (pr);
+				HAL_INFO (("blkid_do_safeprobe returned %d", bid_ret));
+			}
+
+			if (bid_ret == 0) {
+				set_blkid_values(cs, pr);
 				if (disc_may_have_data) {
 					libhal_changeset_set_property_bool (cs, "volume.disc.is_blank", FALSE);
 					libhal_changeset_set_property_bool (cs, "volume.disc.has_data", TRUE);
@@ -663,7 +659,7 @@ main (int argc, char *argv[])
 			 *  this is good enough for now... the only discs I know of that does this
 			 *  is in fact Apple's install disc.)
 			 */
-			if (vid_ret != 0 && is_disc) {
+			if (bid_ret != 0 && is_disc) {
 				PartitionTable *p;
 				p = part_table_load_from_disk (stordev_dev_file);
 				if (p != NULL) {
@@ -681,11 +677,10 @@ main (int argc, char *argv[])
 							guint64 part_offset;
 
 							part_offset = part_table_entry_get_offset (p, i);
-							if (volume_id_probe_all (
-								    vid, vol_probe_offset + part_offset, 0) == 0) {
-
-								set_volume_id_values(cs, vid);
-							}
+							if (blkid_probe_set_device (pr, fd,
+								vol_probe_offset + part_offset, 0) == 0 &&
+							    blkid_do_safeprobe (pr) == 0)
+								set_blkid_values(cs, pr);
 
 							/* and we're done */
 							break;
@@ -699,7 +694,7 @@ main (int argc, char *argv[])
 				}
 			}
 
-			volume_id_close(vid);
+			blkid_free_probe (pr);
 		}
 
 		/* get partition type number, if we find a msdos partition table */

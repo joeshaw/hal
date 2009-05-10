@@ -222,7 +222,7 @@ logger_emit (const char *format, ...)
  *  @format:             Message format string, printf style
  *  @...:                Parameters for message, printf style
  *
- * Forward debug messages as e.g. from udev/libvolume_id.
+ * Forward debug messages
  */
 void
 logger_forward_debug (const char *format, ...)
