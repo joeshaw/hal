@@ -488,7 +488,7 @@ else
         *-*-solaris*)
 		   HALD_BACKEND="solaris"
 		   ;;
-        *-*-freebsd*)
+        *-*-freebsd* | *-*-kfreebsd*-gnu)
                    HALD_BACKEND="freebsd"
                    ;;
 	*-linux*)
