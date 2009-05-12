@@ -32,6 +32,7 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/un.h>
 #include <unistd.h>
 
@@ -45,9 +46,14 @@ static FILE *
 acpi_get_event_fp_kernel (void)
 {
 	FILE *fp = NULL;
+	struct stat sbuf;
+
+	if (stat("/usr/sbin/acpid", &sbuf) == 0)  {
+		HAL_DEBUG (("acpid installed, not using the kernel acpi event interface"));
+		return NULL;
+	}
 
 	fp = fopen ("/proc/acpi/event", "r");
-
 	if (fp == NULL)
 		HAL_ERROR (("Cannot open /proc/acpi/event: %s", strerror (errno)));
 
