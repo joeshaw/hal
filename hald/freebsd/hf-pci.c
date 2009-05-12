@@ -27,7 +27,7 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <bitstring.h>
+#include <sys/bitstring.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
