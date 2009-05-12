@@ -28,7 +28,7 @@
 #  include <config.h>
 #endif
 
-#include <sys/types.h>
+#include <stdint.h>
 
 #include "hfp.h"
 
@@ -53,8 +53,8 @@ enum
 typedef struct
 {
   /* mode page data header */
-  u_int16_t   data_length;
-  u_int8_t    medium_type;
+  uint16_t   data_length;
+  uint8_t    medium_type;
 #define HFP_CDROM_MST_TYPE_MASK_LOW	0x0f
 #define HFP_CDROM_MST_FMT_NONE		0x00
 #define HFP_CDROM_MST_DATA_120		0x01
@@ -75,17 +75,17 @@ typedef struct
 #define HFP_CDROM_MST_DOOR_OPEN		0x71
 #define HFP_CDROM_MST_FMT_ERROR		0x72
 
-  u_int8_t    dev_spec;
-  u_int16_t   unused;
-  u_int16_t   blk_desc_len;
+  uint8_t    dev_spec;
+  uint16_t   unused;
+  uint16_t   blk_desc_len;
 
   /* capabilities page */
-  u_int8_t    page_code;
+  uint8_t    page_code;
 #define HFP_CDROM_CAP_PAGE		0x2a
 
-  u_int8_t    param_len;
+  uint8_t    param_len;
 
-  u_int16_t   media;
+  uint16_t   media;
 #define HFP_CDROM_MST_READ_CDR		0x0001
 #define HFP_CDROM_MST_READ_CDRW		0x0002
 #define HFP_CDROM_MST_READ_PACKET	0x0004
@@ -98,7 +98,7 @@ typedef struct
 #define HFP_CDROM_MST_WRITE_DVDR	0x1000
 #define HFP_CDROM_MST_WRITE_DVDRAM	0x2000
 
-  u_int16_t   capabilities;
+  uint16_t   capabilities;
 #define HFP_CDROM_MSTAUDIO_PLAY		0x0001
 #define HFP_CDROM_MST_COMPOSITE		0x0002
 #define HFP_CDROM_MST_AUDIO_P1		0x0004
@@ -115,7 +115,7 @@ typedef struct
 #define HFP_CDROM_MST_ISRC		0x2000
 #define HFP_CDROM_MST_UPC		0x4000
 
-  u_int8_t    mechanism;
+  uint8_t    mechanism;
 #define HFP_CDROM_MST_LOCKABLE		0x01
 #define HFP_CDROM_MST_LOCKED		0x02
 #define HFP_CDROM_MST_PREVENT		0x04
@@ -131,18 +131,18 @@ typedef struct
 #define HFP_CDROM_MST_SEP_VOL		0x01
 #define HFP_CDROM_MST_SEP_MUTE		0x02
 
-  u_int16_t   max_read_speed;		/* max raw data rate in bytes/1000 */
-  u_int16_t   max_vol_levels;		/* number of discrete volume levels */
-  u_int16_t   buf_size;			/* internal buffer size in bytes/1024 */
-  u_int16_t   cur_read_speed;		/* current data rate in bytes/1000  */
+  uint16_t   max_read_speed;		/* max raw data rate in bytes/1000 */
+  uint16_t   max_vol_levels;		/* number of discrete volume levels */
+  uint16_t   buf_size;			/* internal buffer size in bytes/1024 */
+  uint16_t   cur_read_speed;		/* current data rate in bytes/1000  */
 
-  u_int8_t    reserved3;
-  u_int8_t    misc;
+  uint8_t    reserved3;
+  uint8_t    misc;
 
-  u_int16_t   max_write_speed;		/* max raw data rate in bytes/1000 */
-  u_int16_t   cur_write_speed;		/* current data rate in bytes/1000  */
-  u_int16_t   copy_protect_rev;
-  u_int16_t   reserved4;
+  uint16_t   max_write_speed;		/* max raw data rate in bytes/1000 */
+  uint16_t   cur_write_speed;		/* current data rate in bytes/1000  */
+  uint16_t   copy_protect_rev;
+  uint16_t   reserved4;
 } HFPCDROMCapabilities;
 
 HFPCDROM *hfp_cdrom_new (const char *path, const char *parent);
