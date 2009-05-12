@@ -644,7 +644,6 @@ void
 hf_storage_device_enable (HalDevice *device)
 {
   g_return_if_fail(HAL_IS_DEVICE(device));
-  g_return_if_fail(devname != NULL);
 
   hal_device_property_set_string(device, "storage.bus", "platform");
   hal_device_property_set_string(device, "storage.drive_type", "disk");
