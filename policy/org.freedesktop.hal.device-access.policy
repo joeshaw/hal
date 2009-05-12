@@ -199,4 +199,13 @@ NOTE: Please keep the actions in alpabetical order
     </defaults>
   </action>
 
+  <action id="org.freedesktop.hal.device-access.smart-card-reader">
+    <description>Directly access smart-card readers</description>
+    <message>System policy prevents access to the smart-card readers</message>
+    <defaults>
+      <allow_inactive>no</allow_inactive>
+      <allow_active>yes</allow_active>
+    </defaults>
+  </action>
+
 </policyconfig>

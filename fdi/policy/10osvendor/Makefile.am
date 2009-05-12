@@ -8,6 +8,7 @@ dist_fdi_DATA = 			\
 	10-leds.fdi			\
 	10-power-mgmt-policy.fdi	\
 	10-rfkill-switch.fdi		\
+	10-smartcardreaders.fdi		\
 	10-tabletPCs.fdi		\
 	10-x11-input.fdi		\
 	15-storage-luks.fdi		\
