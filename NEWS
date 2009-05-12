@@ -2,13 +2,13 @@
 HAL 0.5.12
 ==========
 
-Released Month 00, 2009.
+Released May 12, 2009.
 
 Requirements for HAL 0.5.12:
 
  - Linux kernel     >= 2.6.22    (CONFIG_SYSFS_DEPRECATED=n)
  - udev             >= 125       (Linux only)
- - util-linux-ng    >= 2.15-rc1
+ - util-linux-ng    >= 2.15
  - bash             >= 2.0
  - dbus             >= 0.61      (with glib bindings)
  - glib             >= 2.10.0
@@ -30,6 +30,278 @@ Requirements for HAL 0.5.12:
  - pm-utils         >= 0.99.2    or newer (optional)
 
 Contributors to HAL 0.5.12 :
+
+Alex Kanavin (1):
+      add ACL rule an policy for obex devices
+
+Andreas Schwab (1):
+      fixed buffer overrun
+
+Arjan van de Ven (1):
+      make hal start a lot faster
+
+Colin Walters (1):
+      aallowllow calling KillSwitch methods in D-Bus configuration
+
+Daniel Drake (1):
+      disable polling on batteries if battery.quirk.do_not_poll is set
+
+Daniel Walsh (1):
+      don't leak file descriptor on umount
+
+Danny Kukawka (142):
+      added system.board.* for base-/mainboard information
+      removed info about hal-device-manager from spec
+      fixed memory leaks related to usage of g_strsplit
+      fixed fdi.dtd for the remove rule
+      updated SPEC for power_management.quirk.pci_save
+      fix PMU battery and AC handling with power_supply
+      fixed PropertyModified signal in SPEC and code
+      fixed possible memory leak
+      remove storage.model property from volumes
+      reuse code in addons to check privileges
+      updated .gitignore
+      fixed merge for uint64
+      added new addon for the generic sysfs backlight interface
+      fix detection of TabletPCs
+      fixed device removage
+      fixed 10-tabletPCs.fdi
+      added hald-addon-generic-backlight to .gitignore
+      added new addon for the ipw killswitch interface
+      add hald-addon-ipw-killswitch to .gitignore
+      fixed Lock() handling
+      unify directory usage under /var/run
+      added check for ConsoleKit >= v0.3.1 to configure
+      allow acl and user_xattr as mount options for reiserfs
+      removed needless whitespaces at the end of lines
+      fix DBus introspection for org.freedesktop.Hal.Manager
+      ported addon-macbook-backlight to use HAL logging code
+      fixed cpufreq addon to call setup_logger()
+      added configure check for libsmbios >= 2.0.3
+      use smi::getPasswordStatus() only if available
+      use udevadm instead of (deprecated) udevinfo
+      add requirements for next release (0.5.12)
+      fixed wrong condition in libsmbios checks
+      don't use hal_util_compute_udi directly inside of hald
+      added linux rfkill subsystem to HAL
+      add *.tar.bz2 to .gitignore
+      get storage.model for SCSI via HDIO_GET_IDENTITY instead of sysfs
+      remove unneeded variable from commit 702351eaea4
+      add battery.quirk.do_not_poll to spec
+      removed deprecated properties from spec
+      removed outdated deprecated keys finally from spec
+      Revert "allow 'locale=' NTFS mount option for Linux"
+      unify set volume.ignore for recovery partitions
+      Revert "adapt HAL to changes in the kernel regarding to docking stations"
+      fix udi: replace '/' in the last part of the udi
+      prefer sans-serif instead of luxi sans in css file
+      fixed formatting of org.freedesktop.Hal.SingletonAddon in spec
+      keep subsystem/devhandler in alphabetical order
+      add ppdev subsystem
+      add support for virtual network devices
+      added obex namespace to spec
+      sort device access policies/actions alphabetical
+      add ACL rule and policy for ppdev
+      fixed ACL rules for PDAs
+      add support for detect DVD-R DL for storage.cdrom.dvdrdl
+      fixed spec for vio bus
+      allow also PCI as possible storage.bus
+      add support for the BDI subsystem
+      add bdi namespace to spec
+      add support for bdi bases block devices
+      add bdi to storage.bus spec
+      fixed storage.bus spec to sort values in alphabetical order
+      reorganise spec: sort 'Subsystem-Specific Properties' alphabetical
+      reorganise spec: sort 'Functional Properties' alphabetical
+      reorganise spec: sort 'D-Bus interfaces' alphabetical
+      add biometric and biometric.fingerprint_reader namespace
+      added ACL/device access rules for fingerprint reader
+      small cleanup for configure.in
+      added volume.(un)mount.valid_options to spec
+      added new properties to mount alternative fstypes as e.g. ntfs-3g
+      added support for alternative fstype to Mount()
+      Merge branch 'master' of ssh://dkukawka@git.freedesktop.org/git/hal
+      added comment to not change order of usb and usbclass handler
+      Revert "add support for the BDI subsystem"
+      revert BDI changes from SPEC
+      Revert "add support for bdi bases block devices"
+      remove generic sysfs backlight from scripts
+      add volume.fstype.alternative.prefered to spec
+      add support for HP Smart Array CCISS block devices
+      add cciss as possible storage.bus to spec
+      fixed md related code in hotplug_event_begin_add_blockdev()
+      check module parameter of acpi video to set brightness_in_hardware
+      fixed typo, adjust description of volume.fstype.alternative.preferred
+      fix handling of Device Mapper devices for LUKS
+      fix commit 151957477daaf985acdb2d7bda5b4a418c612cf3
+      Merged changes from git.freedesktop.org/git/hal.git (315ca276ffdde9a)
+      cleanup handling volume filesystem information
+      fix commit d29ea6b31b67bf540b23dfedfa1b7add4c22bce2
+      another fix for commit d29ea6b31b67bf540b23dfedfa1b7add4c22bce2
+      add memstick and memstick_host namespace to spec
+      add memstick to storage.bus in spec
+      fixed call of hotplug_queue_now_empty() under linux
+      Revert "cleanup handling volume filesystem information"
+      improve HAL performance for filesystem detection
+      add a new singleton addon for the rfkill subsystem
+      add new killswitch.state property
+      fixed ipw addon
+      Merge branch 'master' of ssh://dkukawka@people.freedesktop.org/~dkukawka/hal
+      add the leds linux kernel subsystem to HAL
+      add a new singleton addon to handle leds
+      update .gitignore for hald/linux/addons
+      add org.freedesktop.Hal.Device.Leds interface to spec
+      fix joystick detection (patch by Ari Mustonen)
+      fix ACL handling for drm devices
+      fixed serial.port handling for USB serial devices
+      add ACL support for scsi_generic scanner devices
+      Merge branch 'master' of ssh://dkukawka@git.freedesktop.org/git/hal
+      Merge branch 'master' of ssh://dkukawka@people.freedesktop.org/~dkukawka/hal
+      fix make distcheck
+      fixing spec for access_control.type due to Policykit changes
+      fix spec due to path/filename changes with actual PolicyKit
+      Merge branch 'master' of ssh://dkukawka@git.freedesktop.org/git/hal
+      remove policy rule for org.freedesktop.Hal.Device.VideoAdapterPM
+      remove second policy context="default" block
+      put policy rules in alphabetical order
+      fix policy for org.freedesktop.Hal.Device.KillSwitch
+      add DBus policy rule for org.freedesktop.Hal.Device.Leds
+      add DBus policy rule for org.freedesktop.Hal.Device.CPUFreq
+      add DBus policy rule for org.freedesktop.Hal.Device.LightSensor
+      add D-Bus policy rule for org.freedesktop.Hal.Device.KeyboardBacklight
+      add D-Bus policy rule for org.freedesktop.Hal.Device.Storage.Removable
+      add org.freedesktop.Hal.Device.WakeOnLan to HAL D-Bus config
+      add org.freedesktop.Hal.Device.Storage to HAL D-Bus config
+      add org.freedesktop.Hal.Device.DockStation to HAL D-Bus config
+      add org.freedesktop.DBus.Properties standard iterface
+      remove all receive_* lines from HAL D-Bus config
+      fixed HAL D-Bus config: added send_destination for all interfaces
+      add some parameter checks to hal_util_*et_driver*() functions
+      add section about "Device Files policies" to spec
+      put usbraw matches for ACL together into one block
+      use addset instead of append for ACL rules
+      add ACL and device-access policy for printers
+      update spec for printer access policy
+      filled TODOs with information for the printer namespace
+      sort existing PolicyKit policies for device access alphabetical
+      add current default policies for device access to spec
+      fixed entries to add acl related keys only if there is a device
+      fix commit 33b54318f73012e24220456216794dd3ff39fc93
+      provide comparable linux kernel version information
+      fix problems with removable-block policy and floppy devs
+      move all storage/block related policies to one block
+      Merge branch 'master' of ssh://dkukawka@git.freedesktop.org/git/hal
+      fix commit 92e7f2e8b2a1a36d3ec2b371424719e7078d91da
+
+Frederic Crozat (1):
+      adapt new CK library version (>= v0.3.1) to HAL
+
+Gabriel Burt (1):
+      export seconds_to_sleep to pm-utils
+
+Guillem Jover (9):
+      add mmc_host slot_name support
+      do not compare arrays against NULL
+      addon-cpufreq: do not leak va_arg on error condition
+      do not leak on error conditions
+      fix some memory leaks on normal operation
+      remove unused pointer to struct mntent returned from getmntent_r
+      do not call property_set_lookup before checking param validity
+      remove unused call to hal_util_get_last_element
+      make Magneto-Optical devices visible
+
+Holger Freyther (1):
+      allow to cross compile hal with host and target having different input.h
+
+Holger Macht (1):
+      adapt HAL to changes in the kernel regarding to docking stations
+
+Johannes Berg (2):
+      use 'phy80211' instead of 'wiphy' symlink to detect wireless
+      use wext ioctl instead of sysfs to detect wireless
+
+Jürg Billeter (1):
+      inserts the sysfs path at the right position for call udevadm
+
+Kay Sievers (2):
+      use '@' for abstract namespace socket, bump udev requirement
+      move from libvolume_id to libblkid
+
+Kouhei Sutou (1):
+      add support for detecting DVD-R DL media
+
+Lucas Rocha (1):
+      probe for v4l only if probe for v4l2 failed
+
+Ludwig Nussel (3):
+      merge additional device access types from hal-resmgr
+      hal-acl-tool: don't free strings that are not supposed to be freed
+      fix ACL handling for removable block devices (as CD/DVD)
+
+Makoto Dei (1):
+      include config.h before any other headers
+
+Mario Limonciello (3):
+      check if BIOS password is present prior to use libsmbios commands
+      fix Dell bluetooth killswitch
+      fix building with current libsmbios
+
+Markus Rothe (1):
+      fix issue on 64bit big endian architectures.
+
+Martin Pitt (7):
+      volume.num_blocks can become larger than 2G
+      increase hal helper timeout to fix slow CD-ROMs
+      add ACL support to removable block devices
+      fix building on Linux 2.6.28
+      fix auto ACL management for DRI
+      fix volume label parsing
+      fix volume.num_blocks data type in libhal-storage
+
+Matthew Garrett (3):
+      Add newer Macbook Pros, and remove the backlight addon for Nvidia-based Pros (it doesn't work there)
+      add memstick/memstick_host support
+      don't add input capabilities to tablet PNP device
+
+Michael Biebl (1):
+      allow uid/gid mount option for ntfs
+
+Ozan Çağlayan (1):
+      fix SUSBSYSTEM typo in a debug message
+
+Pacho Ramos (1):
+      prevent hal from automounting Dell recovery partition
+
+Patrick Campbell (1):
+      set Xen storage drive type
+
+Paul Bolle (1):
+      add zoom and ThinkPad events to acpi addon for IBM/Lenovo
+
+Philipp Ittershagen (1):
+      add save-pci support to hal-system-power-suspend-linux
+
+Rafał Mużyło (1):
+      fix some configure issues
+
+Richard Hughes (11):
+      fix a crash when the rfkill device does not have a type
+      revert a tiny bit of the device ording change as it breaks printer detection
+      remove the forced removal of the trailing newline to fix OLPC probing
+      prefer openfirmware interface for DMI even when dmidecode is found in the path
+      check udi in hal-get-property
+      set the retval of hal-device correctly on error
+      allow child timeout to be set so hal starts on big servers
+      Merge branch 'master' of git+ssh://hughsient@git.freedesktop.org/git/hal
+      add x11_driver for KVM graphics tablet
+      allow specifying a udev dir in etc
+      regenerate cache if it's zero sized
+
+Rémi Cardona (1):
+      add libtool-2.2 support
+
+Scott James Remnant (1):
+      install udev rule to /lib/udev/rules.d/
 
 
 ==========
