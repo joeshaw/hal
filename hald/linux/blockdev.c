@@ -1498,8 +1498,15 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 		hal_device_property_set_bool (d, "volume.is_mounted", FALSE);
 		hal_device_property_set_bool (d, "volume.is_mounted_read_only", FALSE);
 		hal_device_property_set_bool (d, "volume.linux.is_device_mapper", is_device_mapper);
-		hal_device_property_set_bool (d, "volume.is_disc", strcmp (hal_device_property_get_string (parent, "storage.drive_type"), "cdrom") == 0);
-
+		/* Don't assume that the parent has storage capability, eg
+		 * if we are an MD partition then this is the case as we were
+		 * re-parented to the root computer device object earlier.
+		 */
+		if (hal_device_has_property(parent, "storage.drive_type")) {
+			hal_device_property_set_bool (d, "volume.is_disc", strcmp (hal_device_property_get_string (parent, "storage.drive_type"), "cdrom") == 0);
+		} else {
+			hal_device_property_set_bool (d, "volume.is_disc", FALSE);
+		}
 
 		is_physical_partition = TRUE;
 		if (is_fakevolume || is_device_mapper)
@@ -1508,8 +1515,10 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 		hal_device_property_set_bool (d, "volume.is_partition", is_physical_partition);
 
 		hal_device_property_set_string (d, "info.category", "volume");
-		if (strcmp(hal_device_property_get_string (parent, "storage.drive_type"), "cdrom") == 0) {
-			hal_device_add_capability (d, "volume.disc");
+		if (hal_device_has_property(parent, "storage.drive_type")) {
+			if (strcmp(hal_device_property_get_string (parent, "storage.drive_type"), "cdrom") == 0) {
+				hal_device_add_capability (d, "volume.disc");
+			}
 		}
 		hal_device_add_capability (d, "volume");
 		hal_device_add_capability (d, "block");
