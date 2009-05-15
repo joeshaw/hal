@@ -63,7 +63,7 @@
 static int
 sonypi_get_lcd_brightness (__u8 *val)
 {
-#if defined (__FreeBSD__) || defined(__FreeBSD_kernel__)
+#if defined (__FreeBSD__) || defined(__FreeBSD_kernel__)
 	return FALSE;			/* FIXME implement */
 #elif sun
 	return FALSE;			/* FIXME implement */
@@ -163,7 +163,7 @@ error_set:
 static int
 sonypi_set_lcd_brightness (__u8 val)
 {
-#if defined (__FreeBSD__) || defined(__FreeBSD_kernel__)
+#if defined (__FreeBSD__) || defined(__FreeBSD_kernel__)
 	return FALSE;			/* FIXME implement */
 #elif sun
 	return FALSE;			/* FIXME implement */
@@ -195,7 +195,7 @@ sonypi_set_lcd_brightness (__u8 val)
 static int
 sonypi_set_bluetooth_power (int val)
 {
-#if defined (__FreeBSD__) || defined(__FreeBSD_kernel__)
+#if defined (__FreeBSD__) || defined(__FreeBSD_kernel__)
 	return FALSE;			/* FIXME implement */
 #elif sun
 	return FALSE;			/* FIXME implement */
