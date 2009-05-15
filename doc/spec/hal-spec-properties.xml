@@ -6248,6 +6248,41 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
       </informaltable>
     </sect2>
 
+    <sect2 id="device-properties-smart_card_reader">
+      <title>
+        smart_card_reader namespace
+      </title>
+      <para>
+	Device objects with the capability <literal>smart_card_reader</literal> represent
+	a smart card device/systems (e.g. smart card reader) . No namespace specific
+        properties.
+      </para>
+    </sect2>
+
+    <sect2 id="device-properties-smart_card_reader-card_reader">
+      <title>
+        smart_card_reader.card_reader namespace
+      </title>
+      <para>
+	Device objects with the capabilities <literal>smart_card_reader</literal>
+	and <literal>smart_card_reader.card_reader</literal> represent a 
+	smart card reader. No namespace specific properties.
+      </para>
+    </sect2>
+
+    <sect2 id="device-properties-smart_card_reader-crypto_token">
+      <title>
+        smart_card_reader.crypto_token namespace
+      </title>
+      <para>
+	Device objects with the capabilities <literal>smart_card_reader</literal> and 
+	<literal>smart_card_reader.crypto_token</literal> represent a smart token, a 
+	device where the smart card and the smart card reader are in one device. No 
+	namespace specific properties.
+      </para>
+    </sect2>
+
+
     <sect2 id="device-properties-storage">
       <title>
         storage namespace

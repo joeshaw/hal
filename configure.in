@@ -76,7 +76,7 @@ AC_ARG_WITH([socket-dir],
 
 AC_ARG_WITH(udev-prefix,
         AS_HELP_STRING([--with-udev-prefix=DIR], [add prefix to internal udev path names]),
-        [], [with_udev_prefix='${exec_prefix}'])
+        [], [with_udev_prefix='${exec_prefix}/lib'])
 udev_prefix=$with_udev_prefix
 AC_SUBST(udev_prefix)
 

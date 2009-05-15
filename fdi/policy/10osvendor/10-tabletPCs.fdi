@@ -3,17 +3,10 @@
 <deviceinfo version="0.2">
 
   <device>
-    <match key="info.capabilities" contains="input.tablet.tabletPC">
-      <!-- There is a report that we should use ttyS2 instead of ttyS0 -->
-      <match key="/org/freedesktop/Hal/devices/computer:system.hardware.product" contains="HP Compaq tc4200">
-	<merge key="input.device.set" type="string">/dev/ttyS2</merge>
-      </match>
-
-      <!-- to get the device up we need to set the baud_rate correct -->
-      <match key="pnp.id" contains="FPI2004">
-	<merge key="input.device.set" type="string">/dev/ttyS0</merge>
-	<merge key="pnp.serial.baud_base" type="int">38400</merge>
-      </match>
+    <!-- to get the device up we need to set the baud_rate correct -->
+    <match key="pnp.id" contains="FPI2004">
+      <merge key="input.device.set" type="string">/dev/ttyS0</merge>
+      <merge key="pnp.serial.baud_base" type="int">38400</merge>
     </match>
 
     <!-- add addon if need special ttySx settings -->

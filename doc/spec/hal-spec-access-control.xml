@@ -138,6 +138,14 @@
             </row>
             <row>
               <entry>
+                <literal>smart-card-reader</literal>
+              </entry>
+              <entry>Directly access Smart Card Reader security devices.</entry>
+	      <entry>no</entry>
+	      <entry>yes</entry>
+            </row>
+            <row>
+              <entry>
                 <literal>joystick</literal>
               </entry>
               <entry>Directly access Joystick devices.</entry>

@@ -73,6 +73,11 @@
 	  <merge key="access_control.file" type="copy_property">usbraw.device</merge>
 	  <merge key="access_control.type" type="string">fingerprint-reader</merge>
         </match>
+        <match key="info.capabilities" sibling_contains="smart_card_reader">
+	  <addset key="info.capabilities" type="strlist">access_control</addset>
+	  <merge key="access_control.file" type="copy_property">usbraw.device</merge>
+	  <merge key="access_control.type" type="string">smart-card-reader</merge>
+        </match>
       </match>
     </match>
 
@@ -102,6 +107,11 @@
         <match key="info.capabilities" contains="biometric.fingerprint_reader">
           <addset key="info.capabilities" type="strlist">access_control</addset>
           <merge key="access_control.type" type="string">fingerprint-reader</merge>
+          <merge key="access_control.file" type="copy_property">@info.parent:linux.device_file</merge>
+        </match>
+        <match key="info.capabilities" contains="smart_card_reader">
+          <addset key="info.capabilities" type="strlist">access_control</addset>
+          <merge key="access_control.type" type="string">smart-card-reader</merge>
           <merge key="access_control.file" type="copy_property">@info.parent:linux.device_file</merge>
         </match>
       </match>
