@@ -786,7 +786,8 @@ handle_mount (LibHalContext *hal_ctx,
 		/* don't consider uid= on vfat, iso9660, hfs and udf change-uid for the purpose of policy
 		 * (since these doesn't contain uid/gid bits) 
 		 */
-		if (strcmp (libhal_volume_get_fstype (volume), "vfat") != 0 &&
+		if (libhal_volume_get_fstype (volume) != NULL &&
+		    strcmp (libhal_volume_get_fstype (volume), "vfat") != 0 &&
 		    strcmp (libhal_volume_get_fstype (volume), "ntfs") != 0 &&
 		    strcmp (libhal_volume_get_fstype (volume), "ntfs-3g") != 0 &&
 		    strcmp (libhal_volume_get_fstype (volume), "iso9660") != 0 &&
