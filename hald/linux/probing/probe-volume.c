@@ -97,8 +97,7 @@ set_blkid_values (LibHalChangeSet *cs, blkid_probe pr)
 
 	if (blkid_probe_lookup_value(pr, "TYPE", &type, NULL))
 		type = "";
-	if (!libhal_changeset_set_property_string (cs, "volume.fstype", type))
-		libhal_changeset_set_property_string (cs, "volume.fstype", "");
+	libhal_changeset_set_property_string (cs, "volume.fstype", type);
 	HAL_DEBUG(("volume.fstype = '%s'", type));
 
 	if (blkid_probe_lookup_value(pr, "VERSION", &type_version, NULL))
