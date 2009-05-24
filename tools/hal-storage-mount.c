@@ -786,13 +786,13 @@ handle_mount (LibHalContext *hal_ctx,
 		/* don't consider uid= on vfat, iso9660, hfs and udf change-uid for the purpose of policy
 		 * (since these doesn't contain uid/gid bits) 
 		 */
-		if (libhal_volume_get_fstype (volume) != NULL &&
-		    strcmp (libhal_volume_get_fstype (volume), "vfat") != 0 &&
-		    strcmp (libhal_volume_get_fstype (volume), "ntfs") != 0 &&
-		    strcmp (libhal_volume_get_fstype (volume), "ntfs-3g") != 0 &&
-		    strcmp (libhal_volume_get_fstype (volume), "iso9660") != 0 &&
-		    strcmp (libhal_volume_get_fstype (volume), "hfs") != 0 &&
-		    strcmp (libhal_volume_get_fstype (volume), "udf") != 0) {
+		const char *v_fstype;
+
+		v_fstype = libhal_volume_get_fstype (volume);
+		if (v_fstype != NULL && 
+		    strcmp (v_fstype, "vfat") != 0 && strcmp (v_fstype, "ntfs") != 0 &&
+		    strcmp (v_fstype, "ntfs-3g") != 0 && strcmp (v_fstype, "iso9660") != 0 && 
+		    strcmp (v_fstype, "hfs") != 0 && strcmp (v_fstype, "udf") != 0) {
 			pol_change_uid = wants_to_change_uid;
 		}
 	}
