@@ -256,7 +256,7 @@ hal_util_init_sysfs_to_udev_map (void)
 		} else if (strncmp(line, "E: ID_FS_LABEL_ENC=", 19) == 0) {
 			len = strlen (&line[15]);
 			info->fslabel = g_malloc0 (len + 1);
-			hal_util_decode_escape (&line[19], info->fslabel, len + 1);
+			hal_util_decode_escape (&line[19], (char *)info->fslabel, len + 1);
 		}
 	}
 
