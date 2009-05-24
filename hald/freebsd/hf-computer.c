@@ -130,6 +130,17 @@ hf_computer_device_add (void)
   hal_device_property_set_string(device, "info.subsystem", "unknown");
   hal_device_property_set_string(device, "info.product", "Computer");
 
+  if (PACKAGE_VERSION) {
+      int major, minor, micro;
+
+      hal_device_property_set_string (root, "org.freedesktop.Hal.version", PACKAGE_VERSION);
+      if ( sscanf( PACKAGE_VERSION, "%d.%d.%d", &major, &minor, &micro ) == 3 ) {
+	hal_device_property_set_int (root, "org.freedesktop.Hal.version.major", major);
+        hal_device_property_set_int (root, "org.freedesktop.Hal.version.minor", minor);
+        hal_device_property_set_int (root, "org.freedesktop.Hal.version.micro", micro);
+      }
+  }
+
   if (uname(&un) == 0)
     {
       hal_device_property_set_string(device, "system.kernel.name", un.sysname);

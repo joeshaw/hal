@@ -841,6 +841,17 @@ osspec_probe (void)
 	hal_device_property_set_string (root, "info.product", "Computer");
 	hal_device_set_udi (root, "/org/freedesktop/Hal/devices/computer");
 
+	if (PACKAGE_VERSION) {
+		int major, minor, micro;
+
+		hal_device_property_set_string (root, "org.freedesktop.Hal.version", PACKAGE_VERSION);
+		if ( sscanf( PACKAGE_VERSION, "%d.%d.%d", &major, &minor, &micro ) == 3 ) {
+			hal_device_property_set_int (root, "org.freedesktop.Hal.version.major", major);
+                        hal_device_property_set_int (root, "org.freedesktop.Hal.version.minor", minor);
+                        hal_device_property_set_int (root, "org.freedesktop.Hal.version.micro", micro);
+		}
+	}
+
 	if (uname (&un) >= 0) {
 		hal_device_property_set_string (root, "system.kernel.name", un.sysname);
 		hal_device_property_set_string (root, "system.kernel.version", un.release);

@@ -74,6 +74,17 @@ devinfo_computer_add(HalDevice *parent, di_node_t node, char *devfs_path, char *
         hal_device_set_udi (d, "/org/freedesktop/Hal/devices/computer");
 	hal_device_property_set_string (d, "solaris.devfs_path", devfs_path);
 
+        if (PACKAGE_VERSION) {
+                int major, minor, micro;
+
+                hal_device_property_set_string (root, "org.freedesktop.Hal.version", PACKAGE_VERSION);
+                if ( sscanf( PACKAGE_VERSION, "%d.%d.%d", &major, &minor, &micro ) == 3 ) {
+                        hal_device_property_set_int (root, "org.freedesktop.Hal.version.major", major);
+                        hal_device_property_set_int (root, "org.freedesktop.Hal.version.minor", minor);
+                        hal_device_property_set_int (root, "org.freedesktop.Hal.version.micro", micro);
+                }
+        }
+
 	if (uname (&un) >= 0) {
 		hal_device_property_set_string (d, "system.kernel.name", un.sysname);
 		hal_device_property_set_string (d, "system.kernel.version", un.release);

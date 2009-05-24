@@ -12,6 +12,64 @@
     can catch.
   </para>
 
+  <sect1 id="device-properties-hal">
+    <title>
+      org.freedesktop.Hal namespace
+    </title>
+    <para>
+      The <literal>org.freedesktop.Hal</literal> namespace contain properties that
+      can be considered metadata about HAL itself and not about device objects. They
+      are only available at the root object (<literal>/org/freedesktop/Hal/devices/computer</literal>) 
+      and allow to query information about HAL from fdi files.
+    </para>
+    <informaltable>
+      <tgroup cols="2">
+        <thead>
+          <row>
+            <entry>Key (type)</entry>
+            <entry>Values</entry>
+            <entry>Mandatory</entry>
+            <entry>Description</entry>
+          </row>
+        </thead>
+        <tbody>
+          <row>
+            <entry>
+              <literal>org.freedesktop.Hal.version</literal> (string)
+            </entry>
+            <entry>example: 0.5.13</entry>
+            <entry>Yes</entry>
+            <entry>The version number of the running HAL daemon.</entry>
+          </row>
+          <row>
+            <entry>
+              <literal>org.freedesktop.Hal.version.major</literal> (int)
+            </entry>
+            <entry>example: 0</entry>
+            <entry>Yes</entry>
+            <entry>The major version number of the running HAL daemon.</entry>
+          </row>
+          <row>
+            <entry>
+              <literal>org.freedesktop.Hal.version.minor</literal> (int)
+            </entry>
+            <entry>example: 5</entry>
+            <entry>Yes</entry>
+            <entry>The minor version number of the running HAL daemon.</entry>
+          </row>
+          <row>
+            <entry>
+              <literal>org.freedesktop.Hal.version.micro</literal> (int)
+            </entry>
+            <entry>example: 13</entry>
+            <entry>Yes</entry>
+            <entry>The micro version number of the running HAL daemon.</entry>
+          </row>
+        </tbody>
+      </tgroup>
+     </informaltable>
+  </sect1>
+
   <sect1 id="properties-general">
     <title>General Properties</title>
     <para>
@@ -19,6 +77,7 @@
       physical or functional characteristics of what the device
       object represents.
     </para>
+
     <sect2 id="device-properties-info">
       <title>
         info namespace
