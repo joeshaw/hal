@@ -175,7 +175,11 @@ static char *key_name[KEY_MAX + 1] = {
 #ifndef KEY_WLAN
 #define KEY_WLAN 238
 #endif
-	[KEY_WLAN] = "wlan"
+	[KEY_WLAN] = "wlan",
+#ifndef KEY_ZOOM
+#define KEY_ZOOM 0x174
+#endif
+	[KEY_ZOOM] = "zoom"
 };
 
 
