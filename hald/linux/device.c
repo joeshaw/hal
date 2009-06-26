@@ -1006,6 +1006,8 @@ input_test_key (HalDevice *d, const char *sysfs_path)
 		} else if (test_bit (KEY_SUSPEND, bitmask)) {
 			hal_device_property_set_string (d, "button.type", "hibernate");
 		}
+		if (input_test_keys (bitmask))
+			hal_device_add_capability (d, "input.keys");
 	} else {
 		gboolean is_keyboard = input_test_keyboard (bitmask);
 		gboolean is_keypad = input_test_keypad (bitmask);
