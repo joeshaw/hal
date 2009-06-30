@@ -6,7 +6,7 @@ AM_CPPFLAGS = \
 	-DPACKAGE_BIN_DIR=\""$(bindir)"\" \
 	-DPACKAGE_LOCALE_DIR=\""$(localedir)"\" \
 	-DPACKAGE_LOCALSTATEDIR=\""$(localstatedir)"\" \
-	-DPACKAGE_SCRIPT_DIR=\""$(libdir)/hal/scripts"\" \
+	-DPACKAGE_SCRIPT_DIR=\""$(libexecdir)/scripts"\" \
 	-DHALD_SOCKET_DIR=\""$(HALD_SOCKET_DIR)"\" \
 	-I$(top_srcdir) \
 	@DBUS_CFLAGS@ @GLIB_CFLAGS@

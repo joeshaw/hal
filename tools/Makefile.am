@@ -17,7 +17,7 @@ AM_CPPFLAGS = \
 	-DPACKAGE_DATA_DIR=\""$(datadir)"\" \
 	-DPACKAGE_BIN_DIR=\""$(bindir)"\" \
 	-DPACKAGE_LOCALSTATEDIR=\""$(localstatedir)"\" \
-	-DPACKAGE_SCRIPT_DIR=\""$(libdir)/hal/scripts"\" \
+	-DPACKAGE_SCRIPT_DIR=\""$(libexecdir)/scripts"\" \
 	-DPACKAGE_LOCALE_DIR=\""$(localedir)"\" \
 	-I$(top_srcdir) -I$(top_srcdir)/libhal -I$(top_srcdir)/libhal-storage \
 	@DBUS_CFLAGS@ @GLIB_CFLAGS@ @POLKIT_CFLAGS@
@@ -156,7 +156,7 @@ hal_system_sonypic_SOURCES = hal-system-sonypic.c
 hal_system_sonypic_LDADD = @GLIB_LIBS@ @DBUS_LIBS@ $(top_builddir)/libhal/libhal.la
 endif
 
-scriptdir = $(libdir)/hal/scripts
+scriptdir = $(libexecdir)/scripts
 
 script_SCRIPTS =				\
 	hal-luks-setup                          \
