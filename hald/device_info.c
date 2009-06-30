@@ -122,27 +122,10 @@ get_match_type_str (enum match_type type)
 }
 #endif
 
-/** Resolve a udi-property path as used in .fdi files.
- *
- *  Examples of udi-property paths:
- *
- *   info.udi
- *   /org/freedesktop/Hal/devices/computer:kernel.name
- *   @block.storage_device:storage.bus
- *   @block.storage_device:@storage.originating_device:ide.channel
- *
- *  @param  source_udi          UDI of source device
- *  @param  path                The given path
- *  @param  udi_result          Where to store the resulting UDI
- *  @param  udi_result_size     Size of UDI string
- *  @param  prop_result         Where to store the resulting property name
- *  @param  prop_result_size    Size of property string
- *  @return                     TRUE if and only if the path resolved.
- */
-static gboolean
-resolve_udiprop_path (const char *path, const char *source_udi,
-		      char *udi_result, size_t udi_result_size,
-		      char *prop_result, size_t prop_result_size)
+static inline gboolean
+resolve_udiprop_path_old (const char *path, const char *source_udi,
+			  char *udi_result, size_t udi_result_size,
+			  char *prop_result, size_t prop_result_size)
 {
 	int i;
 	gchar **tokens = NULL;
@@ -207,6 +190,43 @@ out:
 	return rc;
 }
 
+/** Resolve a udi-property path as used in .fdi files.
+ *
+ *  Examples of udi-property paths:
+ *
+ *   info.udi
+ *   /org/freedesktop/Hal/devices/computer:kernel.name
+ *   @block.storage_device:storage.bus
+ *   @block.storage_device:@storage.originating_device:ide.channel
+ *
+ *  @param  source_udi          UDI of source device
+ *  @param  path                The given path
+ *  @param  udi_result          Where to store the resulting UDI
+ *  @param  udi_result_size     Size of UDI string
+ *  @param  prop_result         Where to store the resulting property name
+ *  @param  prop_result_size    Size of property string
+ *  @return                     TRUE if and only if the path resolved.
+ */
+static gboolean
+resolve_udiprop_path (const char *path, const char *source_udi,
+		      const char **udi_result, const char **prop_result,
+		      const char *scratch /* HAL_PATH_MAX * 2 + 3 */)
+{
+	/* Detect trivial property access, e.g. path='foo.bar'   */
+	if (path == NULL || !strchr (path, ':')) {
+		*udi_result = source_udi;
+		*prop_result = path;
+		return TRUE;
+	}
+
+	/* the sub 5% 'everything else' case */
+	*udi_result = scratch;
+	*prop_result = scratch + HAL_PATH_MAX + 2;
+	return resolve_udiprop_path_old (path, source_udi,
+					 (char *) *udi_result, HAL_PATH_MAX,
+					 (char *) *prop_result, HAL_PATH_MAX);
+}
+
 /* Compare the value of a property on a hal device object against a string value
  * and return the result. Note that this works for several types, e.g. both strings
  * and integers - in the latter case the given right side string will be interpreted
@@ -269,8 +289,9 @@ out:
 static gboolean
 handle_match (struct rule *rule, HalDevice *d)
 {
-	char udi_to_check[HAL_PATH_MAX];
-	char prop_to_check[HAL_PATH_MAX];
+	char resolve_scratch[HAL_PATH_MAX*2 + 3];
+	const char *udi_to_check;
+	const char *prop_to_check;
 	const char *key = rule->key;
 	const char *value = (char *)RULES_PTR(rule->value_offset);
 	const char *d_udi;
@@ -280,8 +301,9 @@ handle_match (struct rule *rule, HalDevice *d)
 	/* Resolve key paths like 'someudi/foo/bar/baz:prop.name' '@prop.here.is.an.udi:with.prop.name' */
 	if (!resolve_udiprop_path (key,
 				   d_udi,
-				   udi_to_check, sizeof (udi_to_check),
-				   prop_to_check, sizeof (prop_to_check))) {
+				   &udi_to_check,
+				   &prop_to_check,
+				   resolve_scratch)) {
 		/*HAL_ERROR (("Could not resolve keypath '%s' on udi '%s'", key, value));*/
 		return FALSE;
 	}
@@ -829,17 +851,17 @@ handle_merge (struct rule *rule, HalDevice *d)
 {
 	const char *value = (char *)RULES_PTR(rule->value_offset);
 	const char *key;
-	char key_to_merge[HAL_PATH_MAX];
+	char resolve_scratch[HAL_PATH_MAX*2 + 3];
+	const char *key_to_merge;
 
 	if (rule->rtype == RULE_MERGE || rule->rtype == RULE_APPEND || 
 	    rule->rtype == RULE_PREPEND || rule->rtype == RULE_ADDSET ) {
-		char udi_to_merge[HAL_PATH_MAX];
+		const char *udi_to_merge;
 
 		/* Resolve key paths like 'someudi/foo/bar/baz:prop.name' '@prop.here.is.an.udi:with.prop.name' */
                 if (!resolve_udiprop_path (rule->key, hal_device_get_udi (d),
-                                           udi_to_merge, sizeof (udi_to_merge),
-                                           key_to_merge, sizeof (key_to_merge))) {
-                        HAL_ERROR (("Could not resolve keypath '%s' on udi '%s'", rule->key, hal_device_get_udi (d)));
+			&udi_to_merge, &key_to_merge, resolve_scratch)) {
+	                 HAL_ERROR (("Could not resolve keypath '%s' on udi '%s'", rule->key, hal_device_get_udi (d)));
 			return FALSE;
 		} else {
 			key = key_to_merge;	
@@ -889,17 +911,17 @@ handle_merge (struct rule *rule, HalDevice *d)
 			hal_device_property_set_double (d, key, atof (value));
 
 		} else if (rule->type_merge == MERGE_COPY_PROPERTY) {
-
-			char udi_to_merge_from[HAL_PATH_MAX];
-			char prop_to_merge[HAL_PATH_MAX];
+			char more_resolve_scratch[HAL_PATH_MAX*2 + 3];
+			const char *udi_to_merge_from;
+			const char *prop_to_merge;
 
 			/* Resolve key paths like 'someudi/foo/bar/baz:prop.name'
 			 * '@prop.here.is.an.udi:with.prop.name'
 			 */
 			if (!resolve_udiprop_path (value,
 						   hal_device_get_udi (d),
-						   udi_to_merge_from, sizeof (udi_to_merge_from),
-						   prop_to_merge, sizeof (prop_to_merge))) {
+						   &udi_to_merge_from, &prop_to_merge,
+						   more_resolve_scratch)) {
 				HAL_ERROR (("Could not resolve keypath '%s' on udi '%s'", value, hal_device_get_udi (d)));
 			} else {
 				HalDevice *copyfrom;
@@ -944,16 +966,17 @@ handle_merge (struct rule *rule, HalDevice *d)
 				break;
 			case MERGE_COPY_PROPERTY:
 			{
-				char udi_to_merge_from[HAL_PATH_MAX];
-				char prop_to_merge[HAL_PATH_MAX];
+				char more_resolve_scratch[HAL_PATH_MAX*2 + 3];
+				const char *udi_to_merge_from;
+				const char *prop_to_merge;
 
 				/* Resolve key paths like 'someudi/foo/bar/baz:prop.name'
 				 * '@prop.here.is.an.udi:with.prop.name'
 				 */
 				if (!resolve_udiprop_path (value,
 							   hal_device_get_udi (d),
-							   udi_to_merge_from, sizeof (udi_to_merge_from),
-							   prop_to_merge, sizeof (prop_to_merge))) {
+							   &udi_to_merge_from, &prop_to_merge,
+							   more_resolve_scratch)) {
 					HAL_ERROR (("Could not resolve keypath '%s' on udi '%s'", value, hal_device_get_udi (d)));
 				} else {
 					HalDevice *copyfrom;
