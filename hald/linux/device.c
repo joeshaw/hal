@@ -758,6 +758,44 @@ firewire_compute_udi (HalDevice *d)
 
 }
 
+/*--------------------------------------------------------------------------------------------------------------*/
+
+static HalDevice *
+ibmebus_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_dev,  const gchar *parent_path)
+{
+	HalDevice *d;
+
+	d = hal_device_new ();
+	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
+	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
+	hal_device_property_set_string (d, "info.bus", "ibmebus");
+	if (parent_dev != NULL) {
+		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
+	} else {
+		hal_device_property_set_string (d, "info.parent", "/org/freedesktop/Hal/devices/computer");
+	}
+
+	hal_util_set_driver (d, "info.linux.driver", sysfs_path);
+
+	hal_util_set_string_from_file (d, "ibmebus.devspec", sysfs_path, "devspec");
+	hal_util_set_string_from_file (d, "ibmebus.type", sysfs_path, "type");
+
+	return d;
+}
+
+
+static gboolean
+ibmebus_compute_udi (HalDevice *d)
+{
+	gchar udi[256];
+
+	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
+			      "/org/freedesktop/Hal/devices/ibmebus%s",
+			      hal_device_property_get_string (d, "ibmebus.devspec"));
+	hal_device_set_udi (d, udi);
+	hal_device_property_set_string (d, "info.udi", udi);
+	return TRUE;
+}
 
 /*--------------------------------------------------------------------------------------------------------------*/
 
@@ -4288,6 +4326,13 @@ static DevHandler dev_handler_firewire = {
 	.remove       = dev_remove
 };
 
+static DevHandler dev_handler_ibmebus = { 
+	.subsystem   = "ibmebus",
+	.add         = ibmebus_add,
+	.compute_udi = ibmebus_compute_udi,
+	.remove      = dev_remove
+};
+
 static DevHandler dev_handler_ide = { 
 	.subsystem   = "ide",
 	.add         = ide_add,
@@ -4610,6 +4655,7 @@ static DevHandler *dev_handlers[] = {
 	&dev_handler_drm,
 	&dev_handler_dvb,
 	&dev_handler_firewire,
+	&dev_handler_ibmebus,
 	&dev_handler_ide,
 	&dev_handler_ieee1394,
 	&dev_handler_input,
