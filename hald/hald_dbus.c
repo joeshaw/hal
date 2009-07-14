@@ -3476,7 +3476,7 @@ singleton_signal_device_changed (DBusConnection *connection, HalDevice *device, 
 	if (dbus_connection_send_with_reply (connection,
 					     message,
 					     &pending_call,
-					     /*-1*/ 8000)) {
+					     /*-1*/ 8000) && pending_call) {
 		/*HAL_INFO (("connection=%x message=%x", connection, message));*/
 		dbus_pending_call_set_notify (pending_call,
 					      reply_from_singleton_device_changed,
