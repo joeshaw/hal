@@ -2,7 +2,7 @@
 HAL 0.5.13
 ==========
 
-Released Month 00, 2009.
+Released July 15, 2009.
 
 Requirements for HAL 0.5.13:
 
@@ -28,6 +28,63 @@ Requirements for HAL 0.5.13:
  - PolicyKit        >= 0.5       (optional)
  - ConsoleKit       >= 0.2.0     (optional, needed if use PolicyKit)
  - pm-utils         >= 0.99.2    or newer (optional)
+
+Contributors to HAL 0.5.13:
+
+Andrey Borzenkov (1):
+      work aroud crash caused by LED device handling
+
+Aurelien Jarno (4):
+      use the "freebsd" backend on GNU/kFreeBSD
+      fix compilation of hald/freebsd/hf-storage.c
+      disable power-pmu and sonypic if __FreeBSD_kernel__ is defined
+      hald/freebsd/libprobe/hfp-cdrom.h: use C99 types
+
+Chris Coulson (1):
+      fix crash when assembling certain MD devices
+
+Danny Kukawka (14):
+      remove special serial tablet handling for HP tc4200
+      set default udev_prefix to ${exec_prefix}/lib in configure.in
+      define new (sub-)namespace(s) for smart card reader
+      define ACL and device-access policy for smart_card_reader
+      ignore ADD events if there is already a device with same sysfs_path
+      fix sound_compute_udi(): sound.card is int and not a string
+      Revert "add ACL policy for smartcard readers"
+      added new properties: org.freedesktop.Hal.version(.*)
+      fixed compiler warning
+      cleaned up hal-storage-mount code
+
+Kay Sievers (4):
+      remove broken ASCII 240 chars from C files
+      probe-volume: remove needless check for empty fstype
+      use $libexecdir not $libdir/hal to define private hal directory
+      use AM_SILENT_RULES if available
+
+Martin Pitt (7):
+      post-release bump for 0.5.13
+      add ACL policy for smartcard readers
+      add hal-set-property --direct
+      addon-acpi.c: Support acpid
+      [BSD] use <sys/bitstring.h> instead of <bitstring.h>
+      10-x11-input.fdi: Add tablets
+      add input.keys capability to input buttons
+
+Matthew Garrett (1):
+      add support for devices on the SSB bus
+
+Michael Meeks (1):
+      optimize resolve_udiprop_path()
+
+Pavan Naregundi (1):
+      add suport for /sys/bus/ibmebus
+
+Simon Munton (1):
+      fixed segfault in hal-storage-mount
+
+Thadeu Lima de Souza Cascardo (1):
+      addon-input: add KEY_ZOOM
+
 
 ==========
 HAL 0.5.12
