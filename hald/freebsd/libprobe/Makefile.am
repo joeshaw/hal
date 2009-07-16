@@ -8,7 +8,7 @@ AM_CPPFLAGS = \
 	@DBUS_CFLAGS@
 
 if HALD_COMPILE_FREEBSD
-lib_LTLIBRARIES = libhald_freebsd_probe.la
+noinst_LTLIBRARIES = libhald_freebsd_probe.la
 endif
 
 libhald_freebsd_probe_la_SOURCES = \
