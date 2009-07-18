@@ -202,9 +202,8 @@ out:
  *  @param  source_udi          UDI of source device
  *  @param  path                The given path
  *  @param  udi_result          Where to store the resulting UDI
- *  @param  udi_result_size     Size of UDI string
  *  @param  prop_result         Where to store the resulting property name
- *  @param  prop_result_size    Size of property string
+ *  @param  scratch		 
  *  @return                     TRUE if and only if the path resolved.
  */
 static gboolean
