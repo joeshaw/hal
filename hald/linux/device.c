@@ -878,7 +878,7 @@ ssb_compute_udi (HalDevice *d)
 
 	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
 			      "/org/freedesktop/Hal/devices/ssb_%s",
-			      hal_device_property_get_string (d, "xen.bus_id"));
+			      hal_device_property_get_string (d, "ssb.bus_id"));
 	hal_device_set_udi (d, udi);
 	hal_device_property_set_string (d, "info.udi", udi);
 	return TRUE;
