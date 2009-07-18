@@ -850,43 +850,6 @@ ide_compute_udi (HalDevice *d)
 /*--------------------------------------------------------------------------------------------------------------*/
 
 static HalDevice *
-ssb_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_dev, const gchar *parent_path)
-{
-	HalDevice *d;
-
-	d = hal_device_new ();
-	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
-	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
-	hal_device_property_set_string (d, "info.bus", "ssb");
-	if (parent_dev != NULL) {
-		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
-	} else {
-		hal_device_property_set_string (d, "info.parent", "/org/freedesktop/Hal/devices/computer");
-	}
-
-	hal_util_set_driver (d, "info.linux.driver", sysfs_path);
-
-	hal_device_property_set_string (d, "ssb.bus_id",
-					hal_util_get_last_element (sysfs_path));
-	return d;
-}
-
-static gboolean
-ssb_compute_udi (HalDevice *d)
-{
-	gchar udi[256];
-
-	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
-			      "/org/freedesktop/Hal/devices/ssb_%s",
-			      hal_device_property_get_string (d, "ssb.bus_id"));
-	hal_device_set_udi (d, udi);
-	hal_device_property_set_string (d, "info.udi", udi);
-	return TRUE;
-}
-
-/*--------------------------------------------------------------------------------------------------------------*/
-
-static HalDevice *
 ieee1394_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_dev, const gchar *parent_path)
 {
 	HalDevice *d;
@@ -3613,6 +3576,43 @@ sound_compute_udi (HalDevice *d)
 /*--------------------------------------------------------------------------------------------------------------*/
 
 static HalDevice *
+ssb_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_dev, const gchar *parent_path)
+{
+	HalDevice *d;
+
+	d = hal_device_new ();
+	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
+	hal_device_property_set_string (d, "linux.sysfs_path_device", sysfs_path);
+	hal_device_property_set_string (d, "info.bus", "ssb");
+	if (parent_dev != NULL) {
+		hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
+	} else {
+		hal_device_property_set_string (d, "info.parent", "/org/freedesktop/Hal/devices/computer");
+	}
+
+	hal_util_set_driver (d, "info.linux.driver", sysfs_path);
+
+	hal_device_property_set_string (d, "ssb.bus_id",
+					hal_util_get_last_element (sysfs_path));
+	return d;
+}
+
+static gboolean
+ssb_compute_udi (HalDevice *d)
+{
+	gchar udi[256];
+
+	hal_util_compute_udi (hald_get_gdl (), udi, sizeof (udi),
+			      "/org/freedesktop/Hal/devices/ssb_%s",
+			      hal_device_property_get_string (d, "ssb.bus_id"));
+	hal_device_set_udi (d, udi);
+	hal_device_property_set_string (d, "info.udi", udi);
+	return TRUE;
+}
+
+/*--------------------------------------------------------------------------------------------------------------*/
+
+static HalDevice *
 tape_add (const gchar *sysfs_path, const gchar *device_file, 
 	  HalDevice *parent_dev, const gchar *parent_path)
 {
@@ -4320,13 +4320,6 @@ static DevHandler dev_handler_bluetooth =
 	.remove       = dev_remove
 };
 
-static DevHandler dev_handler_ssb = {
-	.subsystem   = "ssb",
-	.add         = ssb_add,
-	.compute_udi = ssb_compute_udi,
-	.remove      = dev_remove
-};
-
 /* s390 specific busses */
 static DevHandler dev_handler_ccw = {
 	.subsystem   = "ccw",
@@ -4596,6 +4589,13 @@ static DevHandler dev_handler_sound =
 	.post_probing = NULL,
 	.compute_udi  = sound_compute_udi,
 	.remove       = dev_remove
+};
+
+static DevHandler dev_handler_ssb = {
+	.subsystem   = "ssb",
+	.add         = ssb_add,
+	.compute_udi = ssb_compute_udi,
+	.remove      = dev_remove
 };
 
 static DevHandler dev_handler_tape =
