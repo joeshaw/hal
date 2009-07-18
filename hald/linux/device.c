@@ -793,7 +793,6 @@ ibmebus_compute_udi (HalDevice *d)
 			      "/org/freedesktop/Hal/devices/ibmebus%s",
 			      hal_device_property_get_string (d, "ibmebus.devspec"));
 	hal_device_set_udi (d, udi);
-	hal_device_property_set_string (d, "info.udi", udi);
 	return TRUE;
 }
 
@@ -1413,7 +1412,6 @@ memstick_compute_udi (HalDevice *d)
 			      "%s_memstick_card",
 			      hal_device_property_get_string (d, "info.parent"));
 	hal_device_set_udi (d, udi);
-	hal_device_property_set_string (d, "info.udi", udi);
 	return TRUE;
 
 }
@@ -1460,7 +1458,6 @@ memstick_host_compute_udi (HalDevice *d)
 			      "%s_memstick_host",
 			      hal_device_property_get_string (d, "info.parent"));
 	hal_device_set_udi (d, udi);
-	hal_device_property_set_string (d, "info.udi", udi);
 	return TRUE;
 }
 
@@ -3606,7 +3603,6 @@ ssb_compute_udi (HalDevice *d)
 			      "/org/freedesktop/Hal/devices/ssb_%s",
 			      hal_device_property_get_string (d, "ssb.bus_id"));
 	hal_device_set_udi (d, udi);
-	hal_device_property_set_string (d, "info.udi", udi);
 	return TRUE;
 }
 
