@@ -92,6 +92,11 @@
           <merge key="volume.ignore" type="bool">true</merge>
 	</match>
       </match>
+      <match key="volume.partition.scheme" string="apm">
+	<match key="volume.partition.type" string_outof="Apple_Bootstrap">
+          <merge key="volume.ignore" type="bool">true</merge>
+        </match>
+      </match>
 
       <!-- EFI firmware partitions -->
       <match key="volume.fstype" string="vfat">
@@ -124,6 +129,24 @@
 	<match key="volume.label" string_outof="IBM_SERVICE;SERVICEV001;SERVICEV002">
 	  <merge key="volume.ignore" type="bool">true</merge>
 	</match>
+      </match>
+
+      <!-- ignore the following MBR partition types (EFI, hidden, etc.) 
+	   see http://www.win.tue.nl/~aeb/partitions/partition_types-1.html 
+      -->
+      <match key="volume.partition.scheme" string="mbr">
+	<match key="volume.partition.type" string_outof="0x00;0x11;0x14;0x16;0x17;0x1b;0x1c;0x1e;0x27;0x3d;0x84;0x8d;0x90;0x91;0x92;0x93;0x97;0x98;0x9a;0x9b;0xbb;0xc2;0xc3;0xdd;0xef">
+	  <merge key="volume.ignore" type="bool">true</merge>
+        </match>
+      </match>
+
+      <!-- special GUID-identified partition types
+           see http://en.wikipedia.org/wiki/GUID_Partition_Table#Partition_type_GUIDs
+      -->
+      <match key="volume.partition.scheme" string="gpt">
+	<match key="volume.partition.type" string_outof="C12A7328-F81F-11D2-BA4B-00A0C93EC93B;21686148-6449-6E6F-744E-656564454649">
+	  <merge key="volume.ignore" type="bool">true</merge>
+        </match>
       </match>
 
       <append key="info.interfaces" type="strlist">org.freedesktop.Hal.Device.Volume</append>
