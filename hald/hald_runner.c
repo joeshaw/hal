@@ -140,6 +140,8 @@ runner_server_message_handler (DBusConnection * connection,
 					break;
 				}
 			}
+		} else {
+			dbus_error_free (&error);
 		}
 	} else if (dbus_message_is_signal (message,
 					   DBUS_INTERFACE_LOCAL,
@@ -255,7 +257,8 @@ hald_runner_start_runner (void)
 	dbus_error_init (&err);
 	runner_server = dbus_server_listen (DBUS_SERVER_ADDRESS, &err);
 	if (runner_server == NULL) {
-		HAL_ERROR (("Cannot create D-BUS server for the runner"));
+		HAL_ERROR (("Cannot create D-BUS server for the runner: %s:%s", err.name, err.message));
+		dbus_error_free (&err);
 		goto error;
 	}
 
@@ -626,9 +629,8 @@ runner_start (HalDevice * device, const gchar * command_line,
 	}
 
 	/* Wait for the reply, should be almost instantanious */
-	reply =
-	    dbus_connection_send_with_reply_and_block (runner_connection,
-						       msg, -1, &error);
+	reply = dbus_connection_send_with_reply_and_block (runner_connection,
+							   msg, -1, &error);
 	if (reply) {
 		gboolean ret =
 		    (dbus_message_get_type (reply) ==
@@ -660,6 +662,7 @@ runner_start (HalDevice * device, const gchar * command_line,
 				}
 			} else {
 				HAL_ERROR (("Error extracting out_pid from runner's Start()"));
+				dbus_error_free (&error);
 			}
 		}
 
@@ -669,10 +672,11 @@ runner_start (HalDevice * device, const gchar * command_line,
 	} else {
 		if (dbus_error_is_set (&error)) {
 			HAL_ERROR (("Error running '%s': %s: %s", command_line, error.name, error.message));
+			dbus_error_free (&error);
 		}
 	}
 
-      error:
+error:
 	dbus_message_unref (msg);
 	return FALSE;
 }
@@ -880,6 +884,7 @@ hald_runner_run_sync (HalDevice * device,
 	if (reply == NULL) {
 		if (dbus_error_is_set (&error)) {
 			HAL_ERROR (("Error running '%s': %s: %s", command_line, error.name, error.message));
+			dbus_error_free (&error);
 		}
 		goto error;
 	}
@@ -927,11 +932,12 @@ hald_runner_kill_device (HalDevice * device)
 
 	/* Wait for the reply, should be almost instantanious */
 	dbus_error_init (&err);
-	reply =
-	    dbus_connection_send_with_reply_and_block (runner_connection,
-						       msg, -1, &err);
+	reply = dbus_connection_send_with_reply_and_block (runner_connection,
+							   msg, -1, &err);
 	if (reply) {
 		dbus_message_unref (reply);
+	} else {
+		dbus_error_free (&err);
 	}
 
 	dbus_message_unref (msg);
@@ -957,6 +963,8 @@ hald_runner_kill_all (void)
 						       msg, -1, &err);
 	if (reply) {
 		dbus_message_unref (reply);
+	} else {
+		dbus_error_free (&err);
 	}
 
 	dbus_message_unref (msg);
