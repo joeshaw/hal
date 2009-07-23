@@ -511,7 +511,7 @@ AC_DEFINE_UNQUOTED(DBUS_API_SUBJECT_TO_CHANGE, [], [DBUS API is subject to chang
 
 # check for ConsoleKit
 AM_CONDITIONAL(HAVE_CONKIT, false)
-AC_ARG_ENABLE([console-kit], AS_HELP_STRING([--enable-console-kit], [Use ConsoleKit]), [enable_console_kit=$enableval,enable_console_kit=yes])
+AC_ARG_ENABLE([console-kit], AS_HELP_STRING([--enable-console-kit], [Use ConsoleKit]), [enable_console_kit=$enableval], [enable_console_kit=yes])
 msg_conkit=no
 if test "x$enable_console_kit" != "xno"; then
    AM_CONDITIONAL(HAVE_CONKIT, true)
