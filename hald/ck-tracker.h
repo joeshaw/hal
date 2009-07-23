@@ -84,11 +84,11 @@ GSList     *ck_tracker_get_sessions               (CKTracker *tracker);
 CKSession  *ck_tracker_find_session               (CKTracker *tracker, const char *ck_session_objpath);
 
 GSList     *ck_seat_get_sessions                  (CKSeat *seat);
-const char *ck_seat_get_id                        (CKSeat *seat);
+char 	   *ck_seat_get_id                        (CKSeat *seat);
 
 gboolean    ck_session_is_active                  (CKSession *session);
 CKSeat     *ck_session_get_seat                   (CKSession *session);
-const char *ck_session_get_id                     (CKSession *session);
+char 	   *ck_session_get_id                     (CKSession *session);
 uid_t       ck_session_get_user                   (CKSession *session);
 gboolean    ck_session_is_local                   (CKSession *session);
 const char *ck_session_get_hostname               (CKSession *session);

@@ -405,7 +405,7 @@ add_basic_env (DBusMessageIter * iter, const gchar * udi)
 			GSList *j;
 			CKSeat *seat;
 			GSList *sessions;
-			const char *seat_id;
+			char *seat_id;
 			GString *sessions_string;
                         int num_sessions;
 
@@ -484,6 +484,7 @@ add_basic_env (DBusMessageIter * iter, const gchar * udi)
                         add_env (iter, s, p);
                         g_free (p);
 			g_free (s);
+			g_free (seat_id);
 
 		}
 

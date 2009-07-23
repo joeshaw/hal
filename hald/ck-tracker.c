@@ -767,10 +767,10 @@ ck_seat_get_sessions (CKSeat *seat)
 	return seat->sessions;
 }
 
-const char *
+char *
 ck_seat_get_id (CKSeat *seat)
 {
-	return g_basename (seat->seat_objpath);
+	return g_path_get_basename (seat->seat_objpath);
 }
 
 gboolean
@@ -785,10 +785,10 @@ ck_session_get_seat (CKSession *session)
 	return session->seat;
 }
 
-const char *
+char *
 ck_session_get_id (CKSession *session)
 {
-	return g_basename (session->session_objpath);
+	return g_path_get_basename (session->session_objpath);
 }
 
 uid_t

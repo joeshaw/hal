@@ -5649,15 +5649,17 @@ hald_dbus_session_active_changed (CKTracker *tracker, CKSession *session, void *
 {
 	HalDevice *d;
 	char **programs;
+	char *session_id;
 	char *extra_env[5] = {"HALD_ACTION=session_active_changed", 
 			      NULL /* "HALD_SESSION_ACTIVE_CHANGED_SESSION_ID=" */,
 			      NULL /* "HALD_SESSION_ACTIVE_CHANGED_SESSION_UID=" */,
 			      NULL /* "HALD_SESSION_ACTIVE_CHANGED_SESSION_IS_ACTIVE=" */,
 			      NULL};
 
+	session_id = ck_session_get_id (session);
+
 	HAL_INFO (("In hald_dbus_session_active_changed for session '%s': %s", 
-		   ck_session_get_id (session),
-		   ck_session_is_active (session) ? "ACTIVE" : "INACTIVE"));
+		   session_id, ck_session_is_active (session) ? "ACTIVE" : "INACTIVE"));
 
         /* revalidate all locks (to remove locks from callers in that session who no longer has access to devices */
         validate_locks ();
@@ -5678,13 +5680,14 @@ hald_dbus_session_active_changed (CKTracker *tracker, CKSession *session, void *
 		goto out;
 	}
 
-	extra_env[1] = g_strdup_printf ("HALD_SESSION_ACTIVE_CHANGED_SESSION_ID=%s", ck_session_get_id (session));
+	extra_env[1] = g_strdup_printf ("HALD_SESSION_ACTIVE_CHANGED_SESSION_ID=%s", session_id);
 	extra_env[2] = g_strdup_printf ("HALD_SESSION_ACTIVE_CHANGED_SESSION_UID=%u", ck_session_get_user (session));
 	extra_env[3] = g_strdup_printf ("HALD_SESSION_ACTIVE_CHANGED_SESSION_IS_ACTIVE=%s", 
 					ck_session_is_active (session) ? "true" : "false");
 
         session_changes_push (d, programs, extra_env);
 
+	g_free (session_id);
 	g_free (extra_env[1]);
 	g_free (extra_env[2]);
 	g_free (extra_env[3]);
@@ -5697,15 +5700,18 @@ hald_dbus_session_added (CKTracker *tracker, CKSession *session, void *user_data
 {
 	HalDevice *d;
 	char **programs;
+	char *session_id;
+	char *seat_id;
 	char *extra_env[5] = {"HALD_ACTION=session_add", 
 			      NULL /* "HALD_SESSION_ADD_SESSION_ID=" */,
 			      NULL /* "HALD_SESSION_ADD_SESSION_UID=" */,
 			      NULL /* "HALD_SESSION_ADD_SESSION_IS_ACTIVE=" */,
 			      NULL};
-
+	session_id = ck_session_get_id (session);
+	seat_id = ck_seat_get_id (ck_session_get_seat (session));
+	
 	HAL_INFO (("In hald_dbus_session_added for session '%s' on seat '%s'", 
-		   ck_session_get_id (session),
-		   ck_session_get_seat (session) != NULL ? ck_seat_get_id (ck_session_get_seat (session)) : "(NONE)"));
+		   session_id, ck_session_get_seat (session) != NULL ? seat_id : "(NONE)"));
 
 	d = hal_device_store_find (hald_get_gdl (), "/org/freedesktop/Hal/devices/computer");
 	if (d == NULL) {
@@ -5720,13 +5726,15 @@ hald_dbus_session_added (CKTracker *tracker, CKSession *session, void *user_data
 		goto out;
 	}
 
-	extra_env[1] = g_strdup_printf ("HALD_SESSION_ADD_SESSION_ID=%s", ck_session_get_id (session));
+	extra_env[1] = g_strdup_printf ("HALD_SESSION_ADD_SESSION_ID=%s", session_id );
 	extra_env[2] = g_strdup_printf ("HALD_SESSION_ADD_SESSION_UID=%u", ck_session_get_user (session));
 	extra_env[3] = g_strdup_printf ("HALD_SESSION_ADD_SESSION_IS_ACTIVE=%s", 
 					ck_session_is_active (session) ? "true" : "false");
 
         session_changes_push (d, programs, extra_env);
 
+	g_free (session_id);
+	g_free (seat_id);
 	g_free (extra_env[1]);
 	g_free (extra_env[2]);
 	g_free (extra_env[3]);
@@ -5738,6 +5746,8 @@ static void
 hald_dbus_session_removed (CKTracker *tracker, CKSession *session, void *user_data)
 {
 	HalDevice *d;
+	char *session_id;
+	char *seat_id;
 	char **programs;
 	char *extra_env[5] = {"HALD_ACTION=session_remove", 
 			      NULL /* "HALD_SESSION_REMOVE_SESSION_ID=" */,
@@ -5745,9 +5755,11 @@ hald_dbus_session_removed (CKTracker *tracker, CKSession *session, void *user_da
 			      NULL /* "HALD_SESSION_REMOVE_SESSION_IS_ACTIVE=" */,
 			      NULL};
 
+	session_id = ck_session_get_id (session);
+	seat_id = ck_seat_get_id (ck_session_get_seat (session));
+
 	HAL_INFO (("In hald_dbus_session_removed for session '%s' on seat '%s'", 
-		   ck_session_get_id (session),
-		   ck_session_get_seat (session) != NULL ? ck_seat_get_id (ck_session_get_seat (session)) : "(NONE)"));
+		   session_id, ck_session_get_seat (session) != NULL ? seat_id : "(NONE)"));
 
 	d = hal_device_store_find (hald_get_gdl (), "/org/freedesktop/Hal/devices/computer");
 	if (d == NULL) {
@@ -5762,13 +5774,15 @@ hald_dbus_session_removed (CKTracker *tracker, CKSession *session, void *user_da
 		goto out;
 	}
 
-	extra_env[1] = g_strdup_printf ("HALD_SESSION_REMOVE_SESSION_ID=%s", ck_session_get_id (session));
+	extra_env[1] = g_strdup_printf ("HALD_SESSION_REMOVE_SESSION_ID=%s", session_id );
 	extra_env[2] = g_strdup_printf ("HALD_SESSION_REMOVE_SESSION_UID=%d", ck_session_get_user (session));
 	extra_env[3] = g_strdup_printf ("HALD_SESSION_REMOVE_SESSION_IS_ACTIVE=%s", 
 					ck_session_is_active (session) ? "true" : "false");
 
         session_changes_push (d, programs, extra_env);
 
+	g_free (session_id);
+	g_free (seat_id);
 	g_free (extra_env[1]);
 	g_free (extra_env[2]);
 	g_free (extra_env[3]);

@@ -116,11 +116,19 @@ static PolKitSeat *
 get_pk_seat_from_ck_seat (CKSeat *seat)
 {
         char *str;
+	char *seat_id;
         PolKitSeat *pk_seat;
+
+
         pk_seat = polkit_seat_new ();
-        str = g_strdup_printf ("/org/freedesktop/ConsoleKit/%s", ck_seat_get_id (seat));
+	seat_id = ck_seat_get_id (seat);
+
+        str = g_strdup_printf ("/org/freedesktop/ConsoleKit/%s", seat_id );
         polkit_seat_set_ck_objref (pk_seat, str);
+
         g_free (str);
+	g_free (seat_id);
+
         return pk_seat;
 }
 
@@ -128,11 +136,14 @@ static PolKitSession *
 get_pk_session_from_ck_session (CKSession *session)
 {
         char *str;
+	char *ck_session_id;
         CKSeat *seat;
         PolKitSeat *pk_seat;
         PolKitSession *pk_session;
 
         seat = ck_session_get_seat (session);
+	ck_session_id = ck_session_get_id (session);
+
         if (seat == NULL) {
                 pk_seat = NULL;
         } else {
@@ -144,7 +155,7 @@ get_pk_session_from_ck_session (CKSession *session)
                 polkit_session_set_seat (pk_session, pk_seat);
                 polkit_seat_unref (pk_seat);
         }
-        str = g_strdup_printf ("/org/freedesktop/ConsoleKit/%s", ck_session_get_id (session));
+        str = g_strdup_printf ("/org/freedesktop/ConsoleKit/%s", ck_session_id );
         polkit_session_set_ck_objref (pk_session, str);
         g_free (str);
         polkit_session_set_uid (pk_session, ck_session_get_user (session));
@@ -153,6 +164,8 @@ get_pk_session_from_ck_session (CKSession *session)
         if (!ck_session_is_local (session)) {
                 polkit_session_set_ck_remote_host (pk_session, ck_session_get_hostname (session));
         }
+
+	g_free (ck_session_id);
         return pk_session;
 }
 
