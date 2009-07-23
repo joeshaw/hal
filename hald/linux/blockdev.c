@@ -1910,13 +1910,16 @@ blockdev_process_mdstat (void)
         GSList *i;
         GSList *j;
         GSList *k;
+	GError *gerror = NULL;
 
         channel = get_mdstat_channel ();
         if (channel == NULL)
                 goto error;
 
-        if (g_io_channel_seek (channel, 0, G_SEEK_SET) != G_IO_ERROR_NONE) {
+        if (g_io_channel_seek_position (channel, 0, G_SEEK_SET, &gerror) == G_IO_STATUS_ERROR) {
                 HAL_ERROR (("Cannot seek in /proc/mdstat"));
+		if (gerror != NULL) 
+			g_error_free(gerror);
                 goto error;
         }
 
