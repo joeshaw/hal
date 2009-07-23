@@ -558,8 +558,9 @@ manager_find_device_string_match (DBusConnection * connection,
 				    DBUS_TYPE_STRING, &key,
 				    DBUS_TYPE_STRING, &value,
 				    DBUS_TYPE_INVALID)) {
-		raise_syntax (connection, message,
-			      "Manager.FindDeviceStringMatch");
+		raise_syntax (connection, message, "Manager.FindDeviceStringMatch");
+		dbus_error_free (&error);
+
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
@@ -648,8 +649,9 @@ manager_find_device_by_capability (DBusConnection * connection,
 	if (!dbus_message_get_args (message, &error,
 				    DBUS_TYPE_STRING, &capability,
 				    DBUS_TYPE_INVALID)) {
-		raise_syntax (connection, message,
-			      "Manager.FindDeviceByCapability");
+		raise_syntax (connection, message, "Manager.FindDeviceByCapability");
+		dbus_error_free (&error);
+
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
@@ -710,6 +712,9 @@ manager_device_exists (DBusConnection * connection, DBusMessage * message)
 				    DBUS_TYPE_STRING, &udi,
 				    DBUS_TYPE_INVALID)) {
 		raise_syntax (connection, message, "Manager.DeviceExists");
+		
+		dbus_error_free (&error);
+
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
@@ -1442,6 +1447,7 @@ device_get_property (DBusConnection * connection, DBusMessage * message)
 				    DBUS_TYPE_STRING, &key,
 				    DBUS_TYPE_INVALID)) {
 		raise_syntax (connection, message, "GetProperty");
+		dbus_error_free (&error);
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
@@ -1576,6 +1582,7 @@ device_get_property_type (DBusConnection * connection,
 				    DBUS_TYPE_STRING, &key,
 				    DBUS_TYPE_INVALID)) {
 		raise_syntax (connection, message, "GetPropertyType");
+		dbus_error_free (&error);
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
@@ -1785,6 +1792,7 @@ device_add_capability (DBusConnection * connection, DBusMessage * message, dbus_
 				    DBUS_TYPE_STRING, &capability,
 				    DBUS_TYPE_INVALID)) {
 		raise_syntax (connection, message, "AddCapability");
+		dbus_error_free (&error);
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
@@ -1834,6 +1842,7 @@ device_string_list_append_prepend (DBusConnection * connection, DBusMessage * me
 				    DBUS_TYPE_STRING, &value,
 				    DBUS_TYPE_INVALID)) {
 		raise_syntax (connection, message, do_prepend ? "StringListPrepend" : "StringListAppend");
+		dbus_error_free (&error);
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
@@ -1888,6 +1897,7 @@ device_string_list_remove (DBusConnection * connection, DBusMessage * message)
 				    DBUS_TYPE_STRING, &value,
 				    DBUS_TYPE_INVALID)) {
 		raise_syntax (connection, message, "StringListRemove");
+		dbus_error_free (&error);
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
@@ -1959,6 +1969,7 @@ device_remove_property (DBusConnection * connection, DBusMessage * message, dbus
 				    DBUS_TYPE_STRING, &key,
 				    DBUS_TYPE_INVALID)) {
 		raise_syntax (connection, message, "RemoveProperty");
+		dbus_error_free (&error);
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
@@ -2024,6 +2035,7 @@ device_property_exists (DBusConnection * connection, DBusMessage * message)
 				    DBUS_TYPE_STRING, &key,
 				    DBUS_TYPE_INVALID)) {
 		raise_syntax (connection, message, "RemoveProperty");
+		dbus_error_free (&error);
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
@@ -2090,6 +2102,7 @@ device_query_capability (DBusConnection * connection,
 				    DBUS_TYPE_STRING, &capability,
 				    DBUS_TYPE_INVALID)) {
 		raise_syntax (connection, message, "QueryCapability");
+		dbus_error_free (&error);
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
@@ -2150,6 +2163,7 @@ device_acquire_interface_lock (DBusConnection *connection, DBusMessage *message,
 				    DBUS_TYPE_BOOLEAN, &exclusive,
 				    DBUS_TYPE_INVALID)) {
 		raise_syntax (connection, message, "AqcuireInterfaceLock");
+		dbus_error_free (&error);
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
@@ -2206,6 +2220,7 @@ device_release_interface_lock (DBusConnection *connection, DBusMessage *message,
 				    DBUS_TYPE_STRING, &interface_name,
 				    DBUS_TYPE_INVALID)) {
 		raise_syntax (connection, message, "ReleaseInterfaceLock");
+		dbus_error_free (&error);
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
@@ -2267,6 +2282,7 @@ device_is_caller_locked_out (DBusConnection *connection, DBusMessage *message, d
 				    DBUS_TYPE_STRING, &caller_sysbus_name,
 				    DBUS_TYPE_INVALID)) {
 		raise_syntax (connection, message, "IsCallerLockedOut");
+		dbus_error_free (&error);
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
@@ -2295,7 +2311,6 @@ device_is_caller_privileged (DBusConnection *connection, DBusMessage *message, d
 	const char *udi;
 	HalDevice *d;
 	DBusMessage *reply;
-	DBusError error;
 	const char *sender;
 	char *action;
 	char *caller_sysbus_name;
@@ -2323,7 +2338,6 @@ device_is_caller_privileged (DBusConnection *connection, DBusMessage *message, d
 		return DBUS_HANDLER_RESULT_HANDLED;
         }
 
-	dbus_error_init (&error);
         dbus_message_iter_init (message, &iter);
         dbus_message_iter_get_basic (&iter, &action);
         dbus_message_iter_next (&iter);
@@ -2429,6 +2443,7 @@ device_is_locked_by_others (DBusConnection *connection, DBusMessage *message, db
 				    DBUS_TYPE_STRING, &interface_name,
 				    DBUS_TYPE_INVALID)) {
 		raise_syntax (connection, message, "IsLockedByOthers");
+		dbus_error_free (&error);
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
@@ -2492,6 +2507,7 @@ device_acquire_global_interface_lock (DBusConnection *connection, DBusMessage *m
 				    DBUS_TYPE_BOOLEAN, &exclusive,
 				    DBUS_TYPE_INVALID)) {
 		raise_syntax (connection, message, "AqcuireGlobalInterfaceLock");
+		dbus_error_free (&error);
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
@@ -2554,6 +2570,7 @@ device_release_global_interface_lock (DBusConnection *connection, DBusMessage *m
 				    DBUS_TYPE_STRING, &interface_name,
 				    DBUS_TYPE_INVALID)) {
 		raise_syntax (connection, message, "ReleaseGlobalInterfaceLock");
+		dbus_error_free (&error);
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
@@ -2678,6 +2695,7 @@ device_lock (DBusConnection * connection,
 				    DBUS_TYPE_STRING, &reason,
 				    DBUS_TYPE_INVALID)) {
 		raise_syntax (connection, message, "Lock");
+		dbus_error_free (&error);
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
@@ -2754,6 +2772,7 @@ device_unlock (DBusConnection *connection,
 	if (!dbus_message_get_args (message, &error,
 				    DBUS_TYPE_INVALID)) {
 		raise_syntax (connection, message, "Unlock");
+		dbus_error_free (&error);
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
@@ -3202,6 +3221,7 @@ device_emit_condition (DBusConnection * connection, DBusMessage * message, dbus_
 				    DBUS_TYPE_STRING, &condition_details,
 				    DBUS_TYPE_INVALID)) {
 		raise_syntax (connection, message, "EmitCondition");
+		dbus_error_free (&error);
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
@@ -3272,6 +3292,7 @@ device_claim_interface (DBusConnection * connection, DBusMessage * message, dbus
 				    DBUS_TYPE_STRING, &introspection_xml,
 				    DBUS_TYPE_INVALID)) {
 		raise_syntax (connection, message, "ClaimInterface");
+		dbus_error_free (&error);
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
@@ -3341,6 +3362,7 @@ addon_is_ready (DBusConnection * connection, DBusMessage * message, dbus_bool_t 
 	if (!dbus_message_get_args (message, &error,
 				    DBUS_TYPE_INVALID)) {
 		raise_syntax (connection, message, "AddonIsReady");
+		dbus_error_free (&error);
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
@@ -3438,7 +3460,6 @@ reply_from_singleton_device_changed (DBusPendingCall *pending_call,
 static void
 singleton_signal_device_changed (DBusConnection *connection, HalDevice *device, gboolean added)
 {
-	DBusError error;
 	DBusMessage *message;
 	DBusMessageIter iter, iter_dict;
 	DBusPendingCall *pending_call;
@@ -3471,7 +3492,6 @@ singleton_signal_device_changed (DBusConnection *connection, HalDevice *device, 
 	dbus_message_iter_close_container (&iter, &iter_dict);
 
 	HAL_DEBUG (("%s about to send message to connection %p", G_STRFUNC, connection));
-	dbus_error_init (&error);
 
 	if (dbus_connection_send_with_reply (connection,
 					     message,
@@ -3642,6 +3662,7 @@ singleton_addon_is_ready (DBusConnection * connection, DBusMessage * message, db
 				    DBUS_TYPE_STRING, &command_line,
 				    DBUS_TYPE_INVALID)) {
 		raise_syntax (connection, message, "SingletonAddonIsReady");
+		dbus_error_free (&error);
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
@@ -3692,13 +3713,10 @@ manager_new_device (DBusConnection * connection, DBusMessage * message, dbus_boo
 {
 	DBusMessage *reply;
 	DBusMessageIter iter;
-	DBusError error;
 	HalDevice *d;
 	gchar *udi;
 	int i;
 	struct timeval tv;
-
-	dbus_error_init (&error);
 
 	if (!local_interface && !access_check_message_caller_is_root_or_hal (ci_tracker, message)) {
 		raise_permission_denied (connection, message, "NewDevice: not privileged");
@@ -3777,6 +3795,7 @@ manager_remove (DBusConnection * connection, DBusMessage * message, dbus_bool_t 
 				    DBUS_TYPE_STRING, &udi,
 				    DBUS_TYPE_INVALID)) {
 		raise_syntax (connection, message, "Remove");
+		dbus_error_free (&error);
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
@@ -3879,6 +3898,7 @@ manager_commit_to_gdl (DBusConnection * connection, DBusMessage * message, dbus_
 				    DBUS_TYPE_STRING, &udi0,
 				    DBUS_TYPE_INVALID)) {
 		raise_syntax (connection, message, "CommitToGdl");
+		dbus_error_free (&error);
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
@@ -5414,7 +5434,8 @@ hald_dbus_local_server_init (void)
 	 */
 	dbus_error_init (&error);
 	if ((local_server = dbus_server_listen (HALD_DBUS_ADDRESS, &error)) == NULL) { 
-		HAL_ERROR (("Cannot create D-BUS server"));
+		HAL_ERROR (("Cannot create D-BUS server:  %s: %s", error.name, error.message));
+		dbus_error_free (&error);
 		goto out;
 	}
 	local_server_address = dbus_server_get_address (local_server);
@@ -5785,6 +5806,7 @@ hald_dbus_init_preprobe (void)
 	dbus_connection = dbus_bus_get (DBUS_BUS_SYSTEM, &dbus_error);
 	if (dbus_connection == NULL) {
 		HAL_ERROR (("dbus_bus_get(): %s", dbus_error.message));
+		dbus_error_free (&dbus_error);
 		goto out;
 	}
 
@@ -5881,8 +5903,8 @@ hald_dbus_init (void)
 	dbus_error_init (&dbus_error);
 	dbus_bus_request_name (dbus_connection, "org.freedesktop.Hal", 0, &dbus_error);
 	if (dbus_error_is_set (&dbus_error)) {
-		HAL_ERROR (("dbus_bus_request_name(): %s",
-			    dbus_error.message));
+		HAL_ERROR (("dbus_bus_request_name(): %s", dbus_error.message));
+		dbus_error_free(&dbus_error);
 		return FALSE;
 	}
 
