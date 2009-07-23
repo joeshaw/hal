@@ -315,6 +315,7 @@ ci_tracker_get_info (CITracker *cit, const char *system_bus_unique_name)
 		dbus_message_unref (message);
 		if (reply != NULL)
 			dbus_message_unref (reply);
+		dbus_error_free (&error);
 		goto error;
 	}
 	dbus_message_iter_init (reply, &iter);
@@ -341,6 +342,7 @@ ci_tracker_get_info (CITracker *cit, const char *system_bus_unique_name)
                 dbus_message_unref (message);
                 if (reply != NULL)
                         dbus_message_unref (reply);
+		dbus_error_free (&error);
                 goto error;
         } else {
                 /* TODO: verify signature */
@@ -368,6 +370,7 @@ ci_tracker_get_info (CITracker *cit, const char *system_bus_unique_name)
 		if (reply != NULL)
 			dbus_message_unref (reply);
 		/* OK, this is not a catastrophe; just means the caller is not a member of any session.. */
+		dbus_error_free (&error);
 		goto store_caller_info;
 	}
 	dbus_message_iter_init (reply, &iter);
@@ -387,6 +390,7 @@ ci_tracker_get_info (CITracker *cit, const char *system_bus_unique_name)
 		dbus_message_unref (message);
 		if (reply != NULL)
 			dbus_message_unref (reply);
+		dbus_error_free (&error);
 		goto error;
 	}
 	dbus_message_iter_init (reply, &iter);
@@ -406,6 +410,7 @@ ci_tracker_get_info (CITracker *cit, const char *system_bus_unique_name)
 		dbus_message_unref (message);
 		if (reply != NULL)
 			dbus_message_unref (reply);
+		dbus_error_free (&error);
 		goto error;
 	}
 	dbus_message_iter_init (reply, &iter);
