@@ -442,5 +442,13 @@ int main (int argc, char *argv[])
 	ret = 0;
 
 out:
+	LIBHAL_FREE_DBUS_ERROR (&error);
+
+        if (ctx != NULL) {
+                libhal_ctx_shutdown (ctx, &error);
+                LIBHAL_FREE_DBUS_ERROR (&error);
+                libhal_ctx_free (ctx);
+        }
+
 	return ret;
 }
