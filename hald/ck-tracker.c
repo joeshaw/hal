@@ -276,6 +276,8 @@ ck_session_get_info (CKTracker *tracker, CKSession *session)
 	ret = TRUE;
 
 error:
+	if (dbus_error_is_set (&error))
+		dbus_error_free (&error);
 	return ret;
 }
 
@@ -344,6 +346,9 @@ ck_tracker_init_get_sessions_for_seat (CKTracker *tracker, CKSeat *seat)
 	ret = TRUE;
 
 error:
+	if (dbus_error_is_set (&error))
+		dbus_error_free (&error);
+
 	return ret;
 }
 
@@ -419,6 +424,9 @@ ck_tracker_init_get_seats_and_sessions (CKTracker *tracker)
 
 	ret = TRUE;
 error:
+	if (dbus_error_is_set (&error))
+		dbus_error_free (&error);
+
 	return ret;
 }
 
