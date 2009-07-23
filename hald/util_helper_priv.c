@@ -60,6 +60,7 @@ check_priv (LibHalContext *halctx, DBusConnection *connection, DBusMessage *mess
                                                        "Cannot determine if caller is privileged",
                                                        action, polkit_result);
                 dbus_connection_send (connection, reply, NULL);
+		dbus_error_free (&error);
                 goto out;
         }
         if (strcmp (polkit_result, "yes") != 0) {
