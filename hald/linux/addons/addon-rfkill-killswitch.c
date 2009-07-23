@@ -178,6 +178,7 @@ filter_function (DBusConnection *connection, DBusMessage *message, void *userdat
 	}  
 
 	action = g_strdup_printf ("org.freedesktop.hal.killswitch.%s", type);
+	libhal_free_string (type);
 	
 	if (!check_priv (ctx, connection, message, dbus_message_get_path (message), action)) {
 		HAL_DEBUG(("User don't have the permissions to call the interface"));
