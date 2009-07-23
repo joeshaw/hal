@@ -52,9 +52,7 @@ get_properties (DBusConnection *conn, LibHalChangeSet *cs,
 
 	dbus_error_init (&error);
 
-	msg = dbus_message_new_method_call (id, path,
-										BLUEZ_NET_CONNECTION_IFACE,
-										"GetInfo");
+	msg = dbus_message_new_method_call (id, path, BLUEZ_NET_CONNECTION_IFACE, "GetInfo");
 
 	if (msg == NULL)
 		goto out;
@@ -62,8 +60,7 @@ get_properties (DBusConnection *conn, LibHalChangeSet *cs,
 	HAL_INFO (("%s.GetInfo()", BLUEZ_NET_CONNECTION_IFACE));
 	reply = dbus_connection_send_with_reply_and_block (conn, msg, -1, &error);
 
-	if (dbus_error_is_set (&error) || dbus_set_error_from_message (&error,
-		reply)) {
+	if (dbus_error_is_set (&error) || dbus_set_error_from_message (&error, reply)) {
 		dbus_error_free (&error);
 		goto out;
 	}
@@ -165,8 +162,7 @@ main (int argc, char *argv[])
 		goto out;
 
 	HAL_INFO (("%s.ActivateService('%s')", BLUEZ_MANAGER_IFACE, pnetwork));
-	dbus_message_append_args (msg, DBUS_TYPE_STRING, &pnetwork,
-								DBUS_TYPE_INVALID);
+	dbus_message_append_args (msg, DBUS_TYPE_STRING, &pnetwork, DBUS_TYPE_INVALID);
 	reply = dbus_connection_send_with_reply_and_block (conn, msg, -1, &error);
 
 	if (dbus_error_is_set (&error) || dbus_set_error_from_message (&error, reply)) {
@@ -198,8 +194,7 @@ main (int argc, char *argv[])
 							DBUS_TYPE_INVALID);
 	reply = dbus_connection_send_with_reply_and_block (conn, msg, -1, &error);
 
-	if (dbus_error_is_set (&error) || dbus_set_error_from_message (&error,
-		reply)) {
+	if (dbus_error_is_set (&error) || dbus_set_error_from_message (&error, reply)) {
 		dbus_error_free (&error);
 		goto out;
 	}
@@ -207,8 +202,7 @@ main (int argc, char *argv[])
 	dbus_message_unref (msg);
 	msg = NULL;
 
-	dbus_message_get_args (reply, &error, DBUS_TYPE_STRING, &connection,
-							DBUS_TYPE_INVALID);
+	dbus_message_get_args (reply, &error, DBUS_TYPE_STRING, &connection, DBUS_TYPE_INVALID);
 	if (dbus_error_is_set (&error)) {
 		dbus_error_free (&error);
 		goto out;
@@ -231,14 +225,18 @@ out:
 		dbus_message_unref (msg);
 	if (reply)
 		dbus_message_unref (reply);
+
+	LIBHAL_FREE_DBUS_ERROR (&error);
+
 	if (cs != NULL) {
-		dbus_error_init (&error);
 		libhal_device_commit_changeset (ctx, cs, &error);
+		LIBHAL_FREE_DBUS_ERROR (&error);
 		libhal_device_free_changeset (cs);
 	}
+
 	if (ctx != NULL) {
-		dbus_error_init (&error);
 		libhal_ctx_shutdown (ctx, &error);
+		LIBHAL_FREE_DBUS_ERROR (&error);
 		libhal_ctx_free (ctx);
 	}
 

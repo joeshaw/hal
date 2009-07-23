@@ -113,7 +113,6 @@ main (int argc, char *argv[])
 		goto out;
 	}
 
-	dbus_error_init (&error);
 	libhal_device_set_property_bool (ctx, udi, "button.state.value", test_bit (sw, bitmask), &error);
 	
 	ret = 0;
@@ -122,9 +121,11 @@ out:
 	if (fd >= 0)
 		close (fd);
 
+	LIBHAL_FREE_DBUS_ERROR (&error);
+
 	if (ctx != NULL) {
-		dbus_error_init (&error);
 		libhal_ctx_shutdown (ctx, &error);
+		LIBHAL_FREE_DBUS_ERROR (&error);
 		libhal_ctx_free (ctx);
 	}
 

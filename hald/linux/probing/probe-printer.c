@@ -132,29 +132,35 @@ main (int argc, char *argv[])
 			cmd = *iter + 4;
 	}
 
-	dbus_error_init (&error);
-
 	if (mfg != NULL) {
 		libhal_device_set_property_string (ctx, udi, "info.vendor", mfg, &error);
+		LIBHAL_FREE_DBUS_ERROR (&error);
 		libhal_device_set_property_string (ctx, udi, "printer.vendor", mfg, &error);
 	}		
 
 	if (model != NULL) {
+		LIBHAL_FREE_DBUS_ERROR (&error);
 		libhal_device_set_property_string (ctx, udi, "info.product", model, &error);
+		LIBHAL_FREE_DBUS_ERROR (&error);
 		libhal_device_set_property_string (ctx, udi, "printer.product", model, &error);
 	}
 
-	if (serial != NULL)
+	if (serial != NULL) {
+		LIBHAL_FREE_DBUS_ERROR (&error);
 		libhal_device_set_property_string (ctx, udi, "printer.serial", serial, &error);
+	}
 
 	if (desc != NULL) {
+		LIBHAL_FREE_DBUS_ERROR (&error);
 		libhal_device_set_property_string (ctx, udi, "printer.description", desc, &error);
 	}
 
 	if (cmd != NULL) {
 		char **cmdset = g_strsplit (cmd, ",", 0);
-		for (iter = cmdset; *iter != NULL; iter++)
+		for (iter = cmdset; *iter != NULL; iter++) {
+			LIBHAL_FREE_DBUS_ERROR (&error);
 			libhal_device_property_strlist_append (ctx, udi, "printer.commandset", *iter, &error);
+		}
 		g_strfreev (cmdset);
 	}
 
@@ -166,9 +172,11 @@ out:
 	if (fd >= 0)
 		close (fd);
 
+	LIBHAL_FREE_DBUS_ERROR (&error);
+
 	if (ctx != NULL) {
-		dbus_error_init (&error);
 		libhal_ctx_shutdown (ctx, &error);
+		LIBHAL_FREE_DBUS_ERROR (&error);
 		libhal_ctx_free (ctx);
 	}
 

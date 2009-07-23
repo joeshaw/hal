@@ -76,7 +76,9 @@ setstr (char *buf, char *str, char *prop)
 		if (strcmp (value, "Not Specified") == 0)
 			goto out;
 
-		libhal_device_set_property_string (ctx, udi, prop, value, &error);
+		if (!libhal_device_set_property_string (ctx, udi, prop, value, &error))
+			dbus_error_init (&error);
+
 		HAL_DEBUG (("Setting %s='%s'", prop, value));
 		return TRUE;
 	}
@@ -289,10 +291,12 @@ main (int argc, char *argv[])
 	fclose (f);
 
 out:
+	LIBHAL_FREE_DBUS_ERROR (&error);
+
 	/* free ctx */
 	if (ctx != NULL) {
-		dbus_error_init (&error);
 		libhal_ctx_shutdown (ctx, &error);
+		LIBHAL_FREE_DBUS_ERROR (&error);
 		libhal_ctx_free (ctx);
 	}
 

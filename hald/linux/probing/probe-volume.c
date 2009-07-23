@@ -86,9 +86,6 @@ set_blkid_values (LibHalChangeSet *cs, blkid_probe pr)
 	const char *type_version;
 	const char *label;
 	const char *uuid;
-	DBusError error;
-
-	dbus_error_init (&error);
 
 	if (blkid_probe_lookup_value(pr, "USAGE", &usage, NULL))
 		usage = "";
@@ -161,9 +158,6 @@ advanced_disc_detect (LibHalChangeSet *cs, int fd, const char *device_file)
 	int curr_record = 1; 
 	/* loop counter */
 	int i; 
-	DBusError error;
-	
-	dbus_error_init (&error);
 	
 	/* set defaults */
 	libhal_changeset_set_property_bool (cs, "volume.disc.is_videodvd", FALSE);
@@ -796,6 +790,7 @@ out:
 		   char *values[4] = {"foo", "bar", "baz", NULL};
 		   libhal_changeset_set_property_strlist (cs, "foo.bar", values);
 		*/
+		LIBHAL_FREE_DBUS_ERROR (&error);
 		libhal_device_commit_changeset (ctx, cs, &error);
 		libhal_device_free_changeset (cs);
 	}
@@ -804,9 +799,11 @@ out:
 	if (fd >= 0)
 		close (fd);
 
+	LIBHAL_FREE_DBUS_ERROR (&error);
+
 	if (ctx != NULL) {
-		dbus_error_init (&error);
 		libhal_ctx_shutdown (ctx, &error);
+		LIBHAL_FREE_DBUS_ERROR (&error);
 		libhal_ctx_free (ctx);
 	}
 

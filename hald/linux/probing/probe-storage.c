@@ -526,14 +526,18 @@ main (int argc, char *argv[])
 
 	
 out:
+	LIBHAL_FREE_DBUS_ERROR (&error);
+
 	if (cs != NULL) {
 		libhal_device_commit_changeset (ctx, cs, &error);
 		libhal_device_free_changeset (cs);
 	}
 
+	LIBHAL_FREE_DBUS_ERROR (&error);
+		
 	if (ctx != NULL) {
-		dbus_error_init (&error);
 		libhal_ctx_shutdown (ctx, &error);
+		LIBHAL_FREE_DBUS_ERROR (&error);
 		libhal_ctx_free (ctx);
 	}
 

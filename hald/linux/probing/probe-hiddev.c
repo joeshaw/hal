@@ -137,7 +137,7 @@ main (int argc, char *argv[])
 	if (fork () == 0) {
 		sleep (10);
 
-		dbus_error_init (&error);
+		LIBHAL_FREE_DBUS_ERROR (&error);
 		if ((conn = dbus_bus_get (DBUS_BUS_SYSTEM, &error)) == NULL)
 			goto out;
 		
@@ -161,9 +161,11 @@ out:
 	if (fd >= 0)
 		close (fd);
 
+	LIBHAL_FREE_DBUS_ERROR (&error);
+
 	if (ctx != NULL) {
-		dbus_error_init (&error);
 		libhal_ctx_shutdown (ctx, &error);
+		LIBHAL_FREE_DBUS_ERROR (&error);
 		libhal_ctx_free (ctx);
 	}
 
