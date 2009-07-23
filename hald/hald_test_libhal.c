@@ -75,6 +75,7 @@ send_tests_done (DBusConnection *conn, dbus_bool_t passed)
 		dbus_message_unref (message);
 		fprintf (stderr, "%s %d : Error sending message: %s: %s\n", 
 			 __FILE__, __LINE__, error.name, error.message);
+		dbus_error_free (&error);
 		return;
 	}
 
@@ -112,14 +113,14 @@ check_libhal (const char *server_addr)
 		dbus_error_init (&error);
 		if ((conn = dbus_connection_open (server_addr, &error)) == NULL) {
 			printf ("Error connecting to server: %s\n", error.message);
-			/* TODO: handle */
+			goto fail;
 		}
 
 		dbus_connection_setup_with_g_main (conn, NULL);
 
 		if ((ctx = libhal_ctx_new ()) == NULL) {
 			printf ("Error getting libhal context\n");
-			/* TODO: handle */
+			goto fail;
 		}
 
 		
@@ -364,7 +365,9 @@ check_libhal (const char *server_addr)
 		passed = TRUE;
 		
 	fail:
-
+		if (dbus_error_is_set (&error))
+			dbus_error_free (&error);
+			
 		send_tests_done (conn, passed);
 		exit (1);
 

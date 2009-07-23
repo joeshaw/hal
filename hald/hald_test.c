@@ -429,6 +429,7 @@ server_message_handler (DBusConnection *connection,
 			reply = dbus_message_new_error (message, "org.freedesktop.Hal.SyntaxError", "Syntax Error");
 			dbus_connection_send (connection, reply, NULL);
 			dbus_message_unref (reply);
+			dbus_error_free (&error)
 			passed = FALSE;			
 		} else {
 
@@ -535,6 +536,7 @@ main (int argc, char *argv[])
 	if ((server = dbus_server_listen ("unix:tmpdir=hald-test", &error)) == NULL) { 
 		printf ("Cannot create D-BUS server\n");
 		num_tests_failed++;
+		dbus_error_free (&error);
 		goto out;
 	}
 	printf ("server is listening at %s\n", dbus_server_get_address (server));
