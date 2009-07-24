@@ -86,6 +86,7 @@ main (int argc, char *argv[])
         LibHalContext *hal_ctx;
         FILE *f;
         char *filename;
+	char *basename;
 
 	if (argc <= 1) {
 		usage (argc, argv);
@@ -234,8 +235,11 @@ main (int argc, char *argv[])
                 return 1;
         }
 
+
+	basename = g_path_get_basename (udi); 
         filename = g_strdup_printf (PACKAGE_SYSCONF_DIR "/hal/fdi/information/media-check-disable-%s.fdi",
-                                    g_basename (udi));
+                                    basename);
+	g_free (basename);
 
         if (enable_polling) {
                 if (libhal_device_get_property_bool (hal_ctx, udi, "storage.media_check_enabled", NULL)) {

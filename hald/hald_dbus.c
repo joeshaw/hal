@@ -4269,9 +4269,12 @@ hald_exec_method (HalDevice *d, CICallerInfo *ci, DBusConnection *connection, db
                 /* caller may, or may not, be in a session.. if he is, export the session he belongs to... */
                 ck_session_path = ci_tracker_caller_get_ck_session_path (ci);
                 if (ck_session_path != NULL) {
-                        sprintf (ck_session_path_export, "HAL_METHOD_INVOKED_BY_SESSION=%s", 
-                                 g_basename (ck_session_path));
+			char * basename;
+
+			basename = g_path_get_basename (ck_session_path); 
+                        sprintf (ck_session_path_export, "HAL_METHOD_INVOKED_BY_SESSION=%s", basename);
                         extra_env[n++] = ck_session_path_export;
+			g_free (basename);
                 }
 #endif /* HAVE_CONKIT */
 	}
