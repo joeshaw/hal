@@ -4644,7 +4644,6 @@ do_introspect (DBusConnection  *connection,
 				       "    </method>\n"
 				       "    <method name=\"IsCallerPrivileged\">\n"
 				       "      <arg name=\"action\" direction=\"in\" type=\"s\"/>\n"
-                                       "      <arg name=\"action_parameters\" type=\"as\"/>\n"
 				       "      <arg name=\"caller_sysbus_name\" direction=\"in\" type=\"s\"/>\n"
 				       "      <arg name=\"result\" direction=\"out\" type=\"s\"/>\n"
 				       "    </method>\n"
