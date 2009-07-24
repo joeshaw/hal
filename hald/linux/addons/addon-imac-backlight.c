@@ -120,6 +120,8 @@ filter_function (DBusConnection * connection, DBusMessage * message, void *userd
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
+	LIBHAL_FREE_DBUS_ERROR (&err);
+
 	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 }
 
@@ -130,6 +132,7 @@ main (int argc, char **argv)
 	GMainLoop *main_loop;
 	const char *udi;
 	DBusError err;
+	int retval;
 
 	setup_logger ();
 	udi = getenv ("UDI");
@@ -145,12 +148,15 @@ main (int argc, char **argv)
 	if ((halctx = libhal_ctx_init_direct (&err)) == NULL)
 	{
 		HAL_ERROR (("Cannot connect to hald"));
-		return -3;
+		retval = -3;
+		goto out;
 	}
 
-	dbus_error_init (&err);
-	if (!libhal_device_addon_is_ready (halctx, udi, &err))
-		return -4;
+	if (!libhal_device_addon_is_ready (halctx, udi, &err)) 
+	{
+		retval = -4;
+		goto out;
+	}
 
 	if (ioperm(0xB2, 0xB3, 1) < 0)
 	{
@@ -167,11 +173,22 @@ main (int argc, char **argv)
 					    BACKLIGHT_IFACE, INTERFACE_DESCRIPTION, &err))
 	{
 		HAL_ERROR (("Cannot claim interface 'org.freedesktop.Hal.Device.LaptopPanel'"));
-		return -4;
+		retval = -4;
+		goto out;
 	}
 
 	main_loop = g_main_loop_new (NULL, FALSE);
 	g_main_loop_run (main_loop);
 	return 0;
-}
 
+out:
+        LIBHAL_FREE_DBUS_ERROR (&err);
+
+        if (halctx != NULL) {
+                libhal_ctx_shutdown (halctx, &err);
+                LIBHAL_FREE_DBUS_ERROR (&err);
+                libhal_ctx_free (halctx);
+        }
+
+        return retval;
+}

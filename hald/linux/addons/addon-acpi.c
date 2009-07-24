@@ -224,14 +224,13 @@ main_loop (LibHalContext *ctx, FILE *eventfp)
 						type = libhal_device_get_property_string(ctx, udi, 
 											 "button.type",
 											 &error);
-						if (dbus_error_is_set (&error)) {
-							dbus_error_free (&error);
-						}
+						LIBHAL_FREE_DBUS_ERROR(&error);
 
 						if (type != NULL) {
 							libhal_device_emit_condition (ctx, udi, "ButtonPressed",
 										      type, &error);
 							libhal_free_string(type);
+							LIBHAL_FREE_DBUS_ERROR(&error);
 						} else {
 							libhal_device_emit_condition (ctx, udi, "ButtonPressed", "", &error);
 						}
@@ -249,11 +248,7 @@ main_loop (LibHalContext *ctx, FILE *eventfp)
 			HAL_DEBUG (("cannot parse event"));
 		}
 
-		if (dbus_error_is_set (&error)) {
-	        	/* Free the error (which include a dbus_error_init()) 
-			   This should prevent errors if a call above fails */
-			dbus_error_free (&error);
-		}
+		LIBHAL_FREE_DBUS_ERROR(&error);
 	}
 
 	fclose (eventfp);
@@ -279,12 +274,11 @@ main (int argc, char **argv)
 	dbus_error_init (&error);
 	if ((ctx = libhal_ctx_init_direct (&error)) == NULL) {
 		HAL_ERROR (("Unable to initialise libhal context: %s", error.message));
-		return 1;
+		goto out;
 	}
 
-	dbus_error_init (&error);
 	if (!libhal_device_addon_is_ready (ctx, getenv ("UDI"), &error)) {
-		return 1;
+		goto out;
 	}
 
 #ifdef ACPI_PROC
@@ -296,7 +290,7 @@ main (int argc, char **argv)
 		hal_set_proc_title ("hald-addon-acpi: listening on acpi kernel interface /proc/acpi/event");
 		main_loop (ctx, eventfp);
 		HAL_ERROR (("Lost connection to kernel acpi event source - exiting"));
-		return 1;
+		goto out;
 	}
 #endif
 
@@ -315,6 +309,20 @@ main (int argc, char **argv)
 		 * sleep for 5s and try to reconnect (again). */
 		sleep (5);
 	}
+
+out:
+
+        HAL_DEBUG (("An error occured, exiting cleanly"));
+
+        LIBHAL_FREE_DBUS_ERROR (&error);
+
+        if (ctx != NULL) {
+                libhal_ctx_shutdown (ctx, &error);
+                LIBHAL_FREE_DBUS_ERROR (&error);
+                libhal_ctx_free (ctx);
+        }
+
+	return 1;
 }
 
 /* vim:set sw=8 noet: */

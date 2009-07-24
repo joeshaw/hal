@@ -275,12 +275,13 @@ ups_get_static (LibHalContext *ctx, const char *udi, int fd,
 	dbus_error_init (&error);
 	libhal_device_commit_changeset (ctx, cs, &error);
 
-	dbus_error_init (&error);
+	LIBHAL_FREE_DBUS_ERROR (&error);	
 	libhal_device_add_capability (ctx, udi, "battery", &error);
 
 	ret = TRUE;
 
 out:
+	LIBHAL_FREE_DBUS_ERROR (&error);
 	libhal_device_free_changeset (cs);
 
 	return ret;
@@ -328,7 +329,6 @@ main (int argc, char *argv[])
 
 	hal_set_proc_title ("hald-addon-hid-ups: listening on %s", device_file);
 
-	dbus_error_init (&error);
 	if (!libhal_device_addon_is_ready (ctx, udi, &error)) {
 		goto out;
 	}
@@ -338,7 +338,6 @@ main (int argc, char *argv[])
 		FD_SET(fd, &fdset);
 		rd = select(fd+1, &fdset, NULL, NULL, NULL);
 
-		
 		if (rd > 0) {
 			LibHalChangeSet *cs;
 
@@ -399,14 +398,23 @@ main (int argc, char *argv[])
 				}
 			}
 
-			dbus_error_init (&error);
+			LIBHAL_FREE_DBUS_ERROR (&error);
 			/* NOTE: commit_changeset won't do IPC if set is empty */
 			libhal_device_commit_changeset (ctx, cs, &error);
+			LIBHAL_FREE_DBUS_ERROR (&error);
 			libhal_device_free_changeset (cs);
 
 		}
 	}
 
 out:
+        LIBHAL_FREE_DBUS_ERROR (&error);
+
+        if (ctx != NULL) {
+                libhal_ctx_shutdown (ctx, &error);
+                LIBHAL_FREE_DBUS_ERROR (&error);
+                libhal_ctx_free (ctx);
+        }
+	
 	return 0;
 }

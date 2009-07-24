@@ -163,7 +163,6 @@ filter_function (DBusConnection *connection, DBusMessage *message, void *userdat
 					 "SetBrightness")) {
 		int brightness;
 
-		dbus_error_init (&err);
 		if (dbus_message_get_args (message,
 					   &err,
 					   DBUS_TYPE_INT32, &brightness,
@@ -193,7 +192,6 @@ filter_function (DBusConnection *connection, DBusMessage *message, void *userdat
 						"GetBrightness")) {
 		int brightness;
 
-		dbus_error_init (&err);
 		if (dbus_message_get_args (message,
 					   &err,
 					   DBUS_TYPE_INVALID)) {
@@ -213,6 +211,8 @@ filter_function (DBusConnection *connection, DBusMessage *message, void *userdat
 error:
 	if (reply != NULL)
 		dbus_message_unref (reply);
+
+	LIBHAL_FREE_DBUS_ERROR (&err);
 
 	return DBUS_HANDLER_RESULT_HANDLED;
 }
@@ -258,6 +258,7 @@ add_device (LibHalContext *ctx,
 					    "    </method>\n",
 					    &err)) {
 		HAL_ERROR (("Cannot claim interface 'org.freedesktop.Hal.Device.Leds'"));
+		LIBHAL_FREE_DBUS_ERROR (&err);
 		return;
 	}
 	
@@ -322,7 +323,6 @@ main (int argc, char *argv[])
 	dbus_connection_setup_with_g_main (dbus_connection, NULL);
 	dbus_connection_set_exit_on_disconnect (dbus_connection, 0);
 
-	dbus_error_init (&error);
 
 	if (!libhal_device_singleton_addon_is_ready (ctx, commandline, &error)) {
 		goto out;
@@ -337,9 +337,12 @@ main (int argc, char *argv[])
 
 out:
 	HAL_DEBUG (("An error occured, exiting cleanly"));
+	
+	LIBHAL_FREE_DBUS_ERROR (&error);
+
 	if (ctx != NULL) {
-		dbus_error_init (&error);
 		libhal_ctx_shutdown (ctx, &error);
+		LIBHAL_FREE_DBUS_ERROR (&error);
 		libhal_ctx_free (ctx);
 	}
 

@@ -175,19 +175,19 @@ main (int argc, char **argv)
 	dbus_error_init (&error);
 	if ((ctx = libhal_ctx_init_direct (&error)) == NULL) {
 		HAL_ERROR (("Unable to initialise libhal context: %s", error.message));
+		LIBHAL_FREE_DBUS_ERROR (&error);
 		return 1;
 	}
 
-	dbus_error_init (&error);
 	if (!libhal_device_addon_is_ready (ctx, udi, &error)) {
-		return 1;
+		goto out;	
 	}
 
 	/* Check for Toshiba ACPI interface /proc/acpi/toshiba/keys */
 	fp = fopen (TOSHIBA_ACPI_KEYS, "r+");
 	if (!fp) {
 		HAL_ERROR (("Could not open %s! Aborting.", TOSHIBA_ACPI_KEYS));
-		return 0;
+		goto out;
 	}
 	fclose (fp);
 
@@ -199,5 +199,18 @@ main (int argc, char **argv)
 
 	loop = g_main_loop_new (NULL, FALSE);
 	g_main_loop_run (loop);
+	return 0;
+
+out:
+        HAL_DEBUG (("An error occured, exiting cleanly"));
+
+	LIBHAL_FREE_DBUS_ERROR (&error);
+
+        if (ctx != NULL) {
+                libhal_ctx_shutdown (ctx, &error);
+		LIBHAL_FREE_DBUS_ERROR (&error);
+                libhal_ctx_free (ctx);
+        }
+
 	return 0;
 }

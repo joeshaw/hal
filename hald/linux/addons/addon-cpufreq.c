@@ -1071,6 +1071,7 @@ static DBusHandlerResult dbus_filter_function(DBusConnection *connection,
 
 		if (!dbus_get_argument(connection, message, &dbus_error,
 				       DBUS_TYPE_STRING, &arg)) {
+			LIBHAL_FREE_DBUS_ERROR (&dbus_error);
 			return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 		}
  		HAL_DEBUG(("Received argument: %s", arg));
@@ -1084,6 +1085,7 @@ static DBusHandlerResult dbus_filter_function(DBusConnection *connection,
 
 		if (!dbus_get_argument(connection, message, &dbus_error,
 				       DBUS_TYPE_INT32, &arg)) {
+			LIBHAL_FREE_DBUS_ERROR (&dbus_error);
 			return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 		}
  		HAL_DEBUG(("Received argument: %d", arg));
@@ -1097,6 +1099,7 @@ static DBusHandlerResult dbus_filter_function(DBusConnection *connection,
 
 		if (!dbus_get_argument(connection, message, &dbus_error,
 				       DBUS_TYPE_BOOLEAN, &arg)) {
+			LIBHAL_FREE_DBUS_ERROR (&dbus_error);
 			return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 		}
  		HAL_DEBUG(("Received argument: %d", arg));
@@ -1164,6 +1167,7 @@ gboolean dbus_init_local(void)
 
 	dbus_connection = dbus_bus_get(DBUS_BUS_SYSTEM, &dbus_error);
 	if (dbus_error_is_set(&dbus_error)) {
+		dbus_error_free (&dbus_error);
 		HAL_WARNING(("Cannot get D-Bus connection"));
 		return TRUE;
 	}
@@ -1244,7 +1248,14 @@ gboolean dbus_init(void)
 	return TRUE;
 
 Error:
-	dbus_error_free(&dbus_error);
+        LIBHAL_FREE_DBUS_ERROR (&dbus_error);
+
+	if (halctx != NULL) {
+                libhal_ctx_shutdown (halctx, &dbus_error);
+                LIBHAL_FREE_DBUS_ERROR (&dbus_error);
+                libhal_ctx_free (halctx);
+        }
+
 	return FALSE;
 }
 /********************* DBus end *********************/

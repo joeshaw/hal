@@ -157,7 +157,7 @@ unmount_cleartext_devices (LibHalContext *ctx, const char *udi)
 		for (i = 0; i < num_clear_devices; i++) {
 			char *clear_udi;
 			clear_udi = clear_devices[i];
-			dbus_error_init (&error);
+			LIBHAL_FREE_DBUS_ERROR (&error);
 			if (libhal_device_get_property_bool (ctx, clear_udi, "volume.is_mounted", &error)) {
 				HAL_DEBUG (("Forcing unmount of child '%s' (crypto)", clear_udi));
 				force_unmount (ctx, clear_udi);
@@ -166,6 +166,7 @@ unmount_cleartext_devices (LibHalContext *ctx, const char *udi)
 		libhal_free_string_array (clear_devices);
 	}
 
+	LIBHAL_FREE_DBUS_ERROR (&error);
 	return ret;
 }
 
@@ -178,22 +179,22 @@ unmount_childs (LibHalContext *ctx, const char *udi)
 
 	/* need to force unmount all partitions */
 	dbus_error_init (&error);
-	if ((volumes = libhal_manager_find_device_string_match (
-		     ctx, "block.storage_device", udi, &num_volumes, &error)) != NULL) {
+	if ((volumes = libhal_manager_find_device_string_match (ctx, "block.storage_device", udi, &num_volumes, &error)) != NULL) {
 		int i;
 
 		for (i = 0; i < num_volumes; i++) {
 			char *vol_udi;
 
 			vol_udi = volumes[i];
-			dbus_error_init (&error);
+			LIBHAL_FREE_DBUS_ERROR (&error);
+
 			if (libhal_device_get_property_bool (ctx, vol_udi, "block.is_volume", &error)) {
 				dbus_bool_t is_crypto;
 
 				/* unmount all cleartext devices associated with us */
 				is_crypto = unmount_cleartext_devices (ctx, vol_udi);
 
-				dbus_error_init (&error);
+				LIBHAL_FREE_DBUS_ERROR (&error);
 				if (libhal_device_get_property_bool (ctx, vol_udi, "volume.is_mounted", &error)) {
 					HAL_DEBUG (("Forcing unmount of child '%s'", vol_udi));
 					force_unmount (ctx, vol_udi);
@@ -215,12 +216,12 @@ unmount_childs (LibHalContext *ctx, const char *udi)
 						goto teardown_failed;
 					}
 
-					dbus_error_init (&error);
+					LIBHAL_FREE_DBUS_ERROR (&error);
+
 					if (!(reply = dbus_connection_send_with_reply_and_block (
 						      libhal_ctx_get_dbus_connection (ctx), msg, -1, &error)) || 
 					    dbus_error_is_set (&error)) {
-						HAL_DEBUG (("Teardown failed for %s: %s : %s\n", 
-						     udi, error.name, error.message));
+						HAL_DEBUG (("Teardown failed for %s: %s : %s\n", udi, error.name, error.message));
 						dbus_error_free (&error);
 					}
 
@@ -236,6 +237,7 @@ unmount_childs (LibHalContext *ctx, const char *udi)
 		}
 		libhal_free_string_array (volumes);
 	}
+	LIBHAL_FREE_DBUS_ERROR (&error);
 }
 
 /** Check if a filesystem on a special device file is mounted
@@ -357,14 +359,17 @@ poll_for_media (gpointer user_data)
                         HAL_INFO (("... device %s is locked on HAL", device_file));
                         is_locked_by_hal = TRUE;
                         update_proc_title ();
+			LIBHAL_FREE_DBUS_ERROR (&error);
                         goto skip_check;
                 } else {
                         HAL_INFO (("... device %s is not locked on HAL", device_file));
                         is_locked_by_hal = FALSE;
                 }
 
-                dbus_error_init (&error);
+		LIBHAL_FREE_DBUS_ERROR (&error);
+
                 should_poll = libhal_device_get_property_bool (ctx, udi, "storage.media_check_enabled", &error);
+		LIBHAL_FREE_DBUS_ERROR (&error);
 		polling_disabled = !should_poll;
 		update_proc_title ();
         }
@@ -484,6 +489,7 @@ poll_for_media_force (void)
 				/* emit signal from drive device object */
 				dbus_error_init (&error);
 				libhal_device_emit_condition (ctx, udi, "EjectPressed", "", &error);
+				LIBHAL_FREE_DBUS_ERROR (&error);
 			}
 		}
 		close (fd);
@@ -524,6 +530,7 @@ poll_for_media_force (void)
 			/* could have a fs on the main block device; do a rescan to remove it */
 			dbus_error_init (&error);
 			libhal_device_rescan (ctx, udi, &error);
+			LIBHAL_FREE_DBUS_ERROR (&error);
 			
 			/* have to this to trigger appropriate hotplug events */
 			fd = open (device_file, O_RDONLY | O_NONBLOCK);
@@ -547,7 +554,7 @@ poll_for_media_force (void)
 			/* could have a fs on the main block device; do a rescan to add it */
 			dbus_error_init (&error);
 			libhal_device_rescan (ctx, udi, &error);
-			
+			LIBHAL_FREE_DBUS_ERROR (&error);
 		}
 		break;
 		
@@ -604,6 +611,7 @@ get_system_idle_from_ck (void)
        ret = TRUE;
 
 error:
+       LIBHAL_FREE_DBUS_ERROR (&error);
        return ret;
 }
 #endif /* HAVE_CONKIT */
@@ -720,12 +728,10 @@ main (int argc, char *argv[])
 	dbus_connection_setup_with_g_main (con, NULL);
 	dbus_connection_set_exit_on_disconnect (con, 0);
 
-	dbus_error_init (&error);
 	if ((ctx_direct = libhal_ctx_init_direct (&error)) == NULL) {
 		HAL_ERROR (("Cannot connect to hald"));
                 goto out;
 	}
-	dbus_error_init (&error);
 	if (!libhal_device_addon_is_ready (ctx_direct, udi, &error)) {
                 goto out;
 	}
@@ -735,14 +741,11 @@ main (int argc, char *argv[])
 	dbus_connection_add_filter (con_direct, direct_filter_function, NULL, NULL);
 
 
-	dbus_error_init (&error);
 	if ((ctx = libhal_ctx_init_direct (&error)) == NULL)
 		goto out;
 
-	dbus_error_init (&error);
-	if (!libhal_device_addon_is_ready (ctx, udi, &error)) {
+	if (!libhal_device_addon_is_ready (ctx, udi, &error))
 		goto out;
-	}
 
 	HAL_DEBUG (("**************************************************"));
 	HAL_DEBUG (("Doing addon-storage for %s (bus %s) (drive_type %s) (udi %s)", device_file, bus, drive_type, udi));
@@ -818,9 +821,13 @@ main (int argc, char *argv[])
 	g_main_loop_run (loop);
 
 out:
+	HAL_DEBUG (("An error occured, exiting cleanly"));
+
+	LIBHAL_FREE_DBUS_ERROR (&error);
+
 	if (ctx != NULL) {
-		dbus_error_init (&error);
 		libhal_ctx_shutdown (ctx, &error);
+		LIBHAL_FREE_DBUS_ERROR (&error);
 		libhal_ctx_free (ctx);
 	}
 

@@ -79,31 +79,44 @@ property_cache_item_get (const char *hal_device_udi)
 
 	pci->bus_no_present = libhal_device_property_exists (halctx, hal_device_udi, 
 			"usb_device.bus_number", &err);
-	if (dbus_error_is_set (&err))
+
+	if (dbus_error_is_set (&err)) {
 		HAL_ERROR (("Error: [%s]/[%s]", err.name, err.message));	
+		dbus_error_free (&err);
+	}
 
 	if (pci->bus_no_present)
 		pci->bus_no = libhal_device_get_property_int (halctx, hal_device_udi, 
 			"usb_device.bus_number", &err);
 
+	LIBHAL_FREE_DBUS_ERROR (&err);
 	pci->port_no_present = libhal_device_property_exists (halctx, hal_device_udi, 
 			"usb_device.linux.device_number", &err);
+
+	LIBHAL_FREE_DBUS_ERROR (&err);
 	if (pci->port_no_present)
 		pci->port_no = libhal_device_get_property_int (halctx, hal_device_udi, 
 			"usb_device.linux.device_number", &err);
 
+	LIBHAL_FREE_DBUS_ERROR (&err);
 	pci->csr_is_dual_present = libhal_device_property_exists (halctx, hal_device_udi,
 			"battery.csr.is_dual",  &err);
+
+	LIBHAL_FREE_DBUS_ERROR (&err);
 	if (pci->csr_is_dual_present)
 		pci->csr_is_dual = libhal_device_get_property_bool (halctx, hal_device_udi,
 			"battery.csr.is_dual",  &err);
 
+	LIBHAL_FREE_DBUS_ERROR (&err);
 	pci->current_charge_present = libhal_device_property_exists (halctx, hal_device_udi, 
 			"battery.charge_level.current", &err);
+
+	LIBHAL_FREE_DBUS_ERROR (&err);
 	if (pci->current_charge_present)
 		pci->current_charge = libhal_device_get_property_int (halctx, hal_device_udi, 
 			"battery.charge_level.current", &err);
 
+	LIBHAL_FREE_DBUS_ERROR (&err);
 	return pci;
 }
 
@@ -150,9 +163,13 @@ check_battery (const char *hal_device_udi, PropertyCacheItem *pci)
 
 			HAL_DEBUG (("Charge level: %d->%d", pci->current_charge, current_charge));
 			if (current_charge != pci->current_charge) { 
-				pci->current_charge = current_charge; dbus_error_init (&err);
+				pci->current_charge = current_charge; 
+				dbus_error_init (&err);
+
 		 		libhal_device_set_property_int (halctx, hal_device_udi, 
 		 			"battery.charge_level.current", current_charge, &err);
+				LIBHAL_FREE_DBUS_ERROR (&err);
+
 		 		if (current_charge != 0) {
 		 			percentage = (100.0 / 7.0) * current_charge;
 		 			libhal_device_set_property_int (halctx, hal_device_udi, 
@@ -161,10 +178,14 @@ check_battery (const char *hal_device_udi, PropertyCacheItem *pci)
 					libhal_device_remove_property(halctx, hal_device_udi,
 								      "battery.charge_level.percentage", &err);	
 				}
+
+				LIBHAL_FREE_DBUS_ERROR (&err);
 			}
 		}
-	} else
+	} else {
 		perror ("Writing to USB device");
+	}
+
 	usb_close (handle);
 }
 
@@ -266,6 +287,7 @@ int
 main (int argc, char *argv[])
 {
 	DBusError err;
+	int retval = 0;
 
 	hal_set_proc_title_init (argc, argv);
 
@@ -282,24 +304,33 @@ main (int argc, char *argv[])
 	dbus_error_init (&err);
 	if ((halctx = libhal_ctx_init_direct (&err)) == NULL) {
 		HAL_ERROR (("Cannot connect to hald"));
-		return -3;
+		retval = -3;
+		goto out;
 	}
 
 
 	/* update_properties */
-	dbus_error_init (&err);
 	libhal_device_set_property_bool (halctx, device_udi, 
 			"battery.present", TRUE, &err);
+
+	LIBHAL_FREE_DBUS_ERROR (&err);
 	if (!libhal_device_property_exists (halctx, device_udi, 
-			"battery.is_rechargeable", &err))
+			"battery.is_rechargeable", &err)) {
+		LIBHAL_FREE_DBUS_ERROR (&err);
 		libhal_device_set_property_bool (halctx, device_udi, 
 			"battery.is_rechargeable", FALSE, &err);
+	}
+
+	LIBHAL_FREE_DBUS_ERROR (&err);
 	libhal_device_set_property_int (halctx, device_udi, 
 			"battery.charge_level.design", 7, &err);
+	LIBHAL_FREE_DBUS_ERROR (&err);
 	libhal_device_set_property_int (halctx, device_udi, 
 			"battery.charge_level.last_full", 7, &err);
+	LIBHAL_FREE_DBUS_ERROR (&err);
 	libhal_device_set_property_string (halctx, device_udi, 
 			"info.category", "battery", &err);
+	LIBHAL_FREE_DBUS_ERROR (&err);
 	libhal_device_set_property_string (halctx, device_udi, 
 			"battery.command_interface", "csr", &err);
 
@@ -317,12 +348,13 @@ main (int argc, char *argv[])
 	check_all_batteries (NULL);
 
 	/* only add capability when initial charge_level key has been set */
-	dbus_error_init (&err);
+	LIBHAL_FREE_DBUS_ERROR (&err);
 	libhal_device_add_capability (halctx, device_udi, "battery", &err);
 
-	dbus_error_init (&err);
+	LIBHAL_FREE_DBUS_ERROR (&err);
 	if (!libhal_device_addon_is_ready (halctx, device_udi, &err)) {
-		return -4;
+		retval = -4;
+		goto out;
 	}
 
 	hal_set_proc_title ("hald-addon-usb-csr: listening on '%s'", 
@@ -336,8 +368,18 @@ main (int argc, char *argv[])
 	g_timeout_add (1000L * TIMEOUT, check_all_batteries, NULL);
 #endif
 	g_main_loop_run (main_loop);
-
-	libhal_ctx_shutdown (halctx, &err);
-	HAL_ERROR (("** Addon exits normally"));
 	return 0;
+
+out:
+        HAL_DEBUG (("An error occured, exiting cleanly"));
+
+        LIBHAL_FREE_DBUS_ERROR (&err);
+
+        if (halctx != NULL) {
+                libhal_ctx_shutdown (halctx, &err);
+                LIBHAL_FREE_DBUS_ERROR (&err);
+                libhal_ctx_free (halctx);
+        }
+
+        return retval;
 }

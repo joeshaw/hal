@@ -158,13 +158,13 @@ filter_function (DBusConnection *connection, DBusMessage *message, void *userdat
 	     dbus_message_get_member (message));
 #endif
 	reply = NULL;
+	dbus_error_init (&err);
 
 	if (dbus_message_is_method_call (message,
 					 "org.freedesktop.Hal.Device.LaptopPanel",
 					 "SetBrightness")) {
 		int brightness;
 
-		dbus_error_init (&err);
 		if (dbus_message_get_args (message,
 					   &err,
 					   DBUS_TYPE_INT32, &brightness,
@@ -195,7 +195,6 @@ filter_function (DBusConnection *connection, DBusMessage *message, void *userdat
 						"GetBrightness")) {
 		int brightness;
 
-		dbus_error_init (&err);
 		if (dbus_message_get_args (message,
 					   &err,
 					   DBUS_TYPE_INVALID)) {
@@ -223,6 +222,8 @@ error:
 	if (reply != NULL)
 		dbus_message_unref (reply);
 
+	LIBHAL_FREE_DBUS_ERROR (&err);
+
 	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
@@ -240,6 +241,7 @@ int
 main (int argc, char *argv[])
 {
 	DBusError err;
+	int retval = 0;
 
 	setup_logger ();
 	setup_cb ();
@@ -254,7 +256,8 @@ main (int argc, char *argv[])
 	dbus_error_init (&err);
 	if ((halctx = libhal_ctx_init_direct (&err)) == NULL) {
 		HAL_ERROR (("Cannot connect to hald"));
-		return -3;
+		retval = -3;
+		goto out;
 	}
 
 	conn = libhal_ctx_get_dbus_connection (halctx);
@@ -274,16 +277,30 @@ main (int argc, char *argv[])
 					    "    </method>\n",
 					    &err)) {
 		HAL_ERROR (("Cannot claim interface 'org.freedesktop.Hal.Device.LaptopPanel'"));
-		return -4;
+		retval = -4;
+		goto out;
 	}
 
-	dbus_error_init (&err);
 	if (!libhal_device_addon_is_ready (halctx, udi, &err)) {
-		return -4;
+		retval = -4;
+		goto out;
 	}
 
 	bl_data.backlight_init (&bl_data);
 	main_loop = g_main_loop_new (NULL, FALSE);
 	g_main_loop_run (main_loop);
 	return 0;
+
+out:
+        HAL_DEBUG (("An error occured, exiting cleanly"));
+
+        LIBHAL_FREE_DBUS_ERROR (&err);
+
+        if (halctx != NULL) {
+                libhal_ctx_shutdown (halctx, &err);
+                LIBHAL_FREE_DBUS_ERROR (&err);
+                libhal_ctx_free (halctx);
+        }
+
+        return retval;
 }

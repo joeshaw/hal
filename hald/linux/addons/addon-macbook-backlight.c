@@ -246,6 +246,8 @@ filter_function (DBusConnection * connection, DBusMessage * message, void *userd
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
+	LIBHAL_FREE_DBUS_ERROR (&err);
+
 	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 }
 
@@ -256,6 +258,7 @@ main (int argc, char **argv)
 	GMainLoop *main_loop;
 	const char *udi;
 	DBusError err;
+	int retval = 0;
 
 	setup_logger ();
 	udi = getenv ("UDI");
@@ -264,13 +267,16 @@ main (int argc, char **argv)
 		HAL_ERROR (("no device specified"));
 
 	dbus_error_init (&err);
-	if ((halctx = libhal_ctx_init_direct (&err)) == NULL)
+	if ((halctx = libhal_ctx_init_direct (&err)) == NULL) {
 		HAL_ERROR (("cannot connect to hald"));
+		retval = -4;
+		goto out;
+	}
 
-	dbus_error_init (&err);
 	if (!libhal_device_addon_is_ready (halctx, udi, &err)) {
 		HAL_ERROR (("libhal_device_addon_is_ready returned false, exit now"));
-		return -4;
+		retval = -4;
+		goto out;
 	}
 
 	if (!map_register_page ()) {
@@ -284,12 +290,28 @@ main (int argc, char **argv)
 	dbus_connection_add_filter (conn, filter_function, NULL, NULL);
 
 	if (!libhal_device_claim_interface (halctx, BACKLIGHT_OBJECT,
-					    BACKLIGHT_IFACE, INTERFACE_DESCRIPTION, &err))
+					    BACKLIGHT_IFACE, INTERFACE_DESCRIPTION, &err)) {
 		HAL_ERROR (("cannot claim interface"));
+		retval = -4;
+		goto out;
+	}
 
 	main_loop = g_main_loop_new (NULL, FALSE);
 	g_main_loop_run (main_loop);
 
 	return 0;
+
+out:
+        HAL_DEBUG (("An error occured, exiting cleanly"));
+
+        LIBHAL_FREE_DBUS_ERROR (&err);
+
+        if (halctx != NULL) {
+                libhal_ctx_shutdown (halctx, &err);
+                LIBHAL_FREE_DBUS_ERROR (&err);
+                libhal_ctx_free (halctx);
+        }
+
+        return retval;
 }
 

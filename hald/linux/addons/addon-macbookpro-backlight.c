@@ -239,6 +239,7 @@ filter_function (DBusConnection *connection, DBusMessage *message, void *userdat
 	     dbus_message_get_member (message));*/
 
 	reply = NULL;
+	dbus_error_init (&err);
 
 	if (dbus_message_is_method_call (message, 
 					 "org.freedesktop.Hal.Device.LaptopPanel", 
@@ -248,7 +249,6 @@ filter_function (DBusConnection *connection, DBusMessage *message, void *userdat
                 if (!check_priv (halctx, connection, message, udi, "org.freedesktop.hal.power-management.lcd-panel"))
                         goto error;
 
-		dbus_error_init (&err);
 		if (dbus_message_get_args (message, 
 					   &err,
 					   DBUS_TYPE_INT32, &brightness,
@@ -285,7 +285,6 @@ filter_function (DBusConnection *connection, DBusMessage *message, void *userdat
                 if (!check_priv (halctx, connection, message, udi, "org.freedesktop.hal.power-management.lcd-panel"))
                         goto error;
 
-		dbus_error_init (&err);
 		if (dbus_message_get_args (message, 
 					   &err,
 					   DBUS_TYPE_INVALID)) {
@@ -388,7 +387,6 @@ filter_function (DBusConnection *connection, DBusMessage *message, void *userdat
                 if (!check_priv (halctx, connection, message, udi, "org.freedesktop.hal.power-management.keyboard-backlight"))
                         goto error;
 
-		dbus_error_init (&err);
 		if (dbus_message_get_args (message, 
 					   &err,
 					   DBUS_TYPE_INT32, &brightness,
@@ -417,6 +415,8 @@ error:
 	if (reply != NULL)
 		dbus_message_unref (reply);
 
+	LIBHAL_FREE_DBUS_ERROR (&err);
+
 	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
@@ -427,6 +427,7 @@ main (int argc, char *argv[])
  	size_t length = 0;
  	int fd;
  	int state;
+	int retval = 0;
 	struct pci_access *pacc;
  	struct pci_dev *dev;
 
@@ -444,12 +445,13 @@ main (int argc, char *argv[])
 	dbus_error_init (&err);
 	if ((halctx = libhal_ctx_init_direct (&err)) == NULL) {
 		HAL_ERROR (("Cannot connect to hald"));
-		return -3;
+		retval = -3;
+		goto out;
 	}
 
-	dbus_error_init (&err);
 	if (!libhal_device_addon_is_ready (halctx, udi, &err)) {
-		return -4;
+		retval = -4;
+		goto out;
 	}
 
 
@@ -480,21 +482,24 @@ main (int argc, char *argv[])
  
  	if (!address) {
  		HAL_DEBUG (("Failed to detect ATI X1600, aborting..."));
- 		return 1;
+		retval = 1;
+		goto out;
  	}
  
  	fd = open ("/dev/mem", O_RDWR);
  	
  	if (fd < 0) {
  		HAL_DEBUG (("cannot open /dev/mem"));
- 		return 1;
+		retval = 1;
+		goto out;
  	}
  
  	memory = mmap (NULL, length, PROT_READ|PROT_WRITE, MAP_SHARED, fd, address);
  
  	if (memory == MAP_FAILED) {
  		HAL_ERROR (("mmap failed"));
- 		return 2;
+		retval = 2;
+		goto out;
  	}
  
  	/* Is it really necessary ? */
@@ -520,7 +525,8 @@ main (int argc, char *argv[])
 					    "    </method>\n",
 					    &err)) {
 		HAL_ERROR (("Cannot claim interface 'org.freedesktop.Hal.Device.LaptopPanel'"));
-		return -4;
+		retval = -4;
+		goto out;
 	}
 	if (!libhal_device_claim_interface (halctx, 
 					    "/org/freedesktop/Hal/devices/macbook_pro_light_sensor",
@@ -530,7 +536,8 @@ main (int argc, char *argv[])
 					    "    </method>\n",
 					    &err)) {
 		HAL_ERROR (("Cannot claim interface 'org.freedesktop.Hal.Device.LightSensor'"));
-		return -4;
+		retval = -4;
+		goto out;
 	}
 	if (!libhal_device_claim_interface (halctx, 
 					    "/org/freedesktop/Hal/devices/macbook_pro_keyboard_backlight",
@@ -543,10 +550,24 @@ main (int argc, char *argv[])
 					    "    </method>\n",
 					    &err)) {
 		HAL_ERROR (("Cannot claim interface 'org.freedesktop.Hal.Device.KeyboardBacklight'"));
-		return -4;
+		retval = -4;
+		goto out;
 	}
 
 	main_loop = g_main_loop_new (NULL, FALSE);
 	g_main_loop_run (main_loop);
 	return 0;
+
+out:
+        HAL_DEBUG (("An error occured, exiting cleanly"));
+
+        LIBHAL_FREE_DBUS_ERROR (&err);
+
+        if (halctx != NULL) {
+                libhal_ctx_shutdown (halctx, &err);
+                LIBHAL_FREE_DBUS_ERROR (&err);
+                libhal_ctx_free (halctx);
+        }
+
+        return retval;
 }

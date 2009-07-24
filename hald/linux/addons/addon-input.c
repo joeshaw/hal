@@ -217,6 +217,8 @@ event_io (GIOChannel *channel, GIOCondition condition, gpointer data)
 	if (condition & (G_IO_HUP | G_IO_ERR | G_IO_NVAL))
 		return FALSE;
 
+	dbus_error_init (&error);
+
 	/** tbh, we can probably assume every time we read we have a whole
 	 * event availiable, but hey..*/
 	while (g_io_channel_read_chars (channel,
@@ -284,11 +286,11 @@ event_io (GIOChannel *channel, GIOCondition condition, gpointer data)
 					if (new_state != input_data->button_state) {
 						input_data->button_state = new_state;
 
-						dbus_error_init (&error);
 						libhal_device_set_property_bool (ctx, input_data->udi, "button.state.value",
 										 input_data->button_state, &error);
 
-						dbus_error_init (&error);
+						LIBHAL_FREE_DBUS_ERROR (&error);
+
 						libhal_device_emit_condition (ctx, input_data->udi,
 									      "ButtonPressed",
 									      name,
@@ -298,7 +300,6 @@ event_io (GIOChannel *channel, GIOCondition condition, gpointer data)
 				}
 			}
 		} else if (input_data->event.type == EV_KEY && key_name[input_data->event.code] != NULL && input_data->event.value) {
-			dbus_error_init (&error);
 			libhal_device_emit_condition (ctx, input_data->udi,
 						      "ButtonPressed",
 						      key_name[input_data->event.code],
@@ -306,6 +307,8 @@ event_io (GIOChannel *channel, GIOCondition condition, gpointer data)
 			dbus_error_free (&error);
 		}
 	}
+
+	LIBHAL_FREE_DBUS_ERROR (&error);
 
 	return TRUE;
 }
@@ -475,8 +478,6 @@ main (int argc, char **argv)
 	dbus_connection_setup_with_g_main (dbus_connection, NULL);
 	dbus_connection_set_exit_on_disconnect (dbus_connection, 0);
 
-	dbus_error_init (&error);
-
 	if (!libhal_device_singleton_addon_is_ready (ctx, commandline, &error)) {
 		goto out;
 	}
@@ -496,8 +497,11 @@ main (int argc, char **argv)
 
 out:
 	HAL_DEBUG (("An error occured, exiting cleanly"));
+
+	LIBHAL_FREE_DBUS_ERROR (&error);
+
 	if (ctx != NULL) {
-		dbus_error_init (&error);
+		LIBHAL_FREE_DBUS_ERROR (&error);
 		libhal_ctx_shutdown (ctx, &error);
 		libhal_ctx_free (ctx);
 	}

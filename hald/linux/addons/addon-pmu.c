@@ -66,7 +66,6 @@ main (int argc, char *argv[])
 	if ((ctx = libhal_ctx_init_direct (&error)) == NULL)
 		goto out;
 
-	dbus_error_init (&error);
 	if (!libhal_device_addon_is_ready (ctx, udi, &error)) {
 		goto out;
 	}
@@ -117,10 +116,8 @@ main (int argc, char *argv[])
 
 				if (new_state != state) {
 					HAL_DEBUG (("lid state change: %d", new_state));
-					dbus_error_init (&error);
-					libhal_device_set_property_bool (
-						ctx, udi, "button.state.value", new_state, &error);
-					dbus_error_init (&error);
+					libhal_device_set_property_bool (ctx, udi, "button.state.value", new_state, &error);
+					LIBHAL_FREE_DBUS_ERROR (&error);
 					libhal_device_emit_condition (ctx, udi, "ButtonPressed", "", &error);
 				}
 
@@ -129,15 +126,21 @@ main (int argc, char *argv[])
 
 			
 		}
+		LIBHAL_FREE_DBUS_ERROR (&error);
 		usleep (1000 * 1000);
 	}
-
-
-
 
 out:
 	if (fd >= 0)
 		close (fd);
+
+        LIBHAL_FREE_DBUS_ERROR (&error);
+
+        if (ctx != NULL) {
+                libhal_ctx_shutdown (ctx, &error);
+                LIBHAL_FREE_DBUS_ERROR (&error);
+                libhal_ctx_free (ctx);
+        }
 
 	return 0;
 }

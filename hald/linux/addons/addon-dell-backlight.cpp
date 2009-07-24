@@ -185,6 +185,7 @@ check_priv (DBusConnection *connection, DBusMessage *message, const char *udi, c
         ret = TRUE;
 
 out:
+	LIBHAL_FREE_DBUS_ERROR (&error);
         if (polkit_result != NULL)
                 libhal_free_string (polkit_result);
         return ret;
@@ -215,8 +216,7 @@ filter_function (DBusConnection *connection, DBusMessage *message, void *userdat
 	/* Mechanism to ensure that we always set the AC brightness when we are on AC-power etc. */
 	if ((udis = libhal_find_device_by_capability(halctx, "ac_adapter", &num_devices, &err)) != NULL) {
 		for (i = 0; udis[i] != NULL; i++) {
-			if (dbus_error_is_set(&err)) 
-				dbus_error_free (&err);
+			LIBHAL_FREE_DBUS_ERROR (&err);
 
 			if (libhal_device_property_exists (halctx, udis[i], "ac_adapter.present", &err)) {
 				AC = libhal_device_get_property_bool (halctx, udis[i], "ac_adapter.present", &err);
@@ -233,8 +233,7 @@ filter_function (DBusConnection *connection, DBusMessage *message, void *userdat
 		
 		HAL_DEBUG (("Received SetBrightness DBus call"));
 
-		if (dbus_error_is_set(&err)) 
-			dbus_error_free (&err);
+		LIBHAL_FREE_DBUS_ERROR (&err);
 
 		if (dbus_message_get_args (message, 
 					   &err,
@@ -290,6 +289,8 @@ filter_function (DBusConnection *connection, DBusMessage *message, void *userdat
 		}
 	}	
 error:
+	LIBHAL_FREE_DBUS_ERROR (&err);
+
 	if (reply != NULL)
 		dbus_message_unref (reply);
 	
@@ -300,6 +301,7 @@ int
 main (int argc, char *argv[])
 {
  	DBusError err;
+	int retval = 0;
 
 	setup_logger ();
 
@@ -308,18 +310,20 @@ main (int argc, char *argv[])
 	HAL_DEBUG (("udi=%s", udi));
 	if (udi == NULL) {
 		HAL_ERROR (("No device specified"));
-		return -2;
+		retval = -2;
+		goto out;
 	}
 
 	dbus_error_init (&err);
 	if ((halctx = libhal_ctx_init_direct (&err)) == NULL) {
 		HAL_ERROR (("Cannot connect to hald"));
-		return -3;
+		retval = -3;
+		goto out;
 	}
 
-	dbus_error_init (&err);
 	if (!libhal_device_addon_is_ready(halctx, udi, &err)) {
-		return -4;
+		retval = -4;
+		goto out;
 	}
 
 	conn = libhal_ctx_get_dbus_connection (halctx);
@@ -335,7 +339,8 @@ main (int argc, char *argv[])
 
 	if (maxValue == 0) {
 		HAL_ERROR (("This machine don't support set brightness."));
-		return -5;
+		retval = -5;
+		goto out;
 	}
 	
 	if (!libhal_device_set_property_int (halctx, 
@@ -344,7 +349,8 @@ main (int argc, char *argv[])
 					    maxValue + 1,
 					    &err)) {
 		HAL_ERROR (("Could not set 'laptop_panel.numlevels' to %d", maxValue));
-		return -4;
+		retval = -4;
+		goto out;
 	}
 	HAL_DEBUG (("laptop_panel.numlevels is set to %d", maxValue + 1));
 
@@ -361,12 +367,25 @@ main (int argc, char *argv[])
 					    "    </method>\n",
 					    &err)) {
 		HAL_ERROR (("Cannot claim interface 'org.freedesktop.Hal.Device.LaptopPanel'"));
-		return -4;
+		retval = -4;
+		goto out;
 	}
 	
 	main_loop = g_main_loop_new (NULL, FALSE);
 	g_main_loop_run (main_loop);
 	return 0;
+
+out: 
+
+	LIBHAL_FREE_DBUS_ERROR (&err);
+
+	if (halctx != NULL) {
+		libhal_ctx_shutdown (halctx, &err);
+		LIBHAL_FREE_DBUS_ERROR (&err);
+		libhal_ctx_free (halctx);
+	}
+
+	return retval;
 }
 
 
