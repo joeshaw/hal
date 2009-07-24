@@ -64,7 +64,7 @@ get_backlight ()
 	f = NULL;
 	value = -1;
 
-	g_snprintf (sysfs_path, sizeof (sysfs_path), "%s/brightness", path);
+	g_snprintf (sysfs_path, sizeof (sysfs_path), "%s/actual_brightness", path);
 
 	f = fopen (sysfs_path, "rb");
         if (f == NULL) {
