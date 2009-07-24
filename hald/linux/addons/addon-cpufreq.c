@@ -180,7 +180,7 @@ static gchar **read_line_str_split(char *filename, gchar *delim)
 		return NULL;
 
 	for (i = 0; l[i] != NULL; i++) {
-		if (g_strcasecmp(l[i], "") == 0) {
+		if (g_ascii_strcasecmp(l[i], "") == 0) {
 			free(l[i]);
 			l[i] = NULL;
 		}

@@ -188,13 +188,13 @@ find_device (PropertyCacheItem *pci)
 	for (curr_bus = usb_busses; curr_bus != NULL; curr_bus = curr_bus->next) {
  		struct usb_device *curr_device;
 		/* dbg ("Checking bus: [%s]", curr_bus->dirname); */
-		if (g_strcasecmp (LUdirname, curr_bus->dirname))
+		if (g_ascii_strcasecmp (LUdirname, curr_bus->dirname))
 			continue;
 
  		for (curr_device = curr_bus->devices; curr_device != NULL; 
 		     curr_device = curr_device->next) {
 			/* dbg ("Checking port: [%s]", curr_device->filename); */
-			if (g_strcasecmp (LUfname, curr_device->filename))
+			if (g_ascii_strcasecmp (LUfname, curr_device->filename))
 				continue;
 			HAL_DEBUG (("Matched device: [%s][%s][%04X:%04X]", curr_bus->dirname, 
 				curr_device->filename, 
