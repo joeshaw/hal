@@ -129,6 +129,10 @@
 	<match key="volume.label" string_outof="IBM_SERVICE;SERVICEV001;SERVICEV002">
 	  <merge key="volume.ignore" type="bool">true</merge>
 	</match>
+        <!-- Fujitsu ships laptops with a recovery partitions -->
+	<match key="volume.label" string="WinRE">
+	  <merge key="volume.ignore" type="bool">true</merge>
+	</match>
       </match>
 
       <!-- ignore the following MBR partition types (EFI, hidden, etc.) 
