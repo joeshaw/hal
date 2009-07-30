@@ -3196,6 +3196,22 @@ libhal_device_property_watch_all (LibHalContext *ctx, DBusError *error)
 }
 
 
+dbus_bool_t
+libhal_device_property_remove_watch_all (LibHalContext *ctx, DBusError *error)
+{
+	LIBHAL_CHECK_LIBHALCONTEXT(ctx, FALSE);
+
+	dbus_bus_remove_match (ctx->connection,
+			    "type='signal',"
+			    "interface='org.freedesktop.Hal.Device',"
+			    "sender='org.freedesktop.Hal'", error);
+	if (error != NULL && dbus_error_is_set (error)) {
+		return FALSE;
+	}
+	return TRUE;
+}
+
+
 /**
  * libhal_device_add_property_watch:
  * @ctx: the context for the connection to hald

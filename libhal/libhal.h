@@ -685,6 +685,11 @@ char **libhal_find_device_by_capability (LibHalContext *ctx,
 dbus_bool_t libhal_device_property_watch_all (LibHalContext *ctx,
 					      DBusError *error);
 
+/* Remove a watch of all devices.
+ */
+dbus_bool_t libhal_device_property_remove_watch_all (LibHalContext *ctx,
+					      DBusError *error);
+
 /* Add a watch on a device, so the device_property_changed callback is
  * invoked when the properties on the given device changes.
  */
