@@ -408,7 +408,7 @@ static gboolean ondemand_set_consider_nice(void *data, gboolean consider)
 	consider_file = g_strdup_printf(ONDEMAND_IGNORE_NICE_LOAD_FILE, iface->base_cpu); 
 
         if(!write_line(consider_file, "%u", !consider)){
-                HAL_WARNING(("Could not set ignore_nice_load to: %u kHz; %s", consider,
+                HAL_WARNING(("Could not set ignore_nice_load to: %u; %s", consider,
 			     strerror(errno)));
 		g_free(consider_file);
                 return FALSE;
