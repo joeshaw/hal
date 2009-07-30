@@ -356,6 +356,8 @@ libhal_volume_policy_compute_display_name (LibHalDrive *drive, LibHalVolume *vol
 	dbus_bool_t drive_is_removable;
 	char buf[MAX_STRING_SZ];
 
+	name = NULL;
+
 	volume_label = libhal_volume_get_label (volume);
 	drive_type = libhal_drive_get_type (drive);
 	drive_is_removable = libhal_drive_uses_removable_media (drive);
