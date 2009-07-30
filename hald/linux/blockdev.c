@@ -878,7 +878,7 @@ error:
 }
 
 
-
+void
 hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_file, gboolean is_partition,
 				  HalDevice *parent, void *end_token)
 {
