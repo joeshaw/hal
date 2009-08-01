@@ -3165,7 +3165,7 @@ device_reprobe (DBusConnection * connection, DBusMessage * message, dbus_bool_t 
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
-	HAL_DEBUG (("udi=%s", udi));
+	HAL_DEBUG (("device_reprobe() for udi=%s", udi));
 
 	device = hal_device_store_find (hald_get_gdl (), udi);
 	if (device == NULL)
