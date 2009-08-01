@@ -393,8 +393,10 @@ compare_events (HotplugEvent *hotplug_event, GList *events)
 		for (lp = events; lp; lp = g_list_next (lp)) {
 			loop_event = (HotplugEvent*) lp->data;
 			/* skip ourselves and all later events*/
-			if (loop_event->sysfs.seqnum >= hotplug_event->sysfs.seqnum)
+			if (loop_event->sysfs.seqnum >= hotplug_event->sysfs.seqnum) {
+				HAL_DEBUG (("event %s: skip ourselves and all later events", hotplug_event->sysfs.sysfs_path));
 				break;
+			}
 			if (compare_event (hotplug_event, loop_event)) {
 				HAL_DEBUG (("event %s dependant on %s", hotplug_event->sysfs.sysfs_path, loop_event->sysfs.sysfs_path));
 				return TRUE;
@@ -412,6 +414,43 @@ compare_events (HotplugEvent *hotplug_event, GList *events)
 		return FALSE;
 	}
 }
+
+/*
+ * Returns TRUE if @hotplug_event depends on any running event in @events
+ * This function checks if there is a running remove/add event for the same 
+ * sysfs_path/device. (for more see fd.o#23060)
+ */
+static gboolean
+compare_events_running (HotplugEvent *hotplug_event, GList *events)
+{
+	GList *lp;
+	HotplugEvent *loop_event;
+
+	switch (hotplug_event->type) {
+
+	/* explicit fallthrough */
+	case HOTPLUG_EVENT_SYSFS:
+	case HOTPLUG_EVENT_SYSFS_DEVICE:
+	case HOTPLUG_EVENT_SYSFS_BLOCK:
+
+		for (lp = events; lp; lp = g_list_next (lp)) {
+			loop_event = (HotplugEvent*) lp->data;
+			/* skip ourselves and all later events*/
+			if (!strcmp (hotplug_event->sysfs.sysfs_path, loop_event->sysfs.sysfs_path)) {
+				if (loop_event->action != hotplug_event->action) {
+					HAL_DEBUG (("there is still a event running for this device, wait!"));
+					return TRUE;
+				}
+
+			}
+		}
+		return FALSE;
+
+	default:
+		return FALSE;
+	}
+}
+
 
 
 void 
@@ -432,9 +471,17 @@ hotplug_event_process_queue (void)
 	lp = hotplug_event_queue->head;
 	while (lp != NULL) {
 		hotplug_event = lp->data;
-		HAL_INFO (("checking event %s", hotplug_event->sysfs.sysfs_path));
-		if (!compare_events (hotplug_event, hotplug_event_queue->head)
-		 && !compare_events (hotplug_event, hotplug_events_in_progress)) {
+
+		if (hotplug_event->action == HOTPLUG_ACTION_ADD)
+			HAL_DEBUG (("checking ADD event %s", hotplug_event->sysfs.sysfs_path));
+		else if (hotplug_event->action == HOTPLUG_ACTION_REMOVE)
+			HAL_DEBUG (("checking REMOVE event %s", hotplug_event->sysfs.sysfs_path));
+		else 
+			HAL_DEBUG (("checking event %s, action: %d", hotplug_event->sysfs.sysfs_path, hotplug_event->action));
+
+		if (!compare_events (hotplug_event, hotplug_event_queue->head) && 
+		    !compare_events (hotplug_event, hotplug_events_in_progress) &&
+		    !compare_events_running (hotplug_event, hotplug_events_in_progress)) {
 			lp2 = lp->prev;
 			g_queue_unlink(hotplug_event_queue, lp);
 			hotplug_events_in_progress = g_list_concat (hotplug_events_in_progress, lp);
