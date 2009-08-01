@@ -137,6 +137,7 @@ filter_function (DBusConnection *connection, DBusMessage *message, void *userdat
 	DBusError err;
 	DBusMessage *reply;
 	const char *_udi;
+	const char *interface;
 	char *sysfs_path;
 
 	if ((_udi = dbus_message_get_path (message)) == NULL) {
@@ -151,16 +152,21 @@ filter_function (DBusConnection *connection, DBusMessage *message, void *userdat
 
 	dbus_error_init (&err);
 
-	if (!check_priv (ctx, connection, message, dbus_message_get_path (message), "org.freedesktop.hal.leds.brightness")) {
+	interface = dbus_message_get_interface (message);
+	if (interface != NULL && strcmp (interface, "org.freedesktop.Hal.Device.KeyboardBacklight") == 0) {
+		if (!check_priv (ctx, connection, message, dbus_message_get_path (message), "org.freedesktop.hal.power-management.keyboard-backlight")) {
+                	HAL_DEBUG(("User don't have the permissions to call the interface"));
+                	return DBUS_HANDLER_RESULT_HANDLED;
+		}
+	} else if (!check_priv (ctx, connection, message, dbus_message_get_path (message), "org.freedesktop.hal.leds.brightness")) {
 		HAL_DEBUG(("User don't have the permissions to call the interface"));
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 
 	reply = NULL;
 
-	if (dbus_message_is_method_call (message,
-					 "org.freedesktop.Hal.Device.Leds",
-					 "SetBrightness")) {
+	if (dbus_message_is_method_call (message, "org.freedesktop.Hal.Device.Leds", "SetBrightness") || 
+	    dbus_message_is_method_call (message, "org.freedesktop.Hal.Device.KeyboardBacklight", "SetBrightness")) {
 		int brightness;
 
 		if (dbus_message_get_args (message,
@@ -187,9 +193,8 @@ filter_function (DBusConnection *connection, DBusMessage *message, void *userdat
 
 			dbus_connection_send (connection, reply, NULL);
 		}
-	} else if (dbus_message_is_method_call (message,
-					 	"org.freedesktop.Hal.Device.Leds",
-						"GetBrightness")) {
+	} else if (dbus_message_is_method_call (message, "org.freedesktop.Hal.Device.Leds", "GetBrightness") ||
+		   dbus_message_is_method_call (message, "org.freedesktop.Hal.Device.KeyboardBacklight", "GetBrightness")) {
 		int brightness;
 
 		if (dbus_message_get_args (message,
@@ -225,10 +230,15 @@ add_device (LibHalContext *ctx,
 	DBusError err;
 	DBusConnection *dbus_connection;
 	const char* sysfs_path;
+	const char* function;
 	static gboolean initialized = FALSE;
 
 	if ((sysfs_path = libhal_ps_get_string (properties, "linux.sysfs_path")) == NULL) {
 		HAL_ERROR(("%s has no property linux.sysfs_path", udi));
+		return;
+	}
+	if ((function = libhal_ps_get_string (properties, "leds.function")) == NULL) {
+		HAL_ERROR(("%s has no property leds.function", udi));
 		return;
 	}
 
@@ -246,7 +256,25 @@ add_device (LibHalContext *ctx,
 
 	dbus_error_init (&err);
 
-	if (!libhal_device_claim_interface (ctx,
+	if (function != NULL && strcmp(function, "kbd_backlight") == 0) {
+		HAL_DEBUG (("Found a led which is a keyboard backlight."));
+		
+		if (!libhal_device_claim_interface (ctx,
+						    udi,
+						    "org.freedesktop.Hal.Device.KeyboardBacklight",
+						    "    <method name=\"SetBrightness\">\n"
+						    "      <arg name=\"brightness_value\" direction=\"in\" type=\"i\"/>\n"
+						    "      <arg name=\"return_code\" direction=\"out\" type=\"i\"/>\n"
+						    "    </method>\n"
+						    "    <method name=\"GetBrightness\">\n"
+						    "      <arg name=\"brightness_value\" direction=\"out\" type=\"i\"/>\n"
+						    "    </method>\n",
+						    &err)) {
+			HAL_ERROR (("Cannot claim interface 'org.freedesktop.Hal.Device.KeyboardBacklight'"));
+			LIBHAL_FREE_DBUS_ERROR (&err);
+			return;
+		}
+	} else if (!libhal_device_claim_interface (ctx,
 					    udi,
 					    "org.freedesktop.Hal.Device.Leds",
 					    "    <method name=\"SetBrightness\">\n"
