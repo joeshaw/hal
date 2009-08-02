@@ -71,6 +71,7 @@ setstr (char *buf, char *str, char *prop)
 			goto out;
 
 		libhal_device_set_property_string (hfp_ctx, hfp_udi, prop, value, &hfp_error);
+		LIBHAL_FREE_DBUS_ERROR (&hfp_error);
 		hfp_info ("Setting %s='%s'", prop, value);
 		return TRUE;
 	}
@@ -102,7 +103,6 @@ int
 main (int argc, char *argv[])
 {
 	int ret;
-	DBusError error;
 	char buf[512];
 	char *nbuf;
 	int dmipipe[2];
@@ -123,8 +123,6 @@ main (int argc, char *argv[])
 
 	if (! hfp_init (argc, argv))
 	  goto out;
-
-	dbus_error_init (&error);
 
 	tmp_ret = pipe (dmipipe);
 	f = fdopen (dmipipe[0], "r");

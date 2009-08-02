@@ -69,7 +69,7 @@ hfp_init (int argc, char **argv)
 
   dbus_error_init(&hfp_error);
   hfp_ctx = libhal_ctx_init_direct(&hfp_error);
-  dbus_error_free(&hfp_error);
+  LIBHAL_FREE_DBUS_ERROR(&hfp_error);
 
   return TRUE;
 }
