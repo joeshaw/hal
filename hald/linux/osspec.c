@@ -360,6 +360,7 @@ osspec_privileged_init_preparse_set_dmi (gboolean set, HalDevice *d)
 				hal_device_property_set_string (d, "system.board.serial", board_serial);
 				g_free (product_serial);
 				g_free (product_uuid);
+				g_free (board_serial);
 				parsed = FALSE;
 			}
 		}
