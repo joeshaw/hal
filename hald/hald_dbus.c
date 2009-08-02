@@ -5689,12 +5689,11 @@ hald_dbus_session_active_changed (CKTracker *tracker, CKSession *session, void *
 
         session_changes_push (d, programs, extra_env);
 
-	g_free (session_id);
 	g_free (extra_env[1]);
 	g_free (extra_env[2]);
 	g_free (extra_env[3]);
 out:
-	;
+	g_free (session_id);
 }
 
 static void 
@@ -5735,13 +5734,12 @@ hald_dbus_session_added (CKTracker *tracker, CKSession *session, void *user_data
 
         session_changes_push (d, programs, extra_env);
 
-	g_free (session_id);
-	g_free (seat_id);
 	g_free (extra_env[1]);
 	g_free (extra_env[2]);
 	g_free (extra_env[3]);
 out:
-	;
+	g_free (session_id);
+	g_free (seat_id);
 }
 
 static void 
@@ -5783,13 +5781,12 @@ hald_dbus_session_removed (CKTracker *tracker, CKSession *session, void *user_da
 
         session_changes_push (d, programs, extra_env);
 
-	g_free (session_id);
-	g_free (seat_id);
 	g_free (extra_env[1]);
 	g_free (extra_env[2]);
 	g_free (extra_env[3]);
 out:
-	;
+	g_free (session_id);
+	g_free (seat_id);
 }
 
 static void

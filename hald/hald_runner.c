@@ -427,7 +427,7 @@ add_basic_env (DBusMessageIter * iter, const gchar * udi)
                         num_sessions_total += num_sessions;
 			for (j = sessions; j != NULL; j = g_slist_next (j)) {
 				CKSession *session;
-				const char *session_id;
+				char *session_id;
                                 const char *q;
 
 				session = j->data;
@@ -467,6 +467,7 @@ add_basic_env (DBusMessageIter * iter, const gchar * udi)
                                         add_env (iter, s, q);
                                         g_free (s);
                                 }
+				g_free (session_id);
 			}
 
 			/* for each Seat, export sessions on each seat 
