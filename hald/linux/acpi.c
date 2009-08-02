@@ -1003,6 +1003,7 @@ acpi_button_add (const gchar *acpi_path, HalDevice *parent, ACPIDevHandler *hand
 	return acpi_generic_add (acpi_path, parent, handler);
 
 out:
+	g_free (parent_path);
 	return NULL;
 }
 
