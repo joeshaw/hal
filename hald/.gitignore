@@ -12,3 +12,4 @@ hald-generate-fdi-cache
 *~
 .local-fdi
 massif.*
+valgrind.log
