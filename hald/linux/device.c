@@ -88,6 +88,42 @@ static gboolean battery_poll_running = FALSE;
 #define LONG(x) ((x)/BITS_PER_LONG)
 #define test_bit(bit, array)    ((array[LONG(bit)] >> OFF(bit)) & 1)
 
+/******************** helper functions **********************/
+
+static gboolean
+compare_ge_kernel_version (int major, int minor, int micro) {
+
+	HalDevice *root;
+
+	root = hal_device_store_find (hald_get_gdl (), "/org/freedesktop/Hal/devices/computer");
+	if (root == NULL) {
+		root = hal_device_store_find (hald_get_tdl (), "/org/freedesktop/Hal/devices/computer");
+		if (root == NULL) {
+			HAL_ERROR (("Couldn't find computer root object."));
+			return FALSE;
+		}
+	}
+
+	if (hal_device_has_property (root, "system.kernel.version.major")) {
+		int _major, _minor, _micro;
+
+		_major = hal_device_property_get_int (root, "system.kernel.version.major");
+		_minor = hal_device_property_get_int (root, "system.kernel.version.minor");
+		_micro = hal_device_property_get_int (root, "system.kernel.version.micro");
+
+		if ((major < _major) || ((major == _major) && (minor < _minor)) ||
+		   ((major == _major) && (minor == _minor) && (micro < _micro)) ) {
+			return FALSE;
+		} else {
+			return TRUE;
+		}
+	} else {
+		HAL_DEBUG (("Couldn't get system.kernel.version.m* properties."));
+		return FALSE;
+	}
+}
+
+
 /*--------------------------------------------------------------------------------------------------------------*/
 /* 		 	PLEASE KEEP THE SUBSYSTEMS IN ALPHABETICAL ORDER !!!					*/
 /*--------------------------------------------------------------------------------------------------------------*/
@@ -2041,6 +2077,17 @@ platform_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *pare
 	if (strncmp (dev_id, "dock", 4) == 0) {
 		int docked;
 
+		if (compare_ge_kernel_version(2,6,28)) {
+			gchar *type;
+
+			type = hal_util_get_string_from_file (sysfs_path, "type");
+			if (type != NULL && strcmp (type, "dock_station") == 0) {
+				hal_device_property_set_string (d, "info.type", type);
+				hal_device_add_capability (d, "dock_station");
+			}
+	
+		} 
+
 		hal_util_get_int_from_file (sysfs_path, "docked", &docked, 0);
 		hal_device_property_set_bool (d, "info.docked", docked);
 	}
@@ -2075,9 +2122,15 @@ platform_refresh_undock (gpointer data)
 	sysfs_path = hal_device_property_get_string(d, "linux.sysfs_path");
 	hal_util_get_int_from_file (sysfs_path, "flags", &flags, 0);
 
-	/* check for != 0, maybe the user did an immediate dock */
-	if (flags != 0)
-		return TRUE;
+	if (compare_ge_kernel_version (2,6,28)) {
+		/* check for != 16, maybe the user did an immediate dock */
+		if (flags != 16)
+			return TRUE;
+	} else {
+		/* check for != 0, maybe the user did an immediate dock */
+		if (flags != 0)
+			return TRUE;
+	}
 
 	hal_util_get_int_from_file (sysfs_path, "docked", &docked, 0);
 	hal_device_property_set_bool (d, "info.docked", docked);
@@ -2095,16 +2148,32 @@ platform_refresh (HalDevice *d)
 	if (strncmp (id, "dock", 4) != 0)
 		return TRUE;
 
+	if (compare_ge_kernel_version (2,6,28)) {
+		const gchar *type;
+
+		type = hal_device_property_get_string(d, "info.type");
+		if (type != NULL && strcmp (type, "dock_station") != 0)
+			return TRUE;
+	}
+
 	sysfs_path = hal_device_property_get_string(d, "linux.sysfs_path");
 	hal_util_get_int_from_file (sysfs_path, "docked", &docked, 0);
 
 	if (docked == 1) {
 		/* undock still in progress? */
 		hal_util_get_int_from_file (sysfs_path, "flags", &flags, 0);
-		if (flags == 2) {
-			g_timeout_add (DOCK_STATION_UNDOCK_POLL_INTERVAL,
-				       platform_refresh_undock, d);
-			return TRUE;
+		if (compare_ge_kernel_version (2,6,28)) {
+			if (flags == 2) {
+				g_timeout_add (DOCK_STATION_UNDOCK_POLL_INTERVAL,
+					       platform_refresh_undock, d);
+				return TRUE;
+			}
+		} else {
+			if (flags == 18) {
+				g_timeout_add (DOCK_STATION_UNDOCK_POLL_INTERVAL,
+					       platform_refresh_undock, d);
+				return TRUE;
+			}
 		}
 	}
 
