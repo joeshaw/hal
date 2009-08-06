@@ -1351,10 +1351,13 @@ leds_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_d
 {
 	HalDevice *d;
 	const gchar *dev_name;
-        gchar **attributes;
+	gchar *function;
+	gchar **attributes;
+	int max_brightness;
 
 	d = hal_device_new ();
-
+	function = NULL;
+	
 	if (parent_dev != NULL)
                 hal_device_property_set_string (d, "info.parent", hal_device_get_udi (parent_dev));
         else
@@ -1377,14 +1380,27 @@ leds_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_d
 				if (attributes[1] != NULL ) {
 					if (attributes[1][0] != '\0')
 						hal_device_property_set_string (d, "leds.colour", attributes[1]);
-					if (attributes[2] != NULL && attributes[2][0] != '\0')
+					if (attributes[2] != NULL && attributes[2][0] != '\0') {
 						hal_device_property_set_string (d, "leds.function", attributes[2]);
+						function = g_strdup (attributes[2]);
+					}
 				}
 			}
 		}
 		g_strfreev (attributes);
 	}
-	
+
+	if (!hal_util_get_int_from_file (sysfs_path, "max_brightness", &max_brightness, 0))
+		max_brightness = 255;
+
+	if (function != NULL && strcmp (function, "kbd_backlight")) {
+		hal_device_property_set_int (d, "keyboard_backlight.num_levels", max_brightness + 1);
+		hal_device_add_capability (d, "keyboard_backlight");
+	} else {
+		hal_device_property_set_int (d, "leds.num_levels", max_brightness + 1);
+	}
+
+	g_free (function);	
 	return d;
 }
 
