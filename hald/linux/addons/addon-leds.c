@@ -99,10 +99,18 @@ set_leds_brightness (const char *udi, int level)
 	char path[256];
 	char buf[5];	/* Assume we don't need more */
 	char *sysfs_path;
+	DBusError error;
 
-	ret = -1;	
+	ret = -1;
 
 	if (!g_hash_table_lookup_extended (leds, udi, NULL, (gpointer) &sysfs_path)) {
+		return -1;
+	}
+
+	dbus_error_init (&error);
+
+	if (level > libhal_device_get_property_int (ctx, udi, "leds.num_levels", &error) -1) {
+		HAL_DEBUG (("Requested level is higher than max level (check leds.num_levels)."));
 		return -1;
 	}
 
