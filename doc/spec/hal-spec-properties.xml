@@ -2149,6 +2149,16 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
               <entry>Yes</entry>
               <entry>The function of the LED.</entry>
             </row>
+            <row>
+              <entry>
+                <literal>leds.num_levels</literal> (int)
+              </entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>
+                The brightness levels supported by the LED device.
+              </entry>
+            </row>
           </tbody>
         </tgroup>
       </informaltable>
@@ -4897,6 +4907,41 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
               <entry>No</entry>
               <entry>
                 Options to be provided to XKB.
+              </entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </sect2>
+
+    <sect2 id="device-properties-keyboard_backlight">
+      <title>
+        keyboard_backlight namespace
+      </title>
+      <para>
+        Device objects with the capability <literal>keyboard_backlight</literal>
+        represent all the devices capable handling the keyboard backlight. (Note:
+	normally those devices have also the <literal>leds</literal> capability.)
+      </para>
+      <informaltable>
+        <tgroup cols="2">
+          <thead>
+            <row>
+              <entry>Key (type)</entry>
+              <entry>Values</entry>
+              <entry>Mandatory</entry>
+              <entry>Description</entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry>
+                <literal>keyboard_backlight.num_levels</literal> (bool)
+              </entry>
+              <entry></entry>
+              <entry>Yes</entry>
+              <entry>
+		The brightness levels supported by the LED device.
               </entry>
             </row>
           </tbody>
