@@ -1396,9 +1396,9 @@ leds_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_d
 	if (function != NULL && strcmp (function, "kbd_backlight")) {
 		hal_device_property_set_int (d, "keyboard_backlight.num_levels", max_brightness + 1);
 		hal_device_add_capability (d, "keyboard_backlight");
-	} else {
-		hal_device_property_set_int (d, "leds.num_levels", max_brightness + 1);
 	}
+
+	hal_device_property_set_int (d, "leds.num_levels", max_brightness + 1);
 
 	g_free (function);	
 	return d;
