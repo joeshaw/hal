@@ -3069,6 +3069,22 @@ missing_scsi_host (const gchar *sysfs_path, HotplugEvent *device_event, HotplugA
 	if (action == HOTPLUG_ACTION_REMOVE && d == NULL)
 		goto out;
 
+	/* skip "remove" if more than one child still exists */
+	if (action == HOTPLUG_ACTION_REMOVE && d != NULL)
+	{
+		GSList *siblings;
+
+		siblings = hal_device_store_match_multiple_key_value_string (hald_get_gdl(),
+									     "info.parent",
+									     hal_device_get_udi(d));
+		if (siblings && g_slist_next(siblings) != NULL)
+		{
+			g_slist_free(siblings);
+			goto out;
+		}
+		g_slist_free(siblings);
+	}
+
 	/* fake host event */
 	rc = TRUE;
 	host_event = g_slice_new0 (HotplugEvent);
