@@ -34,4 +34,7 @@
 extern HFHandler hf_usb_handler;
 extern HFDevdHandler hf_usb_devd_handler;
 
+void hf_usb_device_compute_udi(HalDevice *device);
+void hf_usb_add_webcam_properties(HalDevice *device);
+
 #endif /* _HF_USB_H */

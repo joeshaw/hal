@@ -54,4 +54,11 @@ libhald_freebsd_la_SOURCES = 	\
 
 libhald_freebsd_la_LDFLAGS = -lcam
 
+if HAVE_LIBUSB20
+libhald_freebsd_la_SOURCES += 	\
+	hf-usb2.c		\
+	hf-usb2.h
+libhald_freebsd_la_LDFLAGS += @LIBUSB20_LIBS@
+endif
+
 EXTRA_DIST = README TODO
