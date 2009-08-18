@@ -216,55 +216,59 @@ hfp_getenv_bool (const char *variable)
 }
 
 void
-hfp_gettimeofday (struct timeval *t)
+hfp_clock_gettime (struct timespec *t)
 {
   int status;
 
   assert(t != NULL);
 
-  status = gettimeofday(t, NULL);
+#ifdef CLOCK_MONOTONIC_FAST
+  status = clock_gettime(CLOCK_MONOTONIC_FAST, t);
+#else
+  status = clock_gettime(CLOCK_MONOTONIC, t);
+#endif
   assert(status == 0);
 }
 
-/* timeval functions from sys/kern/kern_time.c */
+/* timespec functions from sys/kern/kern_time.c */
 
 static void
-hfp_timevalfix (struct timeval *t)
+hfp_timespecfix (struct timespec *t)
 {
   assert(t != NULL);
 
-  if (t->tv_usec < 0)
+  if (t->tv_nsec < 0)
     {
       t->tv_sec--;
-      t->tv_usec += 1000000;
+      t->tv_nsec += 1000000000;
     }
-  if (t->tv_usec >= 1000000)
+  if (t->tv_nsec >= 1000000000)
     {
       t->tv_sec++;
-      t->tv_usec -= 1000000;
+      t->tv_nsec -= 1000000000;
     }
 }
 
 void
-hfp_timevaladd (struct timeval *t1, const struct timeval *t2)
+hfp_timespecadd (struct timespec *t1, const struct timespec *t2)
 {
   assert(t1 != NULL);
   assert(t2 != NULL);
 
   t1->tv_sec += t2->tv_sec;
-  t1->tv_usec += t2->tv_usec;
+  t1->tv_nsec += t2->tv_nsec;
 
-  hfp_timevalfix(t1);
+  hfp_timespecfix(t1);
 }
 
 void
-hfp_timevalsub (struct timeval *t1, const struct timeval *t2)
+hfp_timespecsub (struct timespec *t1, const struct timespec *t2)
 {
   assert(t1 != NULL);
   assert(t2 != NULL);
 
   t1->tv_sec -= t2->tv_sec;
-  t1->tv_usec -= t2->tv_usec;
+  t1->tv_nsec -= t2->tv_nsec;
 
-  hfp_timevalfix(t1);
+  hfp_timespecfix(t1);
 }

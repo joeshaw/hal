@@ -29,8 +29,12 @@
 #endif
 
 #include <stdarg.h>
+#include <time.h>
 #include <sys/types.h>
+#include <sys/param.h>
+#if __FreeBSD_version < 600000
 #include <sys/time.h>
+#endif
 
 #include "libhal/libhal.h"
 
@@ -84,14 +88,14 @@ void volume_id_log (const char *format, ...) HFP_GNUC_PRINTF(1, 2);
 
 boolean hfp_getenv_bool (const char *variable);
 
-void hfp_gettimeofday (struct timeval *t);
-void hfp_timevaladd (struct timeval *t1, const struct timeval *t2);
-void hfp_timevalsub (struct timeval *t1, const struct timeval *t2);
+void hfp_clock_gettime (struct timespec *t);
+void hfp_timespecadd (struct timespec *t1, const struct timespec *t2);
+void hfp_timespecsub (struct timespec *t1, const struct timespec *t2);
 
 /* from sys/time.h (_KERNEL) */
-#define hfp_timevalcmp(t1, t2, cmp) \
+#define hfp_timespeccmp(t1, t2, cmp) \
   (((t1)->tv_sec == (t2)->tv_sec	\
-    ? ((t1)->tv_usec cmp (t2)->tv_usec)	\
+    ? ((t1)->tv_nsec cmp (t2)->tv_nsec)	\
     : ((t1)->tv_sec cmp (t2)->tv_sec)))
 
 #endif /* _HFP_H */
