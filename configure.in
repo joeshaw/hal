@@ -15,6 +15,7 @@ m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 glib_module="glib-2.0 >= 2.10.0 gobject-2.0 > 2.10.0 dbus-glib-1 >= 0.61"
 dbus_module="dbus-1 >= 0.61"
 blkid_module="blkid >= 2.15"
+volume_id_module="libvolume_id >= 0.77"
 polkit_module="polkit >= 0.5"
 
 # libtool versioning - this applies to libhal and libhal-storage
@@ -686,8 +687,20 @@ else
 fi
 AC_MSG_RESULT($have_glib_2_14)
 
+case "$host" in
+    *-*-freebsd*)
+        PKG_CHECK_MODULES(VOLUME_ID, [$volume_id_module])
+	AC_SUBST(VOLUME_ID_CFLAGS)
+	AC_SUBST(VOLUME_ID_LIBS)
+	;;
+    *)
+        ;;
+esac
+
 # blkid (util-linux-ng)
 case "$host" in
+*-*-freebsd*)
+        ;;
 *-*-solaris*)
 	;;
 *)
