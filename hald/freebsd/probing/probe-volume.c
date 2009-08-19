@@ -568,7 +568,7 @@ main (int argc, char **argv)
       if (ufs_disk_fillout(&ufsdisk, device_file) == 0)
         {
 	  char ufsid[64];
-	  char **ufs_devs;
+	  char **ufs_devs = NULL;
 	  int num_udis;
 	  int i;
 
@@ -587,10 +587,16 @@ main (int argc, char **argv)
                   gboolean mounted;
 
 		  mounted = libhal_device_get_property_bool(hfp_ctx, ufs_devs[i], "volume.is_mounted", &hfp_error);
+		  dbus_error_free(&hfp_error);
 		  if (mounted)
-                    libhal_device_set_property_bool(hfp_ctx, hfp_udi, "volume.ignore", TRUE, &hfp_error);
+		    {
+                      libhal_device_set_property_bool(hfp_ctx, hfp_udi, "volume.ignore", TRUE, &hfp_error);
+		      dbus_error_free(&hfp_error);
+		    }
 		}
 	    }
+	  if (ufs_devs)
+	    libhal_free_string_array(ufs_devs);
 	  ufs_disk_close(&ufsdisk);
 	}
     }
