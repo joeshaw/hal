@@ -245,7 +245,6 @@
 	  <append key="volume.mount.valid_options" type="strlist">uid=</append>
 	  <append key="volume.mount.valid_options" type="strlist">gid=</append>
 	  <append key="volume.mount.valid_options" type="strlist">umask=</append>
-	  <append key="volume.mount.valid_options" type="strlist">locale=</append>
 	  <append key="volume.mount.valid_options" type="strlist">utf8</append>
 	</match>
 	<match key="/org/freedesktop/Hal/devices/computer:system.kernel.name" string="FreeBSD">
