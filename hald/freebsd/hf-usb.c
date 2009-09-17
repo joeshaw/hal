@@ -392,9 +392,9 @@ hf_usb_device_new (HalDevice *parent,
     hf_devtree_device_set_name(device, di->udi_devnames[0]);
 
   if ((devname = hf_usb_get_devname(di, "ukbd")))	/* USB keyboard */
-    hf_device_set_input(device, "keyboard", NULL);
+    hf_device_set_input(device, "keyboard", "keys", devname);
   else if ((devname = hf_usb_get_devname(di, "ums")))	/* USB mouse */
-    hf_device_set_input(device, "mouse", devname);
+    hf_device_set_input(device, "mouse", NULL, devname);
   else if ((devname = hf_usb_get_devname(di, "uhid")))	/* UHID device */
     {
       hal_device_property_set_string(device, "info.category", "hiddev");

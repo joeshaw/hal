@@ -326,24 +326,31 @@ hf_device_property_set_string_printf (HalDevice *device,
 
 void
 hf_device_set_input (HalDevice *device,
-		     const char *class,
+		     const char *capability1,
+		     const char *capability2,
 		     const char *devname)
 {
   g_return_if_fail(HAL_IS_DEVICE(device));
 
   hal_device_add_capability(device, "input");
-
-  if (class)
+  if (capability1)
     {
-      char *category;
+      char *capability;
 
-      category = g_strdup_printf("input.%s", class);
-      hal_device_property_set_string(device, "info.category", category);
-      hal_device_add_capability(device, category);
-      g_free(category);
+      capability = g_strdup_printf("input.%s", capability1);
+      hal_device_add_capability(device, capability);
+      g_free(capability);
     }
-  else
-    hal_device_property_set_string(device, "info.category", "input");
+  if (capability2)
+    {
+      char *capability;
+
+      capability = g_strdup_printf("input.%s", capability2);
+      hal_device_add_capability(device, capability);
+      g_free(capability);
+    }
+
+  hal_device_property_set_string(device, "info.category", "input");
 
   if (devname)
     hf_device_property_set_string_printf(device, "input.device", "/dev/%s", devname);

@@ -87,7 +87,8 @@ void hf_device_property_set_string_printf (HalDevice *device,
 					   ...) G_GNUC_PRINTF(3, 4);
 
 void hf_device_set_input (HalDevice *device,
-			  const char *class,
+			  const char *capability1,
+			  const char *capability2,
 			  const char *devname);
 
 HalDevice *hf_device_store_get_parent (HalDeviceStore *store,

@@ -132,30 +132,22 @@ main (int argc, char **argv)
 
   hid_dispose_report_desc(report_desc);
 
-  if (is_keyboard || is_mouse || is_joystick)
+  if (is_keyboard || is_mouse || is_joystick || is_keypad)
     {
       libhal_device_add_capability(hfp_ctx, hfp_udi, "input", &hfp_error);
+      libhal_device_set_property_string(hfp_ctx, hfp_udi, "info.category", "input", &hfp_error);
       libhal_device_set_property_string(hfp_ctx, hfp_udi, "input.device", device_file, &hfp_error);
     }
   if (is_keyboard)
-    {
       libhal_device_add_capability(hfp_ctx, hfp_udi, "input.keyboard", &hfp_error);
-      libhal_device_set_property_string(hfp_ctx, hfp_udi, "info.category", "input.keyboard", &hfp_error);
-    }
   if (is_keypad)
       libhal_device_add_capability(hfp_ctx, hfp_udi, "input.keypad", &hfp_error);
   if (is_keyboard || is_keypad)
       libhal_device_add_capability(hfp_ctx, hfp_udi, "input.keys", &hfp_error);
   if (is_mouse)
-    {
       libhal_device_add_capability(hfp_ctx, hfp_udi, "input.mouse", &hfp_error);
-      libhal_device_set_property_string(hfp_ctx, hfp_udi, "info.category", "input.mouse", &hfp_error);
-    }
   if (is_joystick)
-    {
       libhal_device_add_capability(hfp_ctx, hfp_udi, "input.joystick", &hfp_error);
-      libhal_device_set_property_string(hfp_ctx, hfp_udi, "info.category", "input.joystick", &hfp_error);
-    }
 
  end:
   return 0;
