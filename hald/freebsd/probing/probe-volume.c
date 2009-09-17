@@ -64,7 +64,7 @@ struct iso_path_table_entry
 };
 #define ISO_PATH_TABLE_ENTRY_SIZE         8
 
-#if __FreeBSD_version < 600101
+#if (__FreeBSD_version < 600101) && (__FreeBSD_kernel_version < 600101)
 static uint32_t
 isonum_731(unsigned char *p)
 {
