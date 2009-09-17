@@ -538,8 +538,6 @@ main (int argc, char *argv[])
 {
 	GMainLoop *loop;
 	guint sigterm_iochn_listener_source_id;
-	char *path;
-	char newpath[512];
 	guint opt_child_timeout;
 #ifdef HAVE_POLKIT
         PolKitError *p_error;
@@ -574,20 +572,15 @@ main (int argc, char *argv[])
 	 * to include this at the end (since we want to overide in
 	 * run-hald.sh and friends)
 	 */
-	path = getenv ("PATH");
-	if (path != NULL) {
-		g_strlcpy (newpath, path, sizeof (newpath));
-		g_strlcat (newpath, ":", sizeof (newpath));
-	} else {
-		/* No PATH was set */
-		newpath[0] = '\0';
-	} 
+	GString *path = g_string_new(getenv("PATH"));
+	if ( path->len > 0 ) {
+		g_string_append_c(path, ':');	
+	}
+	
+	g_string_append_printf(path, "%s:%s", PACKAGE_LIBEXEC_DIR, PACKAGE_SCRIPT_DIR);
 
-	g_strlcat (newpath, PACKAGE_LIBEXEC_DIR, sizeof (newpath));
-	g_strlcat (newpath, ":", sizeof (newpath));
-	g_strlcat (newpath, PACKAGE_SCRIPT_DIR, sizeof (newpath));
-
-	setenv ("PATH", newpath, TRUE);
+	setenv ("PATH", path->str, TRUE);
+	g_string_free(path, TRUE);
 
 	/* set the default child timeout to 250 seconds */
 	opt_child_timeout = 250;
