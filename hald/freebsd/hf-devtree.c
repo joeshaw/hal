@@ -86,7 +86,11 @@ hf_devtree_cpu_can_throttle (int cpu)
   gboolean can = FALSE;
   char *levels;
 
+#ifdef notyet
   levels = hf_get_string_sysctl(NULL, "dev.cpu.%i.freq_levels", cpu);
+#else
+  levels = hf_get_string_sysctl(NULL, "dev.cpu.0.freq_levels");
+#endif
   if (levels)
     {
       char **toks;
@@ -109,7 +113,11 @@ hf_devtree_cpu_get_maxfreq (int cpu)
   char *levels;
   int freq = -1;
 
+#ifdef notyet
   levels = hf_get_string_sysctl(NULL, "dev.cpu.%i.freq_levels", cpu);
+#else
+  levels = hf_get_string_sysctl(NULL, "dev.cpu.0.freq_levels");
+#endif
   if (levels)
     {
       sscanf(levels, "%i/", &freq);
@@ -186,7 +194,7 @@ hf_devtree_fd_set_properties (HalDevice *device)
 static void
 hf_devtree_atkbd_set_properties (HalDevice *device)
 {
-  hf_device_set_input(device, "keyboard", NULL);
+  hf_device_set_input(device, "keyboard", "keys", NULL);
 }
 
 static void
@@ -195,7 +203,7 @@ hf_devtree_psm_set_properties (HalDevice *device)
   char *devname;
 
   devname = hf_devtree_device_get_name(device);
-  hf_device_set_input(device, "mouse", devname);
+  hf_device_set_input(device, "mouse", NULL, devname);
   g_free(devname);
 }
 
@@ -205,7 +213,7 @@ hf_devtree_joy_set_properties (HalDevice *device)
   char *devname;
 
   devname = hf_devtree_device_get_name(device);
-  hf_device_set_input(device, "joystick", devname);
+  hf_device_set_input(device, "joystick", NULL, devname);
   g_free(devname);
 
   if (! hal_device_has_property(device, "info.product"))
@@ -379,7 +387,8 @@ static Handler handlers[] = {
   { "pcm",		NULL					},
   { "psm",		hf_devtree_psm_set_properties		},
   { "sio",		NULL					},
-  { "speaker",		NULL					}
+  { "speaker",		NULL					},
+  { "usbus",		NULL					}
 };
 
 static void
@@ -426,12 +435,29 @@ hf_devtree_probe (void)
 	  HalDevice *device;
 
 	  device = hf_devtree_device_new(parent, info->handler, info->unit);
-	  hf_device_preprobe_and_add(device);
+	  if (hf_device_preprobe(device))
+            {
+              if (hal_device_has_capability(device, "input.mouse"))
+                hf_runner_run_sync(device, 0, "hald-probe-mouse", NULL);
+
+	      hf_device_add(device);
+	    }
 	}
 
       devices = g_slist_delete_link(devices, root);
       g_free(info);
     }
+}
+
+static gboolean
+hf_devtree_rescan (HalDevice *device)
+{
+  if (hal_device_has_capability(device, "input.mouse"))
+    {
+      hf_runner_run_sync(device, 0, "hald-probe-mouse", NULL);
+      return TRUE;
+    }
+  return FALSE;
 }
 
 HalDevice *
@@ -597,5 +623,6 @@ hf_devtree_is_driver (const char *name, const char *driver)
 }
 
 HFHandler hf_devtree_handler = {
-  .probe = hf_devtree_probe
+  .probe = hf_devtree_probe,
+  .device_rescan = hf_devtree_rescan
 };

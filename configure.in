@@ -15,6 +15,7 @@ m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 glib_module="glib-2.0 >= 2.10.0 gobject-2.0 > 2.10.0 dbus-glib-1 >= 0.61"
 dbus_module="dbus-1 >= 0.61"
 blkid_module="blkid >= 2.15"
+volume_id_module="libvolume_id >= 0.77"
 polkit_module="polkit >= 0.5"
 
 # libtool versioning - this applies to libhal and libhal-storage
@@ -478,6 +479,9 @@ if test "x$with_libpci" != xno ; then
 fi 
 AM_CONDITIONAL([HAVE_LIBPCI], [test "x$USE_LIBPCI" = "xyes"])
 
+USE_LIBUSB20=no
+USE_LIBUSB=no
+LIBUSB20_LIBS=""
 AC_ARG_WITH([backend],
 	    AS_HELP_STRING([--with-backend=<name>],
 	                   [backend to use (linux/solaris/freebsd/dummy)]),
@@ -505,6 +509,22 @@ AM_CONDITIONAL(HALD_COMPILE_LINUX, [test x$HALD_BACKEND = xlinux], [Compiling fo
 AM_CONDITIONAL(HALD_COMPILE_FREEBSD, [test x$HALD_BACKEND = xfreebsd], [Compiling for FreeBSD])
 AM_CONDITIONAL(HALD_COMPILE_SOLARIS, [test x$HALD_BACKEND = xsolaris], [Compiling for Solaris])
 AC_SUBST(HALD_BACKEND)
+if test "x$HALD_BACKEND" = "xfreebsd"; then
+    AC_CHECK_LIB([usb20], [libusb20_dev_get_info], [USE_LIBUSB20=yes], [USE_LIBUSB20=no])
+fi
+if test "x$USE_LIBUSB20" = "xno"; then
+    AC_CHECK_LIB([usb], [libusb20_dev_get_info], [USE_LIBUSB=yes], [USE_LIBUSB=no])
+fi
+AM_CONDITIONAL([HAVE_LIBUSB20],[test "x$USE_LIBUSB20" = "xyes"])
+AM_CONDITIONAL([HAVE_LIBUSB20],[test "x$USE_LIBUSB" = "xyes"])
+if test "x$USE_LIBUSB20" = "xyes"; then
+    AC_DEFINE(HAVE_LIBUSB20, 1, [Set if we need libusb20])
+    LIBUSB20_LIBS="-lusb20"
+elif test "x$USE_LIBUSB" = "xyes"; then
+    AC_DEFINE(HAVE_LIBUSB20, 1, [Set if we need libsub20])
+    LIBUSB20_LIBS="-lusb"
+fi
+AC_SUBST(LIBUSB20_LIBS)
 
 dnl DBUS API is subject to changes
 AC_DEFINE_UNQUOTED(DBUS_API_SUBJECT_TO_CHANGE, [], [DBUS API is subject to change])
@@ -686,8 +706,20 @@ else
 fi
 AC_MSG_RESULT($have_glib_2_14)
 
+case "$host" in
+    *-*-freebsd*)
+        PKG_CHECK_MODULES(VOLUME_ID, [$volume_id_module])
+	AC_SUBST(VOLUME_ID_CFLAGS)
+	AC_SUBST(VOLUME_ID_LIBS)
+	;;
+    *)
+        ;;
+esac
+
 # blkid (util-linux-ng)
 case "$host" in
+*-*-freebsd*)
+        ;;
 *-*-solaris*)
 	;;
 *)

@@ -1,9 +1,9 @@
 /***************************************************************************
  * CVSID: $Id$
  *
- * hf-storage.h : storage device support
+ * hf-usb.h : USB support
  *
- * Copyright (C) 2006 Jean-Yves Lefort <jylefort@FreeBSD.org>
+ * Copyright (C) 2009 Joe Marcus Clarke <marcus@FreeBSD.org>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,8 +21,8 @@
  *
  **************************************************************************/
 
-#ifndef _HF_STORAGE_H
-#define _HF_STORAGE_H
+#ifndef _HF_USB2_H
+#define _HF_USB2_H
 
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
@@ -31,14 +31,7 @@
 #include "hf-osspec.h"
 #include "hf-devd.h"
 
-extern HFHandler hf_storage_handler;
-extern HFDevdHandler hf_storage_devd_handler;
+extern HFHandler hf_usb2_handler;
+extern HFDevdHandler hf_usb2_devd_handler;
 
-void hf_storage_device_enable (HalDevice *device);
-void hf_storage_device_enable_tape (HalDevice *device);
-void hf_storage_device_enable_cdrom (HalDevice *device);
-void hf_storage_device_probe (HalDevice *device, gboolean only_media);
-void hf_storage_device_add (HalDevice *device);
-GSList *hf_storage_get_geoms (const char *devname);
-
-#endif /* _HF_STORAGE_H */
+#endif /* _HF_USB2_H */
