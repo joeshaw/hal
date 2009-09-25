@@ -1140,54 +1140,53 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 			}
 
                         if (strcmp (udi_it, "/org/freedesktop/Hal/devices/computer") == 0) {
-					physdev = d_it;
-					physdev_udi = udi_it;
-                                        if (is_md_device) {
-                                                char *level;
-                                                char *model_name;
+				physdev = d_it;
+				physdev_udi = udi_it;
 
-                                                hal_device_property_set_string (d, "storage.bus", "linux_raid");
+                                if (is_md_device) {
+					char *level;
+					char *model_name;
 
-                                                level = hal_util_get_string_from_file (sysfs_path_real, "md/level");
-                                                if (level == NULL)
-                                                        goto error;
-                                                hal_device_property_set_string (d, "storage.linux_raid.level", level);
+					hal_device_property_set_string (d, "storage.bus", "linux_raid");
 
-                                                hal_device_property_set_string (d, "storage.linux_raid.sysfs_path", sysfs_path_real);
+					level = hal_util_get_string_from_file (sysfs_path_real, "md/level");
+					if (level == NULL)
+						goto error;
 
-                                                hal_device_property_set_string (d, "storage.vendor", "Linux");
-                                                if (strcmp (level, "linear") == 0) {
-                                                        model_name = g_strdup ("Software RAID (Linear)");
-                                                } else if (strcmp (level, "raid0") == 0) {
-                                                        model_name = g_strdup ("Software RAID-0 (Stripe)");
-                                                } else if (strcmp (level, "raid1") == 0) {
-                                                        model_name = g_strdup ("Software RAID-1 (Mirror)");
-                                                } else if (strcmp (level, "raid5") == 0) {
-                                                        model_name = g_strdup ("Software RAID-5");
-                                                } else {
-                                                        model_name = g_strdup_printf ("Software RAID (%s)", level);
-                                                }
-                                                hal_device_property_set_string (d, "storage.model", model_name);
-                                                g_free (model_name);
+					hal_device_property_set_string (d, "storage.linux_raid.level", level);
+					hal_device_property_set_string (d, "storage.linux_raid.sysfs_path", sysfs_path_real);
+					hal_device_property_set_string (d, "storage.vendor", "Linux");
 
-                                                hal_util_set_string_from_file (
-                                                        d, "storage.firmware_version", 
-                                                        sysfs_path_real, "md/metadata_version");
-                                                
-                                                hal_device_add_capability (d, "storage.linux_raid");
-
-                                                if (!refresh_md_state (d))
-                                                        goto error;
-
-                                                is_hotpluggable = hal_device_property_get_bool (
-                                                        d, "storage.hotpluggable");
-
-					} else if (is_cciss_device) {
-						HAL_DEBUG (("block_add: parent=/org/freedesktop/Hal/devices/computer, is_cciss_device=true"));
-						hal_device_property_set_string (d, "storage.bus", "cciss");
+					if (strcmp (level, "linear") == 0) {
+						model_name = g_strdup ("Software RAID (Linear)");
+					} else if (strcmp (level, "raid0") == 0) {
+						model_name = g_strdup ("Software RAID-0 (Stripe)");
+					} else if (strcmp (level, "raid1") == 0) {
+						model_name = g_strdup ("Software RAID-1 (Mirror)");
+					} else if (strcmp (level, "raid5") == 0) {
+						model_name = g_strdup ("Software RAID-5");
+					} else {
+						model_name = g_strdup_printf ("Software RAID (%s)", level);
 					}
-                                        break;
-                        }
+
+					hal_device_property_set_string (d, "storage.model", model_name);
+					g_free (model_name);
+
+					hal_util_set_string_from_file (d, "storage.firmware_version", sysfs_path_real, "md/metadata_version");
+
+					hal_device_add_capability (d, "storage.linux_raid");
+
+					if (!refresh_md_state (d))
+						goto error;
+
+					is_hotpluggable = hal_device_property_get_bool (d, "storage.hotpluggable");
+
+				} else if (is_cciss_device) {
+					HAL_DEBUG (("block_add: parent=/org/freedesktop/Hal/devices/computer, is_cciss_device=true"));
+					hal_device_property_set_string (d, "storage.bus", "cciss");
+				}
+				break;
+			}
 
 			/* Check info.subsystem */
 			if ((bus = hal_device_property_get_string (d_it, "info.subsystem")) != NULL) {
