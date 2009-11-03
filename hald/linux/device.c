@@ -1157,12 +1157,12 @@ input_test_abs (HalDevice *d, const char *sysfs_path)
 		{
 			num_bits_key = input_str_to_bitmask (s, bitmask_key, sizeof (bitmask_key));
 
-			if (test_bit (BTN_STYLUS, bitmask_key)) {
+			if (test_bit (BTN_STYLUS, bitmask_key) || test_bit (BTN_TOOL_PEN, bitmask_key)) {
 				hal_device_add_capability (d, "input.tablet");
 				goto out;
 			}
 
-			if (test_bit (BTN_TOUCH, bitmask_key)) {
+			if (test_bit (BTN_TOOL_FINGER, bitmask_key) && !test_bit (BTN_TOOL_PEN, bitmask_key)) {
 				hal_device_add_capability (d, "input.touchpad");
 				goto out;
 			}
@@ -1180,11 +1180,6 @@ input_test_abs (HalDevice *d, const char *sysfs_path)
 				hal_device_add_capability (d, "input.mouse");
 				goto out;
 			}
-		}
-
-		if (test_bit (ABS_PRESSURE, bitmask_abs)) {
-			hal_device_add_capability (d, "input.touchpad");
-			goto out;
 		}
 	}
 out:
