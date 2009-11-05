@@ -31,12 +31,13 @@
 #include <string.h>
 #include <libhal.h>
 #include <libhal-storage.h>
+#include "../hald/util.h"
 
 int
 main (int argc, char *argv[])
 {
 	int ret;
-	char *device_file_or_mount_point;
+	char device_file_or_mount_point[HAL_PATH_MAX];
 	DBusError error;
 	DBusConnection *con;
 	LibHalContext *hal_ctx;
@@ -58,7 +59,7 @@ main (int argc, char *argv[])
 	 * first argument.  TODO XXX FIXME: we ought to honor
 	 * umount(8) options like -v for verbose.
 	 */
-	device_file_or_mount_point = argv[1];
+	realpath(argv[1], device_file_or_mount_point);
 
 	dbus_error_init (&error);
 	con = dbus_bus_get (DBUS_BUS_SYSTEM, &error);
