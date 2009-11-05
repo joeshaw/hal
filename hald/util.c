@@ -106,6 +106,10 @@ hal_util_get_last_element (const gchar *s)
 	int len;
 	const gchar *p;
 
+	if (s == NULL) {
+		return NULL;
+	}
+
 	len = strlen (s);
 	for (p = s + len - 1; p > s; --p) {
 		if ((*p) == '/')
