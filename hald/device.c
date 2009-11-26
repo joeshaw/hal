@@ -644,6 +644,11 @@ hal_device_merge_with_rewrite  (HalDevice    *target,
 {
 	merge_rewrite_ud_t ud;
 
+	if (source_namespace == NULL || target_namespace == NULL) {
+		HAL_ERROR(("source_namespace == NULL || target_namespace == NULL"));
+		return;
+	}
+
 	ud.target = target;
 	ud.source_namespace = source_namespace;
 	ud.target_namespace = target_namespace;
@@ -973,13 +978,15 @@ hal_device_property_get_as_string (HalDevice *device, const char *key, char *buf
 					const char *str;
 					
 					str = (const char *) iter->data;
-					len = strlen (str);
-					strncpy (buf + i, str, bufsize - i);
-					i += len;
+					if (str != NULL) {
+						len = strlen (str);
+						strncpy (buf + i, str, bufsize - i);
+						i += len;
 
-					if (i < bufsize) {
-						buf[i] = '\t';
-						i++;
+						if (i < bufsize) {
+							buf[i] = '\t';
+							i++;
+						}
 					}
 				}
 			}

@@ -407,9 +407,14 @@ handle_match (struct rule *rule, HalDevice *d)
 			should_be_empty = FALSE;
 		if (hal_device_property_get_type (d, prop_to_check) != HAL_PROPERTY_TYPE_STRING)
 			return FALSE;
-		if (hal_device_has_property (d, prop_to_check))
-			if (strlen (hal_device_property_get_string (d, prop_to_check)) > 0)
-				is_empty = FALSE;
+		if (hal_device_has_property (d, prop_to_check)) {
+			const char *s;
+			s = hal_device_property_get_string (d, prop_to_check);
+			if (s != NULL) {
+				if (strlen (s) > 0)
+					is_empty = FALSE;
+			}
+		}
 
 		if (should_be_empty) {
 			if (is_empty)
@@ -1033,7 +1038,7 @@ handle_merge (struct rule *rule, HalDevice *d)
 
 		} else {
 			/* only allow <remove key="foobar"/>, not <remove key="foobar">blah</remove> */
-			if (strlen (value) == 0)
+			if (value != NULL && strlen (value) == 0)
 				hal_device_property_remove (d, key);
 		}
 

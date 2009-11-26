@@ -72,6 +72,9 @@ validate_bus_name (const char *name)
         const char *last_dot;
         gboolean ret;
 
+	if (name == NULL)
+		return FALSE;
+
         s = name;
         len = strlen (name);
         end = name + len;
@@ -201,6 +204,9 @@ ci_tracker_name_owner_changed (CITracker *cit,
                                const char *old_service_name, 
                                const char *new_service_name)
 {
+	if (old_service_name == NULL)
+		return;
+
 	if (strlen (old_service_name) > 0) {
 		CICallerInfo *caller_info;
 

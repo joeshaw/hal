@@ -3561,6 +3561,11 @@ hald_singleton_device_added (const char * command_line,
 	SingletonInfo *info;
 	gchar *extra_env[2] = {NULL, NULL};
 
+	if (command_line == NULL) {
+		HAL_ERROR (("command_line == NULL"));
+		return FALSE;
+	}
+
 	if (!singletons)
 		singletons = g_hash_table_new_full (
 				g_str_hash, g_str_equal,
@@ -5264,6 +5269,11 @@ hald_dbus_filter_function (DBusConnection * connection,
 		/*HAL_INFO (("NameOwnerChanged name=%s old=%s new=%s", name, old_service_name, new_service_name));*/
 
 		ci_tracker_name_owner_changed (ci_tracker, name, old_service_name, new_service_name);
+
+		if (old_service_name == NULL) {
+			HAL_ERROR (("old_service_name == NULL"));
+                        goto out;
+		}	
 
 		if (services_with_locks != NULL)
 			services_with_locks_remove_lockowner(old_service_name);

@@ -3230,7 +3230,9 @@ serial_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent
 	hal_device_property_set_string (d, "serial.device", device_file);
 
 	last_elem = hal_util_get_last_element(sysfs_path);
-	if (sscanf (last_elem, "ttyS%d", &portnum) == 1) {
+	if (last_elem == NULL) {
+		goto out;
+	} else if (sscanf (last_elem, "ttyS%d", &portnum) == 1) {
 		hal_device_property_set_int (d, "serial.port", portnum);
 		hal_device_property_set_string (d, "serial.type", "platform");
 		hal_device_property_set_string (d, "info.product",
@@ -3388,7 +3390,9 @@ sound_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_
 	hal_device_property_set_string (d, "linux.sysfs_path", sysfs_path);
 	device = hal_util_get_last_element(sysfs_path);
 
-	if (device_file[0] == '\0' && parent_dev == NULL && parent_path == NULL) {
+	if (device == NULL) {
+		goto out;
+	} else if (device_file[0] == '\0' && parent_dev == NULL && parent_path == NULL) {
 		goto out;
 	} else if (device_file[0] == '\0' && parent_dev != NULL && parent_path != NULL) {
 		HAL_INFO(("sound_add: handle sound card %s", sysfs_path));

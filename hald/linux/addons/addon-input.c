@@ -355,8 +355,15 @@ add_device (LibHalContext *ctx,
 	int eventfp;
 	GIOChannel *channel;
 	InputData *data;
-	int len = strlen (udi);
+	int len;
 	const char* device_file;
+
+	if (udi == NULL) {
+		HAL_ERROR(("udi == NULL"));
+		return;
+	}	
+
+	len = strlen (udi);
 
 	data = (InputData*) g_malloc (sizeof (InputData) + len);
 

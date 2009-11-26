@@ -70,6 +70,9 @@ setstr (char *buf, char *str, char *prop)
 	DBusError error;
 	char *value;
 
+	if (str == NULL)
+		goto out;
+
 	if (strbegin (buf, str)) {
 		dbus_error_init (&error);
 		value = buf + strlen (str) + 1;

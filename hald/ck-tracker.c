@@ -726,6 +726,12 @@ ck_tracker_process_system_bus_message (CKTracker *tracker, DBusMessage *message)
 			goto out;
 		}
 
+		if (new_service_name == NULL || old_service_name == NULL) {
+			HAL_ERROR (("new_service_name == NULL || old_service_name == NULL"));
+			goto out;
+		}
+			
+
 		if (strlen (new_service_name) == 0 && strcmp (name, "org.freedesktop.ConsoleKit") == 0) {
 			HAL_INFO (("uh, oh, ConsoleKit went away!"));
 			ck_tracker_remove_all_seats_and_sessions (tracker);

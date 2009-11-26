@@ -544,6 +544,11 @@ rules_search_and_add_fdi_files (const char *dir, int fd)
 	struct dirent **name_list;
 	int num_skipped_fdi_files;
 
+	if (dir == NULL) {
+		HAL_ERROR (("Given 'dir' == NULL"));
+		goto error;
+	}
+
 	num_skipped_fdi_files = 0;
 
 	num_entries = scandir (dir, &name_list, NULL, _alphasort);
