@@ -37,6 +37,7 @@
 #include <getopt.h>
 #include <glib.h>
 #include <libhal.h>
+#include "../hald/util.h"
 
 /** 
  *  usage:
@@ -183,7 +184,7 @@ main (int argc, char *argv[])
 
                 devices = libhal_manager_find_device_string_match (hal_ctx, "block.device", device, &num_devices, NULL);
 		if (devices == NULL || devices[0] == NULL) {
-			char real_device[PATH_MAX];
+			char real_device[HAL_PATH_MAX];
 
 			if (realpath(device, real_device) == NULL) {
                                 fprintf (stderr, "Cannot find device %s.\n", device);

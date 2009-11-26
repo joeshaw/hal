@@ -56,6 +56,7 @@
           <append key="volume.mount.valid_options" type="strlist">dirsync</append>
           <append key="volume.mount.valid_options" type="strlist">noatime</append>
           <append key="volume.mount.valid_options" type="strlist">nodiratime</append>
+          <append key="volume.mount.valid_options" type="strlist">relatime</append>
           <append key="volume.mount.valid_options" type="strlist">noexec</append>
           <append key="volume.mount.valid_options" type="strlist">quiet</append>
           <append key="volume.mount.valid_options" type="strlist">remount</append>
@@ -188,6 +189,7 @@
         <append key="volume.mount.valid_options" type="strlist">dirsync</append>
         <append key="volume.mount.valid_options" type="strlist">noatime</append>
         <append key="volume.mount.valid_options" type="strlist">nodiratime</append>
+        <append key="volume.mount.valid_options" type="strlist">relatime</append>
         <append key="volume.mount.valid_options" type="strlist">noexec</append>
         <append key="volume.mount.valid_options" type="strlist">quiet</append>
         <append key="volume.mount.valid_options" type="strlist">remount</append>

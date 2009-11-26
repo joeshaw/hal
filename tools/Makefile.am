@@ -91,7 +91,7 @@ endif #HAVE_GPERF
 
 hal_setup_keymap_SOURCES = hal-setup-keymap.c
 nodist_hal_setup_keymap_SOURCES = hal-setup-keymap-hash-name.h
-hal_setup_keymap_LDADD = $(top_builddir)/libhal/libhal.la
+hal_setup_keymap_LDADD = $(top_builddir)/libhal/libhal.la @DBUS_LIBS@
 
 endif #BUILD_KEYMAPS
 
