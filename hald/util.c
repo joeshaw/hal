@@ -132,6 +132,9 @@ hal_util_get_parent_path (const gchar *path)
 	guint len;
 	gchar *parent_path;
 
+	if (path == NULL)
+		return NULL;
+
 	/* Find parent device by truncating our own path */
 	parent_path = g_strndup (path, HAL_PATH_MAX);
 	len = strlen (parent_path);
@@ -151,6 +154,9 @@ hal_util_get_normalized_path (const gchar *path1, const gchar *path2)
 	const gchar *p1;
 	const gchar *p2;
 	gchar buf[HAL_PATH_MAX];
+
+	if (path1 == NULL || path2 == NULL)
+		return NULL;
 
 	len1 = strlen (path1);
 	len2 = strlen (path2);
@@ -500,6 +506,9 @@ hal_util_grep_file (const gchar *directory, const gchar *file, const gchar *line
 	gchar *p;
 
 	result = NULL;
+
+	if (linestart == NULL)
+		return result;
 
 	/* TODO: use reuse and _grep_can_reuse parameters to avoid loading
 	 *       the file again and again
@@ -1200,7 +1209,7 @@ is_valid_interface_name (const char *name) {
 
 	last_dot = NULL;
 
-	if (strlen(name) == 0)
+	if (name == NULL || strlen(name) == 0)
 		return FALSE;	
 
 	end = name + strlen(name);
