@@ -894,6 +894,7 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 	gboolean is_cciss_device;
         int md_number;
 	char tc;
+	const gchar *last_elem;
 
 	is_device_mapper = FALSE;
         is_fakevolume = FALSE;
@@ -908,11 +909,13 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 		goto out;
 	}
 
-	if (strcmp (hal_util_get_last_element (sysfs_path), "fakevolume") == 0) {
+	last_elem = hal_util_get_last_element (sysfs_path);
+
+	if (strcmp (last_elem, "fakevolume") == 0) {
 		HAL_INFO (("Handling %s as fakevolume - sysfs_path_real=%s", device_file, sysfs_path_real));
 		is_fakevolume = TRUE;
 		sysfs_path_real = hal_util_get_parent_path (sysfs_path);
-        } else if (sscanf (hal_util_get_last_element (sysfs_path), "md%d%c", &md_number, &tc) == 1) {
+        } else if (last_elem && sscanf (last_elem, "md%d%c", &md_number, &tc) == 1) {
 		HAL_INFO (("Handling %s as MD device", device_file));
                 is_md_device = TRUE;
 		sysfs_path_real = g_strdup (sysfs_path);

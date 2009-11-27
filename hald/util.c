@@ -98,7 +98,7 @@ hal_util_remove_trailing_slash (gchar *path)
  *  foobar.
  *
  *  @param  path                Path
- *  @return                     Pointer into given string
+ *  @return                     Pointer into given string or NULL in error case
  */
 const gchar *
 hal_util_get_last_element (const gchar *s)
