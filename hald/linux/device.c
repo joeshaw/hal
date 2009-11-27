@@ -2854,10 +2854,9 @@ rfkill_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent
 	}
 
 	type = hal_util_get_string_from_file (sysfs_path, "type");
-	if (type == NULL)
-		type = "unknown";
-
-	if (strcasecmp (type, "wimax") == 0) {
+	if (type == NULL) {
+		hal_device_property_set_string (d, "killswitch.type", "unknown");
+	} else if (strcasecmp (type, "wimax") == 0) {
 		hal_device_property_set_string (d, "killswitch.type", "wwan");
 	} else { 
 		hal_device_property_set_string (d, "killswitch.type", type);
