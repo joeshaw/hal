@@ -1203,7 +1203,7 @@ input_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_
 	int eventdev_num;
 	HalDevice *d;
         char *attr_sysfs_path;
-	char *last;       
+	const gchar *last;       
  
         d = NULL;
         attr_sysfs_path = NULL;
