@@ -1,8 +1,8 @@
 ==========
-HAL 0.5.14
+HAL 0.5.14 "Dave, this conversation can serve no purpose anymore. Goodbye."
 ==========
 
-Released Month 00, 2009.
+Released November 30, 2009.
 
 Requirements for HAL 0.5.14:
 
@@ -30,6 +30,107 @@ Requirements for HAL 0.5.14:
  - pm-utils         >= 0.99.2    or newer (optional)
 
 Contributors to HAL 0.5.14:
+
+Arnout Vandecappelle (1):
+      don't remove scsi_host if there are still targets using it
+
+Aurelien Jarno (2):
+      Fix build failure on GNU/kFreeBSD
+      generalize keyboard detection code for FreeBSD
+
+C. Scott Ananian (1):
+      remove action_parameters from DBus XML for IsCallerPrivileged
+
+Danny Kukawka (40):
+      fixed commit 36d076bf26350e022731cb7c2c9f4e840dd25e37
+      move ssb bus code to the correct place
+      add SSB bus to SPEC
+      cleanup: don't set udi manually if hal_device_set_udi() was used
+      add IBM Ebus to SPEC
+      hide more MBR, bootstrap and other partitions from desktop
+      fix code doc for resolve_udiprop_path()
+      hald_dbus.c: fix DBusError handling
+      hald_runner.c: fix usage of DBusError
+      ci-tracker.c: fix usage of DBusError
+      ck-tracker.c: fix usage of DBusError
+      more DBusError fixes
+      another DBusError fix
+      fix configure to get --disable-console-kit working
+      fix probe-ieee1394-unit.c DBusError and LibHalContext handling
+      fix DBusError handling in probe directory
+      free string after usage
+      fix usage of deprected g_io_channel_seek()
+      replace deprecated g_basename() with g_path_get_basename()
+      replace another deprecated g_basename() with g_path_get_basename()
+      replace deprecated g_strcasecmp() with g_ascii_strcasecmp()
+      fix DBusError handling in linux addon directory
+      Merge branch 'master' of ssh://dkukawka@git.freedesktop.org/git/hal
+      fix compiler warning in libhal-storage
+      fix commit 141ca8cd7b768ddefa1bfaa563cbef4337e32b7c
+      extend debug message in device_reprobe()
+      fix hotplug_event_process_queue() to get reprobe working
+      handle keyboard backlight leds via org.freedesktop.Hal.Device.KeyboardBacklight
+      changed massif-hald.sh to work the same way as run-hald.sh
+      changed valgrind-hald.sh to write a logfile
+      fix memory leaks due to usage of g_path_get_basename()
+      add hald/valgrind.log to .gitignore
+      fix memory leak in acpi_button_add() in error case
+      fix memory leak due to usage of g_strdup()
+      fix DBusError handling in freebsd code
+      adopted version of commit 122e41a10 to fix docking stations
+      add keyboard_backlight.* and *.num_levels to led class
+      update SPEC with kbd_backlight(.*) and leds.num_levels
+      always set leds.num_levels since it's mandatory
+      add a check for leds.num_levels to addon-leds.c
+
+Dmitry Torokhov (1):
+      Correctly identify touchpads
+
+Drew Moseley (1):
+      add libhal_device_property_remove_watch_all() to libhal
+
+Frederic Crozat (1):
+      hide Windows recovery partitions on pre-installed Futjisu laptops
+
+Joe Marcus Clarke (17):
+      re-enable libvolume_id support for FreeBSD
+      add USB2 support to the FreeBSD backend
+      add support for reading ufsids
+      add some missing storage properties
+      add USB2 support
+      fix support for power and brightness management
+      fix a problem building the FreeBSD backend
+      add USB2 support
+      add support for mouse device probing
+      add support for Fuse mounts
+      add support for newer GEOM types
+      add support for polling of mouse devices
+      add missing LDADD and CFLAGS for addon-mouse.c
+      add locking support to the storage addon
+      update time handling functions
+      ignore probe devices
+      fix DBusError handling and a memory leak
+
+Johannes Hessellund (1):
+      read brightness from actual_brightness and not from brightness
+
+Kay Sievers (1):
+      configure.in: require blkid >= 2.15 from util-linux-ng
+
+Maciej Grela (1):
+      Remove the 512 byte limit for PATH in hald.c
+
+Martin Poole (1):
+      Fix a segfault in the mdraid code -- see rh#507782 for more info
+
+Michael Biebl (7):
+      Make libhald_freebsd_probe.la a noinst library.
+      fix a misleading warning in ondemand_set_consider_nice()
+      Fix a crasher in hal_util_get_last_element
+      Fix unconditional usage of PATH_MAX
+      Support relative paths in umount.hal
+      list "relatime" as valid mount option on Linux.
+      Fix build failures with binutils-gold
 
 ==========
 HAL 0.5.13
