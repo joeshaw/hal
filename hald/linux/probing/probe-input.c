@@ -70,6 +70,7 @@ main (int argc, char *argv[])
 	fd = -1;
 
 	setup_logger ();
+	dbus_error_init (&error);
 
 	button_type = getenv ("HAL_PROP_BUTTON_TYPE");
 	if (button_type == NULL)
@@ -96,7 +97,6 @@ main (int argc, char *argv[])
 	if (udi == NULL)
 		goto out;
 
-	dbus_error_init (&error);
 	if ((ctx = libhal_ctx_init_direct (&error)) == NULL)
 		goto out;
 
