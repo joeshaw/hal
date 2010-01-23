@@ -42,22 +42,6 @@
 static struct libusb20_backend *hf_usb2_be = NULL;
 
 static void
-hf_usb2_copy_parent (HalDevice *parent,
-		     const char *key,
-		     gpointer user_data)
-{
-  HalDevice *device;
-
-  g_return_if_fail(HAL_IS_DEVICE(parent));
-  g_return_if_fail(HAL_IS_DEVICE(user_data));
-
-  device = HAL_DEVICE(user_data);
-
-  if (! strncmp(key, "usb_device.", strlen("usb_device.")))
-    hal_device_copy_property(parent, key, device, key);
-}
-
-static void
 hf_usb2_probe_interfaces(HalDevice *parent)
 {
   int num_interfaces;
@@ -79,9 +63,9 @@ hf_usb2_probe_interfaces(HalDevice *parent)
 
       hal_device_property_set_string(device, "info.subsystem", "usb");
       hal_device_property_set_int(device, "usb.interface.number", i);
-      hal_device_property_foreach(parent, hf_usb2_copy_parent, device);
       hal_device_copy_property(parent, "info.product", device, "info.product");
       hal_device_copy_property(parent, "info.vendor", device, "info.vendor");
+      hal_device_merge_with_rewrite(device, parent, "usb.", "usb_device.");
 
       if (hf_device_preprobe(device))
         {
