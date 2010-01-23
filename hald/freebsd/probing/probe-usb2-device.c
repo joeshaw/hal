@@ -34,7 +34,7 @@
 
 #include <libusb20_desc.h>
 #include <libusb20.h>
-#if __FreeBSD_version >= 800064
+#if (__FreeBSD_version >= 800064) || (__FreeBSD_kernel_version >= 800064)
 #include <dev/usb/usb_ioctl.h>
 #else
 #include <dev/usb2/include/usb2_standard.h>
@@ -73,7 +73,7 @@ main(int argc, char **argv)
     {
       struct LIBUSB20_DEVICE_DESC_DECODED *ddesc;
       struct LIBUSB20_CONFIG_DESC_DECODED *cdesc;
-#if __FreeBSD_version >= 800092
+#if (__FreeBSD_version >= 800092) || (__FreeBSD_kernel_version >= 800092)
       struct usb_device_info di;
 #else
       struct usb2_device_info di;
