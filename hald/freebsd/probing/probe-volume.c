@@ -38,10 +38,12 @@
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/types.h>
+#ifdef HAVE_LIBUFS
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
 #include <libufs.h>
+#endif /* HAVE_LIBUFS */
 #include <isofs/cd9660/iso.h>
 #include <glib.h>
 #include <libvolume_id.h>
@@ -561,6 +563,7 @@ main (int argc, char **argv)
 
   libhal_device_set_property_bool(hfp_ctx, hfp_udi, "volume.ignore", has_children || is_swap, &hfp_error);
 
+#ifdef HAVE_LIBUFS
   if (vid && ! strcmp (vid->type, "ufs"))
     {
       struct uufsd ufsdisk;
@@ -602,6 +605,7 @@ main (int argc, char **argv)
 	  ufs_disk_close(&ufsdisk);
 	}
     }
+#endif /* HAVE_LIBUFS */
 
   if (has_children)
     usage = "partitiontable";

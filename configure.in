@@ -508,6 +508,14 @@ AM_CONDITIONAL(HALD_COMPILE_SOLARIS, [test x$HALD_BACKEND = xsolaris], [Compilin
 AC_SUBST(HALD_BACKEND)
 if test "x$HALD_BACKEND" = "xfreebsd"; then
     AC_SEARCH_LIBS([clock_gettime], [rt])
+    LIBUFS_LIBS=""
+    AC_CHECK_HEADERS([libufs.h],
+		     [AC_CHECK_LIB([libufs], [ufs_disk_fillout], [USE_LIBUFS="yes"], [], [])])
+    if test "x$USE_LIBUFS" = "xyes"; then
+	AC_DEFINE(HAVE_LIBUFS, 1, [Set if we have libufs])
+	LIBUFS_LIBS="-lufs"
+	AC_SUBST(LIBUFS_LIBS)
+    fi
     USE_BSDLIBUSB20=no
     USE_BSDLIBUSB=no
     LIBUSB20_LIBS=""
