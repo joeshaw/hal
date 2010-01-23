@@ -507,6 +507,7 @@ AM_CONDITIONAL(HALD_COMPILE_FREEBSD, [test x$HALD_BACKEND = xfreebsd], [Compilin
 AM_CONDITIONAL(HALD_COMPILE_SOLARIS, [test x$HALD_BACKEND = xsolaris], [Compiling for Solaris])
 AC_SUBST(HALD_BACKEND)
 if test "x$HALD_BACKEND" = "xfreebsd"; then
+    AC_SEARCH_LIBS([clock_gettime], [rt])
     USE_BSDLIBUSB20=no
     USE_BSDLIBUSB=no
     LIBUSB20_LIBS=""
