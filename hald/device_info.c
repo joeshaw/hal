@@ -1142,7 +1142,9 @@ rules_match_and_merge_device (void *fdi_rules_list, HalDevice *d)
 			rule = di_jump(rule);
 			break;
 		}
-		rule = di_next(rule);
+
+		if (rule)
+			rule = di_next(rule);
 	}
 }
 
