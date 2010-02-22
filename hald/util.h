@@ -38,7 +38,7 @@
 #endif
 
 #define HAL_NAME_MAX 256
-#define HAL_PATH_MAX 512
+#define HAL_PATH_MAX 4096
 
 gboolean hal_util_remove_trailing_slash (gchar *path);
 

@@ -38,10 +38,12 @@
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/types.h>
+#ifdef HAVE_LIBUFS
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
 #include <libufs.h>
+#endif /* HAVE_LIBUFS */
 #include <isofs/cd9660/iso.h>
 #include <glib.h>
 #include <libvolume_id.h>
@@ -561,6 +563,7 @@ main (int argc, char **argv)
 
   libhal_device_set_property_bool(hfp_ctx, hfp_udi, "volume.ignore", has_children || is_swap, &hfp_error);
 
+#ifdef HAVE_LIBUFS
   if (vid && ! strcmp (vid->type, "ufs"))
     {
       struct uufsd ufsdisk;
@@ -574,6 +577,7 @@ main (int argc, char **argv)
 
 	  snprintf(ufsid, sizeof(ufsid), "%08x%08x", ufsdisk.d_fs.fs_id[0], ufsdisk.d_fs.fs_id[1]);
 	  libhal_device_set_property_string(hfp_ctx, hfp_udi, "volume.freebsd.ufsid", ufsid, &hfp_error);
+	  dbus_error_free(&hfp_error);
 	  ufs_devs = libhal_manager_find_device_string_match(hfp_ctx,
 			  				     "volume.freebsd.ufsid",
 							     ufsid,
@@ -582,16 +586,17 @@ main (int argc, char **argv)
 	  dbus_error_free(&hfp_error);
 	  for (i = 0; i < num_udis; i++)
             {
-              if (ufs_devs[i] != NULL)
+              if (ufs_devs[i] != NULL && strcmp(ufs_devs[i], hfp_udi))
                 {
                   gboolean mounted;
 
 		  mounted = libhal_device_get_property_bool(hfp_ctx, ufs_devs[i], "volume.is_mounted", &hfp_error);
-		  dbus_error_free(&hfp_error);
+	          dbus_error_free(&hfp_error);
 		  if (mounted)
-		    {
+	            {
                       libhal_device_set_property_bool(hfp_ctx, hfp_udi, "volume.ignore", TRUE, &hfp_error);
 		      dbus_error_free(&hfp_error);
+		      break;
 		    }
 		}
 	    }
@@ -600,6 +605,7 @@ main (int argc, char **argv)
 	  ufs_disk_close(&ufsdisk);
 	}
     }
+#endif /* HAVE_LIBUFS */
 
   if (has_children)
     usage = "partitiontable";

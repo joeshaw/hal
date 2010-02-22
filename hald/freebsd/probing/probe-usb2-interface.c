@@ -34,7 +34,7 @@
 
 #include <libusb20_desc.h>
 #include <libusb20.h>
-#if __FreeBSD_version >= 800064
+#if (__FreeBSD_version >= 800064) || (__FreeBSD_kernel_version >= 800064)
 #include <dev/usb/usb_ioctl.h>
 #else
 #include <dev/usb2/include/usb2_standard.h>
@@ -58,11 +58,11 @@ main(int argc, char **argv)
   if (pbe == NULL)
     goto end;
 
-  busstr = getenv("HAL_PROP_USB_DEVICE_BUS_NUMBER");
+  busstr = getenv("HAL_PROP_USB_BUS_NUMBER");
   if (! busstr)
     goto end;
 
-  addrstr = getenv("HAL_PROP_USB_DEVICE_PORT_NUMBER");
+  addrstr = getenv("HAL_PROP_USB_PORT_NUMBER");
   if (! addrstr)
     goto end;
 

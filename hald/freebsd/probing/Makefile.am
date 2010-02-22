@@ -67,5 +67,5 @@ hald_probe_volume_CPPFLAGS = $(AM_CPPFLAGS) @GLIB_CFLAGS@ @VOLUME_ID_CFLAGS@
 hald_probe_volume_LDADD = \
 	@GLIB_LIBS@							\
 	@VOLUME_ID_LIBS@						\
-	-lufs								\
+	@LIBUFS_LIBS@							\
 	$(top_builddir)/hald/freebsd/libprobe/libhald_freebsd_probe.la

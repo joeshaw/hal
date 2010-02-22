@@ -12,7 +12,7 @@
 #
 
 # Sanity checks.
-[ -x @sbindir@/hald ] || exit 0
+[ -x @sbindir@/hald ] || exit 1
 
 # Source function library.
 . @sysconfdir@/rc.d/init.d/functions

@@ -32,8 +32,8 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
-#if __FreeBSD_version < 800092
-#if __FreeBSD_version >= 800064
+#if (__FreeBSD_version < 800092) || (__FreeBSD_kernel_version < 800092)
+#if (__FreeBSD_version >= 800064) || (__FreeBSD_kernel_version >= 800064)
 #include <legacy/dev/usb/usb.h>
 #else
 #include <dev/usb/usb.h>
@@ -47,9 +47,9 @@
 #include "hf-devtree.h"
 #include "hf-util.h"
 
-#if __FreeBSD_version < 800092
+#if (__FreeBSD_version < 800092) || (__FreeBSD_kernel_version < 800092)
 #define HF_USB_DEVICE			"/dev/usb"
-#if __FreeBSD_version < 800066
+#if (__FreeBSD_version < 800066) || (__FreeBSD_kernel_version < 800066)
 #define HF_USB2_DEVICE			"/dev/usb "
 #else
 #define HF_USB2_DEVICE			"/dev/usbctl"
