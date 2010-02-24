@@ -58,6 +58,8 @@ main (int argc, char *argv[])
 
 	setup_logger ();
 
+	dbus_error_init (&error);
+
 	device_file = getenv ("HAL_PROP_VIDEO4LINUX_DEVICE");
 	if (device_file == NULL)
 		goto out;
@@ -66,7 +68,6 @@ main (int argc, char *argv[])
 	if (udi == NULL)
 		goto out;
 
-	dbus_error_init (&error);
 	ctx = libhal_ctx_init_direct (&error);
 	if (ctx == NULL)
 		goto out;

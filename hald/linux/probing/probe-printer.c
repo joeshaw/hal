@@ -66,6 +66,8 @@ main (int argc, char *argv[])
 	ret = 1;
 
 	setup_logger ();
+
+	dbus_error_init (&error);
 	
 	udi = getenv ("UDI");
 	if (udi == NULL) {
@@ -73,7 +75,6 @@ main (int argc, char *argv[])
 		goto out;
 	}
 
-	dbus_error_init (&error);
 	if ((ctx = libhal_ctx_init_direct (&error)) == NULL) {
 		HAL_ERROR (("ctx init failed"));
 		goto out;

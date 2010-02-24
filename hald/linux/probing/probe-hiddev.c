@@ -57,11 +57,12 @@ main (int argc, char *argv[])
 	/* assume failure */
 	ret = 1;
 
+	dbus_error_init (&error);
+
 	udi = getenv ("UDI");
 	if (udi == NULL)
 		goto out;
 
-	dbus_error_init (&error);
 	if ((ctx = libhal_ctx_init_direct (&error)) == NULL)
 		goto out;
 
