@@ -507,7 +507,8 @@ main (int argc, char *argv[])
  	state = INREG(0x7ae4);
  	OUTREG(0x7ae4, state);
 
-	if (ioperm (0x300, 0x304, 1) < 0) {
+	/* Allow access to porta 0x300 through 0x304 */
+	if (ioperm (0x300, 5, 1) < 0) {
 		HAL_ERROR (("ioperm failed (you should be root)."));
 		exit(1);
 	}
