@@ -300,6 +300,12 @@ event_io (GIOChannel *channel, GIOCondition condition, gpointer data)
 				}
 			}
 		} else if (input_data->event.type == EV_KEY && key_name[input_data->event.code] != NULL && input_data->event.value) {
+			/* this is a key repeat and should be ignored for the sleep key */
+			if (input_data->event.code == KEY_SLEEP && input_data->event.value == 2) {
+				HAL_INFO (("key release event for KEY_SLEEP, ignoring"));
+				return TRUE;
+			}
+
 			libhal_device_emit_condition (ctx, input_data->udi,
 						      "ButtonPressed",
 						      key_name[input_data->event.code],
