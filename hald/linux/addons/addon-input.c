@@ -229,7 +229,7 @@ event_io (GIOChannel *channel, GIOCondition condition, gpointer data)
 		if (input_data->offset + read_bytes < sizeof (struct input_event)) {
 			input_data->offset = input_data->offset + read_bytes;
 			HAL_DEBUG (("incomplete read"));
-			return TRUE;
+			goto out;
 		} else {
 			input_data->offset = 0;
 		}
@@ -303,7 +303,7 @@ event_io (GIOChannel *channel, GIOCondition condition, gpointer data)
 			/* this is a key repeat and should be ignored for the sleep key */
 			if (input_data->event.code == KEY_SLEEP && input_data->event.value == 2) {
 				HAL_INFO (("key release event for KEY_SLEEP, ignoring"));
-				return TRUE;
+				goto out;	
 			}
 
 			libhal_device_emit_condition (ctx, input_data->udi,
@@ -314,6 +314,7 @@ event_io (GIOChannel *channel, GIOCondition condition, gpointer data)
 		}
 	}
 
+out:
 	LIBHAL_FREE_DBUS_ERROR (&error);
 
 	return TRUE;
