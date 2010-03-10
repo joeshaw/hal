@@ -109,6 +109,8 @@ main (int argc, char *argv[])
 	/* assume failure */
 	ret = 1;
 
+	dbus_error_init (&error);
+
 	if ((udi = getenv ("UDI")) == NULL)
 		goto out;
 	if ((device_file = getenv ("HAL_PROP_BLOCK_DEVICE")) == NULL)
@@ -127,7 +129,6 @@ main (int argc, char *argv[])
 	else
 		only_check_for_fs = FALSE;
 
-	dbus_error_init (&error);
 	if ((ctx = libhal_ctx_init_direct (&error)) == NULL)
 		goto out;
 

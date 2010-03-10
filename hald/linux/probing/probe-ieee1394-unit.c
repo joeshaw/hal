@@ -388,6 +388,8 @@ int main (int argc, char *argv[])
 
 	setup_logger ();
 
+	dbus_error_init (&error);
+
 	udi = getenv ("UDI");
 	if (udi == NULL)
 		goto out;
@@ -396,7 +398,6 @@ int main (int argc, char *argv[])
 	if (ieee1394_udi == NULL)
 		goto out;
 
-	dbus_error_init (&error);
 	if ((ctx = libhal_ctx_init_direct (&error)) == NULL)
 		goto out;
 

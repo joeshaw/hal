@@ -158,7 +158,8 @@ main (int argc, char **argv)
 		goto out;
 	}
 
-	if (ioperm(0xB2, 0xB3, 1) < 0)
+	/* Allow access to ports 0xB2 and 0xB3 */
+	if (ioperm(0xB2, 2, 1) < 0)
 	{
 		HAL_ERROR (("ioperm failed (you should be root)."));
 		exit(1);

@@ -141,6 +141,8 @@ main (int argc, char *argv[])
 	DBusMessage *reply = NULL;
 	DBusError error;
 
+	dbus_error_init (&error);
+
 	udi = getenv ("UDI");
 	if (udi == NULL)
 		goto out;
@@ -150,8 +152,6 @@ main (int argc, char *argv[])
 		goto out;
 
 	HAL_INFO (("Investigating '%s'", iface));
-
-	dbus_error_init (&error);
 
 	if ((conn = dbus_bus_get (DBUS_BUS_SYSTEM, &error)) == NULL)
 		goto out;
