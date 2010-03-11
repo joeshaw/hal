@@ -557,12 +557,19 @@ drm_compute_udi (HalDevice *d)
 
 	name = hal_util_get_last_element(dir);
 
-	/* generate e.g.: /org/freedesktop/Hal/devices/pci_8086_2a02_drm_i915_card0 */
-	hald_compute_udi (udi, sizeof (udi),
-			  "%s_drm_%s_%s",
-			  hal_device_property_get_string (d, "info.parent"),
-			  hal_device_property_get_string (d, "drm.dri_library"),
-			  name);
+	if (hal_device_has_property (d, "drm.dri_library")) {
+		/* generate e.g.: /org/freedesktop/Hal/devices/pci_8086_2a02_drm_i915_card0 */
+		hald_compute_udi (udi, sizeof (udi),
+				  "%s_drm_%s_%s",
+				  hal_device_property_get_string (d, "info.parent"),
+				  hal_device_property_get_string (d, "drm.dri_library"),
+				  name);
+	} else {
+		hald_compute_udi (udi, sizeof (udi),
+				  "%s_drm_%s",
+				  hal_device_property_get_string (d, "info.parent"),
+				  name);
+	}
 
 	hal_device_set_udi (d, udi);
 
