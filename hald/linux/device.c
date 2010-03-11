@@ -2932,6 +2932,10 @@ scsi_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_d
 		hal_device_property_set_string (d, "scsi.type", "unknown");
 	}
 
+	if (hal_device_has_property(parent_dev, "scsi_host.hotpluggable"))
+		hal_device_property_set_bool(d, "scsi.hotpluggable",
+			hal_device_property_get_bool(parent_dev, "scsi_host.hotpluggable"));
+
 out:
 	return d;
 }
@@ -3086,6 +3090,7 @@ scsi_host_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *par
 	HalDevice *d;
 	gint host_num;
 	const gchar *last_elem;
+	gint port_cmd;
 
 	d = NULL;
 
@@ -3107,6 +3112,15 @@ scsi_host_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *par
 	hal_device_property_set_string (d, "info.category", "scsi_host");
 	hal_device_add_capability (d, "scsi_host");
 	hal_device_property_set_string (d, "info.product", "SCSI Host Adapter");
+
+	if (hal_util_get_int_from_file(sysfs_path, "ahci_port_cmd", &port_cmd, 16)) {
+		hal_device_property_set_int(d, "scsi_host.ahci_port_cmd", port_cmd);
+		hal_device_property_set_bool(d, "scsi_host.hotpluggable",
+					     !!(port_cmd & (1 << 21)));
+		hal_device_property_set_bool(parent_dev,
+					     "scsi_host.hotpluggable",
+					     !!(port_cmd & (1 << 21)));
+	}
 out:
 	return d;
 }

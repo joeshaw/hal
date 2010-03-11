@@ -1201,6 +1201,8 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 					physdev_udi = udi_it;
 					hal_device_property_set_string (d, "storage.bus", "scsi");
 					hal_device_copy_property (scsidev, "scsi.lun", d, "storage.lun");
+					is_hotpluggable = hal_device_property_get_bool(scsidev, "scsi.hotpluggable");
+
 					/* want to continue here, because it may be USB or IEEE1394 */
 				} else if (strcmp (bus, "usb") == 0) {
 					physdev = d_it;
