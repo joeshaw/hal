@@ -1082,12 +1082,14 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 	if (!is_partition && !is_device_mapper && !is_fakevolume) {
 		const char *udi_it;
 		const char *physdev_udi;
+		const char *scsidev_udi;
 		HalDevice *scsidev;
 		HalDevice *physdev;
 		gboolean is_hotpluggable;
 		gboolean is_removable;
 		gboolean requires_eject;
 		gboolean no_partitions_hint;
+		gboolean was_scsi;
 		const gchar *bus;
 		const gchar *parent_bus;
 
@@ -1096,6 +1098,7 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 		 *******************************/
 
 		scsidev = NULL;
+		scsidev_udi = NULL;
 		physdev = NULL;
 		physdev_udi = NULL;
 
@@ -1103,6 +1106,7 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 		is_hotpluggable = FALSE;
 		requires_eject = FALSE;
 		no_partitions_hint = FALSE;
+		was_scsi = FALSE;
 
 		/* defaults */
 		hal_device_property_set_string (d, "storage.bus", "unknown");
@@ -1123,6 +1127,7 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 		 * start with our parent. On the way, optionally pick up
 		 * the scsi if it exists */
 		udi_it = hal_device_get_udi (parent);
+		
 		while (udi_it != NULL) {
 			HalDevice *d_it;
 
@@ -1199,9 +1204,11 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 					scsidev = d_it;
 					physdev = d_it;
 					physdev_udi = udi_it;
+					scsidev_udi = udi_it;
 					hal_device_property_set_string (d, "storage.bus", "scsi");
 					hal_device_copy_property (scsidev, "scsi.lun", d, "storage.lun");
 					is_hotpluggable = hal_device_property_get_bool(scsidev, "scsi.hotpluggable");
+					was_scsi = TRUE;
 
 					/* want to continue here, because it may be USB or IEEE1394 */
 				} else if (strcmp (bus, "usb") == 0) {
@@ -1251,10 +1258,18 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 					hal_device_property_set_string (d, "storage.bus", "vio");
 					break;
 				} else if (strcmp (bus, "pci") == 0) {
-					physdev = d_it;
-					physdev_udi = udi_it;
-					hal_device_property_set_string (d, "storage.bus", "pci");
-					break;
+					if (was_scsi) {
+						/* lets assume we are SCSI but not usb or ieee1394 */
+						physdev = scsidev;
+						physdev_udi = scsidev_udi;
+						hal_device_property_set_string (d, "storage.bus", "scsi");
+						break;
+					} else {
+						physdev = d_it;
+						physdev_udi = udi_it;
+						hal_device_property_set_string (d, "storage.bus", "pci");
+						break;
+					}
 				}
 			}
 
@@ -1360,6 +1375,7 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 				HAL_WARNING (("scsi.type is unknown"));
 				goto error;
 			}
+
 			hal_device_copy_property (parent, "scsi.type", d, "storage.drive_type");
 			hal_device_copy_property (parent, "scsi.vendor", d, "storage.vendor");
 			hal_device_copy_property (parent, "scsi.model", d, "storage.model");
@@ -1430,7 +1446,7 @@ hotplug_event_begin_add_blockdev (const gchar *sysfs_path, const gchar *device_f
 					hal_device_property_set_string (d, "storage.drive_type", "disk");
 				}
 			}
-		}
+		} 
 
 		hal_device_property_set_string (d, "info.category", "storage");
 		hal_device_add_capability (d, "storage");
