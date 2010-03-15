@@ -2829,6 +2829,32 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
               <entry></entry>
               <entry>The type of this SCSI device is unknwon.</entry>
             </row>
+            <row>
+              <entry>
+                <literal>scsi.transport</literal> (string)
+              </entry>
+              <entry>Example: FC</entry>
+              <entry>No</entry>
+              <entry>The SCSI Transport protocol used by the device.</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>FC</entry>
+              <entry></entry>
+              <entry>This is a SCSI FiberChannel device.</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>iSCSI</entry>
+              <entry></entry>
+              <entry>This is a iSCSI (internet Small Computer System Interface) device.</entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry>SAS</entry>
+              <entry></entry>
+              <entry>This is a SAS (Serial Attached SCSI) device.</entry>
+            </row>
           </tbody>
         </tgroup>
       </informaltable>
