@@ -2885,6 +2885,16 @@ scsi_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_d
 	hal_device_property_set_int (d, "scsi.target", target_num);
 	hal_device_property_set_int (d, "scsi.lun", lun_num);
 
+	if (strstr(sysfs_path, "/host") != NULL && strstr(sysfs_path, "/target") != NULL) {
+		if (strstr(sysfs_path, "/rport-") != NULL) {
+			hal_device_property_set_string (d, "scsi.transport", "FC");
+		} else if (strstr(sysfs_path, "/session") != NULL) {
+			hal_device_property_set_string (d, "scsi.transport", "iSCSI");
+		} else if (strstr(sysfs_path, "/port-") != NULL && strstr(sysfs_path, "/end_device-") != NULL) {
+			hal_device_property_set_string (d, "scsi.transport", "SAS");
+		}
+	}
+
 	hal_util_set_driver (d, "info.linux.driver", sysfs_path);
 
 	hal_device_property_set_string (d, "info.product", "SCSI Device");
