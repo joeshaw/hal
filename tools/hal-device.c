@@ -74,11 +74,6 @@ int add_udi(LibHalContext *hal_ctx, char *arg);
 void process_property(LibHalContext *hal_ctx, char *buf, lh_prop_t **prop);
 int add_properties(LibHalContext *hal_ctx, new_dev_t *nd, lh_prop_t *prop);
 lh_prop_t *free_properties(lh_prop_t *prop);
-static char *skip_space(char *s);
-static char *skip_non_eq_or_space(char *s);
-static char *skip_number(char *s);
-static char *skip_nonquote(char *s);
-
 
 new_dev_t new_dev;
 
@@ -89,11 +84,11 @@ struct {
 	char *udi;
 } opt;
 
-struct option options[] = {
+static struct option options[] = {
 	{ "remove", 1, NULL, 'r' },
 	{ "add", 1, NULL, 'a' },
 	{ "help", 0, NULL, 'h' },
-	{ 0, 0, 0, 0 }
+	{ NULL , 0, NULL , 0 }
 };
 
 
@@ -168,7 +163,7 @@ int main(int argc, char **argv)
 }
 
 
-void help()
+void help(void)
 {
 	fprintf(stderr,
 		"usage: hal-device [--help] [--add udi] [--remove udi] [udi]\n"
@@ -419,7 +414,7 @@ int add_udi(LibHalContext *hal_ctx, char *arg)
 }
 
 
-char *skip_space(char *s)
+static char *skip_space(char *s)
 {
 	while (isspace(*s)) s++;
 
@@ -427,7 +422,7 @@ char *skip_space(char *s)
 }
 
 
-char *skip_non_eq_or_space(char *s)
+static char *skip_non_eq_or_space(char *s)
 {
 	while (*s && *s != '=' && !isspace(*s))
 		s++;
@@ -435,8 +430,7 @@ char *skip_non_eq_or_space(char *s)
 	return s;
 }
 
-
-char *skip_number(char *s)
+static char *skip_number(char *s)
 {
 	while (*s == '-' || *s == '+' || *s == '.' || isdigit(*s))
 		s++;
@@ -444,8 +438,7 @@ char *skip_number(char *s)
 	return s;
 }
 
-
-char *skip_nonquote(char *s)
+static char *skip_nonquote(char *s)
 {
 	while (*s && *s != '\'')
 		s++;
