@@ -7478,6 +7478,56 @@ org.freedesktop.Hal.Device.Volume.method_signatures = {'ssas', 'as', 'as'}
                 The serial number of the base board.
               </entry>
             </row>
+            <row>
+              <entry>
+                <literal>system.lsb.version</literal> (string)
+              </entry>
+              <entry>example: 'core-2.0-ia64:core-2.0-noarch:graphics-2.0-ia64:graphics-2.0-noarch'</entry>
+              <entry>No</entry>
+              <entry>
+                The version of the LSB specification against which the distribution is compliant (as provided by lsb_release).
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>system.lsb.distributor_id</literal> (string)
+              </entry>
+              <entry>example: MyDistrib</entry>
+              <entry>No</entry>
+              <entry>
+                The LSB distributor ID (as provided by lsb_release).
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>system.lsb.description</literal> (string)
+              </entry>
+              <entry>example: 'I enjoy using my distrib'</entry>
+              <entry>No</entry>
+              <entry>
+                The LSB single line text description of the distribution (as provided by lsb_release).
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>system.lsb.release</literal> (string)
+              </entry>
+              <entry>example: 1.0RC4</entry>
+              <entry>No</entry>
+              <entry>
+                The LSB release number of the distribution (as provided by lsb_release).
+              </entry>
+            </row>
+            <row>
+              <entry>
+                <literal>system.lsb.codename</literal> (string)
+              </entry>
+              <entry>example: TryIt</entry>
+              <entry>No</entry>
+              <entry>
+                The LSB codename according to the distribution release (as provided by lsb_release).
+              </entry>
+            </row>
           </tbody>
         </tgroup>
       </informaltable>
