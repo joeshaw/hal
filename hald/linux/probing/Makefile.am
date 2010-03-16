@@ -20,6 +20,7 @@ libexec_PROGRAMS = 			\
 	hald-probe-serial 		\
 	hald-probe-ieee1394-unit 	\
 	hald-probe-net-bluetooth 	\
+	hald-probe-lsb-release		\
 	hald-probe-video4linux
 endif
 
@@ -52,6 +53,9 @@ hald_probe_ieee1394_unit_LDADD = $(top_builddir)/libhal/libhal.la @DBUS_LIBS@
 
 hald_probe_net_bluetooth_SOURCES = probe-net-bluetooth.c ../../logger.c
 hald_probe_net_bluetooth_LDADD = $(top_builddir)/libhal/libhal.la @DBUS_LIBS@
+
+hald_probe_lsb_release_SOURCES = probe-lsb-release.c ../../logger.c
+hald_probe_lsb_release_LDADD = $(top_builddir)/libhal/libhal.la
 
 hald_probe_video4linux_SOURCES = probe-video4linux.c ../../logger.c
 hald_probe_video4linux_LDADD = $(top_builddir)/libhal/libhal.la @DBUS_LIBS@

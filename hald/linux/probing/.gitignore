@@ -4,16 +4,6 @@ Makefile
 Makefile.in
 *.lo
 *.la
-hald-probe-hiddev
-hald-probe-input
-hald-probe-net-bluetooth
-hald-probe-pc-floppy
-hald-probe-printer
-hald-probe-smbios
-hald-probe-storage
-hald-probe-volume
-hald-probe-serial
-hald-probe-ieee1394-unit
-hald-probe-video4linux
+hald-probe-*
 *.o
 *~

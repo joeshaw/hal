@@ -799,6 +799,22 @@ computer_probing_pm_is_supported_helper_done (HalDevice *d, guint32 exit_type,
 }
 
 static void
+computer_probing_lsb_release_helper_done (HalDevice *d, guint32 exit_type,
+                                          gint return_code, gchar **error,
+                                          gpointer data1, gpointer data2)
+{
+        /* Try and set the suspend/hibernate keys using pm-is-supported
+         */
+        if (g_file_test ("/usr/bin/pm-is-supported", G_FILE_TEST_IS_EXECUTABLE)) {
+                hald_runner_run (d, "hal-system-power-pm-is-supported", NULL, HAL_HELPER_TIMEOUT,
+                                 computer_probing_pm_is_supported_helper_done, NULL, NULL);
+        } else {
+                decode_dmi (d);
+        }
+}
+
+
+static void
 get_primary_videocard (HalDevice *d)
 {
         GDir *dir;
@@ -884,14 +900,8 @@ osspec_probe (void)
         /* set the vendor/product of primary video card */
         get_primary_videocard (root);
 
-        /* Try and set the suspend/hibernate keys using pm-is-supported
-         */
-        if (g_file_test ("/usr/bin/pm-is-supported", G_FILE_TEST_IS_EXECUTABLE)) {
-                hald_runner_run (root, "hal-system-power-pm-is-supported", NULL, HAL_HELPER_TIMEOUT,
-                                 computer_probing_pm_is_supported_helper_done, NULL, NULL);
-        } else {
-                decode_dmi (root);
-        }
+        hald_runner_run (root, "hald-probe-lsb-release", NULL, HAL_HELPER_TIMEOUT,
+                         computer_probing_lsb_release_helper_done, NULL, NULL);
 }
 
 DBusHandlerResult
