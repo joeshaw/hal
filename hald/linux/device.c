@@ -2218,8 +2218,8 @@ pnp_add (const gchar *sysfs_path, const gchar *device_file, HalDevice *parent_de
 			hal_device_property_set_string (d, "info.product", pnp_description);
 		}
 		pnp_id = hal_device_property_get_string (d, "pnp.id");
-		if( !strncmp(pnp_id, "WACf0", 5) || !strcmp(pnp_id, "FUJ02e5") ||
-		    !strcmp(pnp_id, "FUJ02e6") || !strcmp(pnp_id, "FPI2004")) {
+		if( !strncmp(pnp_id, "WACf", 4) || !strcmp(pnp_id, "FUJ02e5") || !strcmp(pnp_id, "FUJ02e6") || 
+		    !strcmp(pnp_id, "FUJ02e7") || !strcmp(pnp_id, "FUJ02e9") || !strcmp(pnp_id, "FPI2004") ||) {
 			/* a internal serial tablet --> this should be a tablet pc */
 			if ((computer = hal_device_store_find (hald_get_gdl (), "/org/freedesktop/Hal/devices/computer")) != NULL ||
 			    (computer = hal_device_store_find (hald_get_tdl (), "/org/freedesktop/Hal/devices/computer")) != NULL) {
