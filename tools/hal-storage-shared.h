@@ -41,6 +41,8 @@ void fstab_close (gpointer handle);
 gboolean lock_hal_mtab (void);
 void unlock_hal_mtab (void);
 
+void fsync_dir (char *path);
+
 void unknown_error (const char *detail);
 
 void bailout_if_drive_is_locked (LibHalContext *hal_ctx, LibHalDrive *drive, const char *invoked_by_syscon_name);
