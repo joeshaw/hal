@@ -215,6 +215,11 @@ hald_udev_data (GIOChannel *source, GIOCondition condition, gpointer user_data)
 				g_free (str);
 			}
 			g_free (dstr);
+		} else if (strncmp(key, "DM_UDEV_DISABLE_OTHER_RULES_FLAG=", 33) == 0) {
+			if (strtoul(&key[33], NULL, 10) == 1) {
+				HAL_INFO (("ignoring device requested by DM udev rules"));
+				goto invalid;
+			}
 		}
 	}
 
