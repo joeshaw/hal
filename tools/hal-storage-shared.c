@@ -483,9 +483,12 @@ line_found:
 		}
 
 	}
-       if (fsync (fileno (hal_mtab_new)) < 0) {
-	       printf ("WARNING! syncing /media/.hal-mtab~ failed: %s\n", strerror (errno));
-       }
+	if (fflush (hal_mtab_new) < 0) {
+	    unknown_error ("Cannot flush /media/.hal-mtab~");
+	}
+	if (fsync (fileno (hal_mtab_new)) < 0) {
+		printf ("WARNING! syncing /media/.hal-mtab~ failed: %s\n", strerror (errno));
+	}
 #ifdef DEBUG
        else
 	       printf ("fsync /media/.hal-mtab~: success\n");

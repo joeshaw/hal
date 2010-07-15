@@ -953,6 +953,9 @@ handle_mount (LibHalContext *hal_ctx,
 		if (fwrite (hal_mtab_buf, 1, strlen (hal_mtab_buf), hal_mtab) != strlen (hal_mtab_buf)) {
 			unknown_error ("Cannot write to /media/.hal-mtab~");
 		}
+		if (fflush (hal_mtab) < 0) {
+			unknown_error ("Cannot flush /media/.hal-mtab~");
+		}
 		if (fsync (fileno (hal_mtab)) < 0) {
 			printf ("WARNING! syncing /media/.hal-mtab~ failed: %s\n", strerror (errno));
 		}
