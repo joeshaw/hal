@@ -953,6 +953,16 @@ handle_mount (LibHalContext *hal_ctx,
 		if (fwrite (hal_mtab_buf, 1, strlen (hal_mtab_buf), hal_mtab) != strlen (hal_mtab_buf)) {
 			unknown_error ("Cannot write to /media/.hal-mtab~");
 		}
+		if (fflush (hal_mtab) < 0) {
+			unknown_error ("Cannot flush /media/.hal-mtab~");
+		}
+		if (fsync (fileno (hal_mtab)) < 0) {
+			printf ("WARNING! syncing /media/.hal-mtab~ failed: %s\n", strerror (errno));
+		}
+#ifdef DEBUG
+		else
+			printf ("fsync /media/.hal-mtab~: success\n");
+#endif
 		fclose (hal_mtab);
 		g_free (hal_mtab_buf);
 #ifdef DEBUG
@@ -1012,6 +1022,8 @@ handle_mount (LibHalContext *hal_ctx,
 #endif
 			unknown_error ("Cannot rename /media/.hal-mtab~ to /media/.hal-mtab");
 		}
+
+		fsync_dir("/media");
 #ifdef DEBUG
 		printf ("%d: XYA done renaming /media/.hal-mtab~ to /media/.hal-mtab\n", getpid ());
 #endif

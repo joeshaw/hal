@@ -47,6 +47,7 @@
 #endif
 #include <sys/types.h>
 #include <unistd.h>
+#include <dirent.h>
 #include <sys/file.h>
 #include <errno.h>
 #include <syslog.h>
@@ -192,6 +193,28 @@ fstab_close (gpointer handle)
 	endfsent ();
 #else
 	fclose (handle);
+#endif
+}
+
+/* fsync() a directory */
+void
+fsync_dir (char *path)
+{
+	DIR* d;
+
+	d = opendir (path);
+	if (d == NULL) {
+		printf ("fsync_dir (%s): failed to opendir(): %s\n", path, strerror (errno));
+		return;
+	}
+
+	if (fsync (dirfd (d)) < 0)
+		printf ("fsync_dir (%s): failed to fsync(): %s\n", path, strerror (errno));
+
+	closedir (d);
+
+#ifdef DEBUG
+	printf ("fsync_dir (%s): success\n", path);
 #endif
 }
 
@@ -460,6 +483,17 @@ line_found:
 		}
 
 	}
+	if (fflush (hal_mtab_new) < 0) {
+	    unknown_error ("Cannot flush /media/.hal-mtab~");
+	}
+	if (fsync (fileno (hal_mtab_new)) < 0) {
+		printf ("WARNING! syncing /media/.hal-mtab~ failed: %s\n", strerror (errno));
+	}
+#ifdef DEBUG
+       else
+	       printf ("fsync /media/.hal-mtab~: success\n");
+#endif
+
 	fclose (hal_mtab_new);
 
 	g_strfreev (lines);
@@ -521,6 +555,7 @@ line_found:
 		unlink ("/media/.hal-mtab~");
 		unknown_error ("Cannot rename /media/.hal-mtab~ to /media/.hal-mtab");
 	}
+	fsync_dir("/media");
 
 #ifdef DEBUG
 	printf ("done unmounting\n");
