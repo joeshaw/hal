@@ -2287,9 +2287,10 @@ ppdev_compute_udi (HalDevice *d)
 	gchar udi[256];
 	const char *name;
 
-	name = hal_util_get_last_element( hal_device_property_get_string(d, "linux.device_file"));
+	name = hal_device_property_get_string (d, "linux.device_file");
 
 	if (name) {
+		name = hal_util_get_last_element (name);
 		hald_compute_udi (udi, sizeof (udi), "/org/freedesktop/Hal/devices/ppdev_%s", name);
 	} else {
 		hald_compute_udi (udi, sizeof (udi), "/org/freedesktop/Hal/devices/ppdev");
