@@ -479,6 +479,9 @@ if test "x$with_libpci" != xno ; then
 fi 
 AM_CONDITIONAL([HAVE_LIBPCI], [test "x$USE_LIBPCI" = "xyes"])
 
+AC_CHECK_HEADERS([linux/videodev.h], [have_videodev_h=yes], [])
+AM_CONDITIONAL(HAVE_V4L1, [test "x$have_videodev_h" = "xyes"])
+
 AC_ARG_WITH([backend],
 	    AS_HELP_STRING([--with-backend=<name>],
 	                   [backend to use (linux/solaris/freebsd/dummy)]),

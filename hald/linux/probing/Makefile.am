@@ -20,8 +20,11 @@ libexec_PROGRAMS = 			\
 	hald-probe-serial 		\
 	hald-probe-ieee1394-unit 	\
 	hald-probe-net-bluetooth 	\
-	hald-probe-lsb-release		\
-	hald-probe-video4linux
+	hald-probe-lsb-release
+
+if HAVE_V4L1
+libexec_PROGRAMS += hald-probe-video4linux
+endif
 endif
 
 hald_probe_smbios_SOURCES = probe-smbios.c ../../logger.c
